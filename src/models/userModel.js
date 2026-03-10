@@ -15,3 +15,11 @@ export async function createUser(email, passwordHash) {
   );
   return result.rows[0];
 }
+
+export async function findUserById(id) {
+  const result = await db.query(
+    `SELECT id, email FROM users WHERE id = $1`,
+    [id]
+  );
+  return result.rows[0];
+}

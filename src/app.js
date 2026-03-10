@@ -3,7 +3,7 @@ import db from "./db/index.js";
 import cors from "cors";
 
 import authRoutes from "./routes/auth.js";
-import testTokenRoutes from "./routes/test_token.js";
+import profileRoutes from "./routes/profile.js";
 
 const app = express();
 
@@ -30,7 +30,7 @@ app.get("/health", (req, res) => {
 
 
 app.use("/auth", authRoutes);
-app.use("/test-token", testTokenRoutes);
+app.use("/profile", profileRoutes);
 
 
 export default app;
