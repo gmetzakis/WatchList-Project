@@ -45,24 +45,36 @@ export async function updateProfile(userId, fields) {
   return result.rows[0];
 }
 
-export async function incrementMoviesWatched(userId) {
-  const result = await db.query(
-    `UPDATE user_profiles
-     SET movies_watched = movies_watched + 1
-     WHERE user_id = $1
-     RETURNING movies_watched`,
-    [userId]
-  );
-  return result.rows[0];
-}
+//Probably not needed if we have the generic incrementWatchedCount function, but keeping for reference
+// export async function incrementMoviesWatched(userId) {
+//   const result = await db.query(
+//     `UPDATE user_profiles
+//      SET movies_watched = movies_watched + 1
+//      WHERE user_id = $1
+//      RETURNING movies_watched`,
+//     [userId]
+//   );
+//   return result.rows[0];
+// }
 
-export async function incrementSeriesWatched(userId) {
-  const result = await db.query(
+// export async function incrementSeriesWatched(userId) {
+//   const result = await db.query(
+//     `UPDATE user_profiles
+//      SET series_watched = series_watched + 1
+//      WHERE user_id = $1
+//      RETURNING series_watched`,
+//     [userId]
+//   );
+//   return result.rows[0];
+// }
+
+export async function incrementWatchedCount(userId, type) {
+  const column = type === "movie" ? "movies_watched" : "series_watched";
+
+  await db.query(
     `UPDATE user_profiles
-     SET series_watched = series_watched + 1
-     WHERE user_id = $1
-     RETURNING series_watched`,
+     SET ${column} = ${column} + 1
+     WHERE user_id = $1`,
     [userId]
   );
-  return result.rows[0];
 }

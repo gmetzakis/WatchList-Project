@@ -4,6 +4,7 @@ import cors from "cors";
 
 import authRoutes from "./routes/auth.js";
 import profileRoutes from "./routes/profile.js";
+import mediaRoutes from "./routes/media.js";
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.get("/health", (req, res) => {
 
 app.use("/auth", authRoutes);
 app.use("/profile", profileRoutes);
+app.use("/media", mediaRoutes);
 
 
 export default app;
