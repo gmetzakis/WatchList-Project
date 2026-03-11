@@ -1,5 +1,5 @@
 import { findOrCreateMedia } from "../models/mediaModel.js";
-import { addUserMedia, findUserMedia } from "../models/userMediaModel.js";
+import { addUserMedia, findUserMedia, getUserWatchlist, getUserWatched } from "../models/userMediaModel.js";
 import { incrementWatchedCount } from "../models/userProfileModel.js";
 
 export async function markAsWatched(req, res) {
@@ -69,6 +69,30 @@ export async function addToWatchlist(req, res) {
 
   } catch (err) {
     console.error("Add to watchlist error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function getWatchlist(req, res) {
+  const userId = req.user.id;
+
+  try {
+    const items = await getUserWatchlist(userId);
+    res.json(items);
+  } catch (err) {
+    console.error("Get watchlist error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function getWatchedHistory(req, res) {
+  const userId = req.user.id;
+
+  try {
+    const items = await getUserWatched(userId);
+    res.json(items);
+  } catch (err) {
+    console.error("Get watched history error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 }

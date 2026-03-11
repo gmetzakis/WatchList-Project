@@ -1,5 +1,6 @@
 import db from "../db/index.js";
 
+
 export async function findUserMedia(userId, mediaId) {
   const result = await db.query(
     `SELECT * FROM user_media WHERE user_id = $1 AND media_id = $2`,
@@ -7,6 +8,7 @@ export async function findUserMedia(userId, mediaId) {
   );
   return result.rows[0];
 }
+
 
 export async function addUserMedia(userId, mediaId, status, setWatchedAt = false) {
   const result = await db.query(
@@ -21,4 +23,48 @@ export async function addUserMedia(userId, mediaId, status, setWatchedAt = false
   );
 
   return result.rows[0];
+}
+
+
+export async function getUserWatchlist(userId) {
+  const result = await db.query(
+    `SELECT 
+        m.id,
+        m.tmdb_id,
+        m.type,
+        m.title,
+        m.poster_path,
+        m.release_year,
+        um.created_at AS added_at
+     FROM user_media um
+     JOIN media m ON m.id = um.media_id
+     WHERE um.user_id = $1
+       AND um.status = 'watchlist'
+     ORDER BY um.created_at DESC`,
+    [userId]
+  );
+
+  return result.rows;
+}
+
+
+export async function getUserWatched(userId) {
+  const result = await db.query(
+    `SELECT 
+        m.id,
+        m.tmdb_id,
+        m.type,
+        m.title,
+        m.poster_path,
+        m.release_year,
+        um.watched_at
+     FROM user_media um
+     JOIN media m ON m.id = um.media_id
+     WHERE um.user_id = $1
+       AND um.status = 'watched'
+     ORDER BY um.watched_at DESC`,
+    [userId]
+  );
+
+  return result.rows;
 }
