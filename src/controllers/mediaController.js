@@ -1,6 +1,7 @@
 import { findOrCreateMedia } from "../models/mediaModel.js";
-import { addUserMedia, findUserMedia, getUserWatchlist, getUserWatched } from "../models/userMediaModel.js";
-import { incrementWatchedCount } from "../models/userProfileModel.js";
+import { addUserMedia, findUserMedia, deleteUserMedia,
+         updateUserMediaStatus, getUserWatchlist, getUserWatched } from "../models/userMediaModel.js";
+import { incrementWatchedCount, decrementWatchedCount } from "../models/userProfileModel.js";
 
 export async function markAsWatched(req, res) {
   const userId = req.user.id;
@@ -43,6 +44,7 @@ export async function markAsWatched(req, res) {
   }
 }
 
+
 export async function addToWatchlist(req, res) {
   const userId = req.user.id;
   const { tmdbId } = req.params;
@@ -73,6 +75,99 @@ export async function addToWatchlist(req, res) {
   }
 }
 
+
+export async function removeFromWatchlist(req, res) {
+  const userId = req.user.id;
+  const { tmdbId } = req.params;
+  const { type } = req.body;
+
+  if (!type || !["movie", "series"].includes(type)) {
+    return res.status(400).json({ error: "Invalid or missing type" });
+  }
+
+  try {
+    const media = await findOrCreateMedia(tmdbId, type);
+
+    const existing = await findUserMedia(userId, media.id);
+
+    if (!existing || existing.status !== "watchlist") {
+      return res.status(404).json({ error: "Not in watchlist" });
+    }
+
+    await deleteUserMedia(userId, media.id);
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("Remove from watchlist error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+
+export async function removeFromWatched(req, res) {
+  const userId = req.user.id;
+  const { tmdbId } = req.params;
+  const { type } = req.body;
+
+  if (!type || !["movie", "series"].includes(type)) {
+    return res.status(400).json({ error: "Invalid or missing type" });
+  }
+
+  try {
+    const media = await findOrCreateMedia(tmdbId, type);
+
+    const existing = await findUserMedia(userId, media.id);
+
+    if (!existing || existing.status !== "watched") {
+      return res.status(404).json({ error: "Not in watched history" });
+    }
+
+    await deleteUserMedia(userId, media.id);
+    await decrementWatchedCount(userId, type);
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("Remove from watched error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+
+export async function moveWatchlistToWatched(req, res) {
+  const userId = req.user.id;
+  const { tmdbId } = req.params;
+  const { type } = req.body;
+
+  if (!type || !["movie", "series"].includes(type)) {
+    return res.status(400).json({ error: "Invalid or missing type" });
+  }
+
+  try {
+    const media = await findOrCreateMedia(tmdbId, type);
+
+    const existing = await findUserMedia(userId, media.id);
+
+    if (!existing || existing.status !== "watchlist") {
+      return res.status(404).json({ error: "Item is not in watchlist" });
+    }
+
+    await updateUserMediaStatus(userId, media.id, "watched");
+    await incrementWatchedCount(userId, type);
+
+    res.json({
+      media,
+      status: "watched"
+    });
+
+  } catch (err) {
+    console.error("Move watchlist to watched error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+
 export async function getWatchlist(req, res) {
   const userId = req.user.id;
 
@@ -84,6 +179,7 @@ export async function getWatchlist(req, res) {
     res.status(500).json({ error: "Internal server error" });
   }
 }
+
 
 export async function getWatchedHistory(req, res) {
   const userId = req.user.id;

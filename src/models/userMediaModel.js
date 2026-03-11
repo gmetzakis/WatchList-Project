@@ -26,6 +26,29 @@ export async function addUserMedia(userId, mediaId, status, setWatchedAt = false
 }
 
 
+export async function deleteUserMedia(userId, mediaId) {
+  await db.query(
+    `DELETE FROM user_media
+     WHERE user_id = $1 AND media_id = $2`,
+    [userId, mediaId]
+  );
+}
+
+
+export async function updateUserMediaStatus(userId, mediaId, status) {
+  const result = await db.query(
+    `UPDATE user_media
+     SET status = $3,
+         watched_at = CASE WHEN $3 = 'watched' THEN NOW() ELSE NULL END
+     WHERE user_id = $1 AND media_id = $2
+     RETURNING *`,
+    [userId, mediaId, status]
+  );
+
+  return result.rows[0];
+}
+
+
 export async function getUserWatchlist(userId) {
   const result = await db.query(
     `SELECT 

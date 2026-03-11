@@ -78,3 +78,14 @@ export async function incrementWatchedCount(userId, type) {
     [userId]
   );
 }
+
+export async function decrementWatchedCount(userId, type) {
+  const column = type === "movie" ? "movies_watched" : "series_watched";
+
+  await db.query(
+    `UPDATE user_profiles
+     SET ${column} = GREATEST(${column} - 1, 0)
+     WHERE user_id = $1`,
+    [userId]
+  );
+}
