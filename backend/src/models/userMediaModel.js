@@ -98,7 +98,8 @@ export async function getUserWatched(userId, sort, favorites) {
         m.poster_path,
         m.release_year,
         um.watched_at,
-        um.rating
+        um.rating,
+        um.is_favorite
      FROM user_media um
      JOIN media m ON m.id = um.media_id
      WHERE um.user_id = $1
