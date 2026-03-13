@@ -1,5 +1,10 @@
+import env from "dotenv";
+env.config();
+
 //Added this to DEACTIVATE CERTIFICATE AUTHORIZATION!!
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+if (process.env.PC_RUNNING === "army") {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+}
 
 
 import express from "express";
