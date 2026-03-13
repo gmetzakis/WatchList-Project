@@ -6,19 +6,21 @@ import MediaDetails from "../pages/MediaDetails";
 import Watchlist from "../pages/Watchlist";
 import Watched from "../pages/Watched";
 import Favorites from "../pages/Favorites";
+import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Search />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/media/:tmdbId" element={<MediaDetails />} />
-        <Route path="/watchlist" element={<Watchlist />} />
-        <Route path="/watched" element={<Watched />} />
-        <Route path="/favorites" element={<Favorites />} />
+        <Route path="/" element={<ProtectedRoute> <Search /> </ProtectedRoute>} />
+        <Route path="/media/:id" element={<ProtectedRoute> <MediaDetails /> </ProtectedRoute>} />
+        <Route path="/watchlist" element={<ProtectedRoute> <Watchlist /> </ProtectedRoute>} />
+        <Route path="/watched" element={<ProtectedRoute> <Watched /> </ProtectedRoute>} />
+        <Route path="/favorites" element={<ProtectedRoute> <Favorites /> </ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );
 }
+
