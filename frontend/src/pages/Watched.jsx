@@ -51,7 +51,6 @@ export default function WatchedPage() {
     updateQuery(sort, newValue);
   }
 
-
   async function handleRemove(item) {
     try {
       await api.delete(`/media/${item.tmdb_id}/watched`, {
@@ -133,33 +132,17 @@ export default function WatchedPage() {
   }
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="page-container">
       <h1>Watched</h1>
 
       {/* FILTER BAR */}
-      <div style={{
-        display: "flex",
-        gap: "20px",
-        marginTop: "20px",
-        marginBottom: "20px",
-        alignItems: "center"
-      }}>
-        
-        {/* SORT SELECT */}
+      <div className="filter-bar">
         <div>
-          <label style={{ color: "white", marginRight: "10px" }}>
-            Sort:
-          </label>
+          <label className="filter-label">Sort:</label>
           <select
             value={sort}
             onChange={handleSortChange}
-            style={{
-              padding: "6px",
-              borderRadius: "6px",
-              background: "#333",
-              color: "white",
-              border: "1px solid #555"
-            }}
+            className="filter-select"
           >
             <option value="">None</option>
             <option value="rating_desc">Rating Desc</option>
@@ -167,65 +150,37 @@ export default function WatchedPage() {
           </select>
         </div>
 
-        {/* FAVORITES TOGGLE */}
         <button
           onClick={handleFavoritesToggle}
-          style={{
-            padding: "6px 12px",
-            borderRadius: "6px",
-            background: favorites === "true" ? "gold" : "#444",
-            color: favorites === "true" ? "black" : "white",
-            border: "none",
-            cursor: "pointer"
-          }}
+          className={favorites === "true" ? "btn-fav-toggle active" : "btn-fav-toggle"}
         >
           {favorites === "true" ? "Showing Favorites" : "Show Favorites Only"}
         </button>
       </div>
 
-
       {items.length === 0 && (
         <p>You haven't watched anything yet.</p>
       )}
 
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-        gap: "20px",
-        marginTop: "20px"
-      }}>
+      <div className="media-grid">
         {items.map(item => (
-          <div key={item.tmdb_id} style={{
-            background: "#222",
-            padding: "12px",
-            borderRadius: "8px",
-            textAlign: "center"
-          }}>
+          <div key={item.tmdb_id} className="media-card">
             <img
               src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
               alt={item.title}
-              style={{ width: "100%", borderRadius: "6px" }}
+              className="media-card-img"
             />
 
-            <h3 style={{ color: "white", marginTop: "10px" }}>{item.title}</h3>
-            <p style={{ color: "#aaa" }}>{item.release_year}</p>
+            <h3 className="media-title">{item.title}</h3>
+            <p className="media-year">{item.release_year}</p>
 
             {/* Rating */}
-            <div style={{ marginTop: "10px", marginBottom: "10px" }}>
+            <div className="rating-row">
               {[1,2,3,4,5,6,7,8,9,10].map(n => (
                 <button
                   key={n}
                   onClick={() => handleRate(item, n)}
-                  style={{
-                    width: "28px",
-                    height: "28px",
-                    margin: "2px",
-                    borderRadius: "4px",
-                    border: "none",
-                    cursor: "pointer",
-                    background: item.rating >= n ? "gold" : "#555",
-                    color: item.rating >= n ? "black" : "white"
-                  }}
+                  className={item.rating >= n ? "btn-rating active" : "btn-rating"}
                 >
                   {n}
                 </button>
@@ -235,13 +190,7 @@ export default function WatchedPage() {
             {item.rating && (
               <button
                 onClick={() => handleRemoveRating(item)}
-                style={{
-                  marginBottom: "10px",
-                  background: "transparent",
-                  border: "none",
-                  color: "red",
-                  cursor: "pointer"
-                }}
+                className="btn-remove-rating"
               >
                 Remove rating
               </button>
@@ -251,49 +200,22 @@ export default function WatchedPage() {
             {item.is_favorite ? (
               <button
                 onClick={() => handleUnfavorite(item)}
-                style={{
-                  width: "100%",
-                  padding: "8px",
-                  background: "orange",
-                  border: "none",
-                  borderRadius: "6px",
-                  color: "black",
-                  cursor: "pointer",
-                  marginBottom: "10px"
-                }}
+                className="btn btn-unfavorite"
               >
                 Remove Favorite
               </button>
             ) : (
               <button
                 onClick={() => handleFavorite(item)}
-                style={{
-                  width: "100%",
-                  padding: "8px",
-                  background: "gold",
-                  border: "none",
-                  borderRadius: "6px",
-                  color: "black",
-                  cursor: "pointer",
-                  marginBottom: "10px"
-                }}
+                className="btn btn-favorite"
               >
                 Add to Favorites
               </button>
             )}
 
-            {/* Remove from watched */}
             <button
               onClick={() => handleRemove(item)}
-              style={{
-                width: "100%",
-                padding: "8px",
-                background: "red",
-                border: "none",
-                borderRadius: "6px",
-                color: "white",
-                cursor: "pointer"
-              }}
+              className="btn btn-remove"
             >
               Remove
             </button>
