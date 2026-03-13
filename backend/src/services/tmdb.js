@@ -11,7 +11,7 @@ export async function fetchTMDBMedia(tmdbId, type) {
   const { data } = await axios.get(url);
 
   return {
-    id: data.id,
+    tmdb_id: data.id,
     type,
     title: type === "movie" ? data.title : data.name,
     poster_path: data.poster_path,
@@ -33,10 +33,10 @@ export async function searchTMDB(query) {
   }));
 }
 
-export async function fetchTMDBDetails(id) {
-  console.log(`Given id is ${id}`)
-  const movieUrl = `${TMDB_BASE}/movie/${id}?api_key=${API_KEY}&language=en-US&append_to_response=credits,images,recommendations`;
-  const tvUrl = `${TMDB_BASE}/tv/${id}?api_key=${API_KEY}&language=en-US&append_to_response=credits,images,recommendations`;
+export async function fetchTMDBDetails(tmdbId) {
+  console.log(`Given id is ${tmdbId}`)
+  const movieUrl = `${TMDB_BASE}/movie/${tmdbId}?api_key=${API_KEY}&language=en-US&append_to_response=credits,images,recommendations`;
+  const tvUrl = `${TMDB_BASE}/tv/${tmdbId}?api_key=${API_KEY}&language=en-US&append_to_response=credits,images,recommendations`;
 
   try {
     const { data } = await axios.get(movieUrl);

@@ -15,7 +15,7 @@ export default function AppRouter() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/" element={<ProtectedRoute> <Search /> </ProtectedRoute>} />
-        <Route path="/media/:id" element={<ProtectedRoute> <MediaDetails /> </ProtectedRoute>} />
+        <Route path="/media/:tmdbId" element={<ProtectedRoute> <MediaDetails /> </ProtectedRoute>} />
         <Route path="/watchlist" element={<ProtectedRoute> <Watchlist /> </ProtectedRoute>} />
         <Route path="/watched" element={<ProtectedRoute> <Watched /> </ProtectedRoute>} />
         <Route path="/favorites" element={<ProtectedRoute> <Favorites /> </ProtectedRoute>} />

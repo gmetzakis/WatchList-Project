@@ -23,14 +23,31 @@ router.get("/search", async (req, res) => {
   }
 });
 
-router.get("/details/:id", async (req, res) => {
+router.get("/details/:tmdb_id", async (req, res) => {
   try {
-    const media = await fetchTMDBDetails(req.params.id);
+    const media = await fetchTMDBDetails(req.params.tmdb_id);
     res.json(media);
   } catch (err) {
     console.error("TMDB Details Error:", err.message);
     res.status(404).json({ error: "Media not found" });
   }
 });
+
+// router.get("/media/status/:id", async (req, res) => {
+//   const user_id = req.user.id;
+//   const tmdb_id = Number(req.params.ιδ);
+
+//   const record = await prisma.user_media.findFirst({
+//     where: { user_id, tmdb_id }
+//   });
+
+//   if (!record) {
+//     return res.json({ status: null });
+//   }
+
+//   return res.json({ status: record.status }); // "watchlist" | "watched"
+// });
+
+
 
 export default router;

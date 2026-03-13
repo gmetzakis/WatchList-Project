@@ -11,6 +11,7 @@ export async function findMediaByTMDBId(tmdbId) {
 
 export async function createMedia(mediaData) {
   const { tmdb_id, type, title, poster_path, release_year } = mediaData;
+  console.log(mediaData);
 
   const result = await db.query(
     `INSERT INTO media (tmdb_id, type, title, poster_path, release_year)

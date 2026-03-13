@@ -1,4 +1,5 @@
 import { Router } from "express";
+import db from "../db/index.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { addToWatchlist, markAsWatched, getWatchlist, rateMedia,
          getWatchedHistory, removeFromWatchlist, removeFromWatched,
@@ -23,5 +24,26 @@ router.post("/:tmdbId/favorite", authMiddleware, markAsFavorite);
 router.delete("/:tmdbId/favorite", authMiddleware, removeFavorite);
 
 router.get("/favorites", authMiddleware, getFavorites);
+
+router.get("/:tmdbId/status", authMiddleware, async (req, res) => {
+  const user_id = req.user.id;
+  const tmdb_id = (req.params.tmdbId);
+
+  const result = await db.query(
+    `SELECT user_media.status
+    FROM user_media
+    JOIN media ON media.id = user_media.media_id
+    WHERE user_media.user_id = $1 AND media.tmdb_id = $2
+    LIMIT 1`,
+    [user_id, tmdb_id]
+  );
+
+  if (result.rows.length === 0) {
+    return res.json({ status: null });
+  }
+
+  res.json({ status: result.rows[0].status });
+});
+
 
 export default router;
