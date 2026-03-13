@@ -1,5 +1,5 @@
 import { findOrCreateMedia } from "../models/mediaModel.js";
-import { addUserMedia, findUserMedia, deleteUserMedia,
+import { addUserMedia, findUserMedia, deleteUserMedia, setRating,
          updateUserMediaStatus, getUserWatchlist, getUserWatched } from "../models/userMediaModel.js";
 import { incrementWatchedCount, decrementWatchedCount } from "../models/userProfileModel.js";
 
@@ -61,6 +61,11 @@ export async function addToWatchlist(req, res) {
     if (existing && existing.status === "watchlist") {
       return res.status(200).json({ media, status: "watchlist" });
     }
+
+    if (existing && existing.status === "watched") {
+      await deleteUserMedia(userId, media.id);
+      await decrementWatchedCount(userId, type);
+    }    
 
     await addUserMedia(userId, media.id, "watchlist");
 
@@ -189,6 +194,69 @@ export async function getWatchedHistory(req, res) {
     res.json(items);
   } catch (err) {
     console.error("Get watched history error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+
+export async function rateMedia(req, res) {
+  const userId = req.user.id;
+  const { tmdbId } = req.params;
+  const { type, rating } = req.body;
+
+  if (!type || !["movie", "series"].includes(type)) {
+    return res.status(400).json({ error: "Invalid or missing type" });
+  }
+
+  if (!rating || rating < 1 || rating > 10) {
+    return res.status(400).json({ error: "Rating must be between 1 and 10" });
+  }
+
+  try {
+    const media = await findOrCreateMedia(tmdbId, type);
+    const existing = await findUserMedia(userId, media.id);
+
+    if (!existing || existing.status !== "watched") {
+      return res.status(400).json({ error: "You can only rate watched items" });
+    }
+
+    await setRating(userId, media.id, rating);
+
+    res.json({
+      media,
+      rating
+    });
+
+  } catch (err) {
+    console.error("Rate media error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+
+export async function removeRating(req, res) {
+  const userId = req.user.id;
+  const { tmdbId } = req.params;
+  const { type } = req.body;
+
+  if (!type || !["movie", "series"].includes(type)) {
+    return res.status(400).json({ error: "Invalid or missing type" });
+  }
+
+  try {
+    const media = await findOrCreateMedia(tmdbId, type);
+    const existing = await findUserMedia(userId, media.id);
+
+    if (!existing || existing.status !== "watched") {
+      return res.status(400).json({ error: "Item is not rated or not watched" });
+    }
+
+    await setRating(userId, media.id, null);
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("Remove rating error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 }

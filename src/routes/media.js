@@ -1,17 +1,23 @@
 import { Router } from "express";
 import { authMiddleware } from "../middleware/authMiddleware.js";
-import { addToWatchlist, markAsWatched, getWatchlist, 
+import { addToWatchlist, markAsWatched, getWatchlist, rateMedia,
          getWatchedHistory, removeFromWatchlist, removeFromWatched,
-         moveWatchlistToWatched } from "../controllers/mediaController.js";
+         moveWatchlistToWatched, removeRating } from "../controllers/mediaController.js";
 
 const router = Router();
 
 router.post("/:tmdbId/watchlist", authMiddleware, addToWatchlist);
+router.delete("/:tmdbId/watchlist", authMiddleware, removeFromWatchlist);
 router.post("/:tmdbId/watched", authMiddleware, markAsWatched);
+router.delete("/:tmdbId/watched", authMiddleware, removeFromWatched);
+
 router.get("/watchlist", authMiddleware, getWatchlist);
 router.get("/watched", authMiddleware, getWatchedHistory);
-router.delete("/:tmdbId/watchlist", authMiddleware, removeFromWatchlist);
-router.delete("/:tmdbId/watched", authMiddleware, removeFromWatched);
+
 router.post("/:tmdbId/watchlist-to-watched", authMiddleware, moveWatchlistToWatched);
+
+router.post("/:tmdbId/rating", authMiddleware, rateMedia);
+router.delete("/:tmdbId/rating", authMiddleware, removeRating);
+
 
 export default router;

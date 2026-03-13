@@ -80,7 +80,8 @@ export async function getUserWatched(userId) {
         m.title,
         m.poster_path,
         m.release_year,
-        um.watched_at
+        um.watched_at,
+        um.rating
      FROM user_media um
      JOIN media m ON m.id = um.media_id
      WHERE um.user_id = $1
@@ -90,4 +91,17 @@ export async function getUserWatched(userId) {
   );
 
   return result.rows;
+}
+
+
+export async function setRating(userId, mediaId, rating) {
+  const result = await db.query(
+    `UPDATE user_media
+     SET rating = $3
+     WHERE user_id = $1 AND media_id = $2
+     RETURNING *`,
+    [userId, mediaId, rating]
+  );
+
+  return result.rows[0];
 }
