@@ -1,6 +1,7 @@
 import { findOrCreateMedia } from "../models/mediaModel.js";
 import { addUserMedia, findUserMedia, deleteUserMedia, setRating,
-         updateUserMediaStatus, getUserWatchlist, getUserWatched } from "../models/userMediaModel.js";
+         updateUserMediaStatus, getUserWatchlist, getUserWatched,
+         setFavorite, getUserFavorites } from "../models/userMediaModel.js";
 import { incrementWatchedCount, decrementWatchedCount } from "../models/userProfileModel.js";
 
 export async function markAsWatched(req, res) {
@@ -188,9 +189,10 @@ export async function getWatchlist(req, res) {
 
 export async function getWatchedHistory(req, res) {
   const userId = req.user.id;
+  const { sort, favorites } = req.query;
 
   try {
-    const items = await getUserWatched(userId);
+    const items = await getUserWatched(userId, sort, favorites);
     res.json(items);
   } catch (err) {
     console.error("Get watched history error:", err);
@@ -257,6 +259,78 @@ export async function removeRating(req, res) {
 
   } catch (err) {
     console.error("Remove rating error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+
+export async function markAsFavorite(req, res) {
+  const userId = req.user.id;
+  const { tmdbId } = req.params;
+  const { type } = req.body;
+
+  if (!type || !["movie", "series"].includes(type)) {
+    return res.status(400).json({ error: "Invalid or missing type" });
+  }
+
+  try {
+    const media = await findOrCreateMedia(tmdbId, type);
+    const existing = await findUserMedia(userId, media.id);
+
+    if (!existing || existing.status !== "watched") {
+      return res.status(400).json({ error: "You can only favorite watched items" });
+    }
+
+    await setFavorite(userId, media.id, true);
+
+    res.json({
+      media,
+      is_favorite: true
+    });
+
+  } catch (err) {
+    console.error("Mark as favorite error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+
+export async function removeFavorite(req, res) {
+  const userId = req.user.id;
+  const { tmdbId } = req.params;
+  const { type } = req.body;
+
+  if (!type || !["movie", "series"].includes(type)) {
+    return res.status(400).json({ error: "Invalid or missing type" });
+  }
+
+  try {
+    const media = await findOrCreateMedia(tmdbId, type);
+    const existing = await findUserMedia(userId, media.id);
+
+    if (!existing || existing.status !== "watched") {
+      return res.status(400).json({ error: "Item is not favorited or not watched" });
+    }
+
+    await setFavorite(userId, media.id, false);
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("Remove favorite error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+
+export async function getFavorites(req, res) {
+  const userId = req.user.id;
+
+  try {
+    const items = await getUserFavorites(userId);
+    res.json(items);
+  } catch (err) {
+    console.error("Get favorites error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 }

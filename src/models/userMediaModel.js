@@ -71,7 +71,24 @@ export async function getUserWatchlist(userId) {
 }
 
 
-export async function getUserWatched(userId) {
+export async function getUserWatched(userId, sort, favorites) {
+  let orderBy = "um.watched_at DESC";
+
+  if (sort === "rating_desc") {
+    orderBy = "um.rating DESC NULLS LAST, um.watched_at DESC";
+  }
+
+  if (sort === "rating_asc") {
+    orderBy = "um.rating ASC NULLS LAST, um.watched_at DESC";
+  }
+
+
+  let filter = "um.status = 'watched'";
+
+  if (favorites === "true") {
+    filter += " AND um.is_favorite = true";
+  }
+
   const result = await db.query(
     `SELECT 
         m.id,
@@ -85,8 +102,8 @@ export async function getUserWatched(userId) {
      FROM user_media um
      JOIN media m ON m.id = um.media_id
      WHERE um.user_id = $1
-       AND um.status = 'watched'
-     ORDER BY um.watched_at DESC`,
+       AND ${filter}
+     ORDER BY ${orderBy}`,
     [userId]
   );
 
@@ -105,3 +122,42 @@ export async function setRating(userId, mediaId, rating) {
 
   return result.rows[0];
 }
+
+
+export async function setFavorite(userId, mediaId, isFavorite) {
+  const result = await db.query(
+    `UPDATE user_media
+     SET is_favorite = $3
+     WHERE user_id = $1 AND media_id = $2
+     RETURNING *`,
+    [userId, mediaId, isFavorite]
+  );
+
+  return result.rows[0];
+}
+
+
+export async function getUserFavorites(userId) {
+  const result = await db.query(
+    `SELECT 
+        m.id,
+        m.tmdb_id,
+        m.type,
+        m.title,
+        m.poster_path,
+        m.release_year,
+        um.watched_at,
+        um.rating,
+        um.is_favorite
+     FROM user_media um
+     JOIN media m ON m.id = um.media_id
+     WHERE um.user_id = $1
+       AND um.status = 'watched'
+       AND um.is_favorite = true
+     ORDER BY um.rating DESC NULLS LAST, um.watched_at DESC`,
+    [userId]
+  );
+
+  return result.rows;
+}
+

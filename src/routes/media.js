@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { addToWatchlist, markAsWatched, getWatchlist, rateMedia,
          getWatchedHistory, removeFromWatchlist, removeFromWatched,
-         moveWatchlistToWatched, removeRating } from "../controllers/mediaController.js";
+         moveWatchlistToWatched, removeRating, markAsFavorite, removeFavorite, getFavorites } from "../controllers/mediaController.js";
 
 const router = Router();
 
@@ -19,5 +19,9 @@ router.post("/:tmdbId/watchlist-to-watched", authMiddleware, moveWatchlistToWatc
 router.post("/:tmdbId/rating", authMiddleware, rateMedia);
 router.delete("/:tmdbId/rating", authMiddleware, removeRating);
 
+router.post("/:tmdbId/favorite", authMiddleware, markAsFavorite);
+router.delete("/:tmdbId/favorite", authMiddleware, removeFavorite);
+
+router.get("/favorites", authMiddleware, getFavorites);
 
 export default router;
