@@ -1,24 +1,56 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios.js";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 export default function FavoritesPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const sort = searchParams.get("sort") || "";
+  const type = searchParams.get("type") || "all"; // ⭐ NEW
+
   useEffect(() => {
     load();
-  }, []);
+  }, [sort, type]); // ⭐ reload when filters change
 
   async function load() {
     try {
-      const res = await api.get("/media/favorites");
+      const res = await api.get("/media/favorites", {
+        params: {
+          sort: sort || undefined,
+          type: type !== "all" ? type : undefined // ⭐ send only movie/series
+        }
+      });
+
       setItems(res.data);
     } catch (err) {
       console.error("Favorites load error:", err);
     } finally {
       setLoading(false);
     }
+  }
+
+  // ⭐ NEW: update URL with both filters
+  function updateQuery(newSort, newType) {
+    const params = new URLSearchParams();
+
+    if (newSort) params.set("sort", newSort);
+    if (newType && newType !== "all") params.set("type", newType);
+
+    navigate(`/favorites?${params.toString()}`);
+  }
+
+  // ⭐ UPDATED: preserve type
+  function handleSortChange(e) {
+    updateQuery(e.target.value, type);
+  }
+
+  // ⭐ NEW: type filter handler
+  function handleTypeChange(e) {
+    updateQuery(sort, e.target.value);
   }
 
   async function handleRemoveFavorite(item) {
@@ -85,6 +117,39 @@ export default function FavoritesPage() {
   return (
     <div className="page-container">
       <h1>Favorites</h1>
+
+      {/* ⭐ FILTER BAR */}
+      <div className="filter-bar" style={{ marginBottom: "20px" }}>
+
+        {/* SORT */}
+        <div>
+          <label className="filter-label">Sort:</label>
+          <select
+            value={sort}
+            onChange={handleSortChange}
+            className="filter-select"
+          >
+            <option value="">None</option>
+            <option value="rating_desc">Rating Desc</option>
+            <option value="rating_asc">Rating Asc</option>
+          </select>
+        </div>
+
+        {/* TYPE */}
+        <div style={{ marginLeft: "20px" }}>
+          <label className="filter-label">Type:</label>
+          <select
+            value={type}
+            onChange={handleTypeChange}
+            className="filter-select"
+          >
+            <option value="all">All</option>
+            <option value="movie">Movies</option>
+            <option value="series">Shows</option>
+          </select>
+        </div>
+
+      </div>
 
       {items.length === 0 && (
         <p>You have no favorite movies or series yet.</p>

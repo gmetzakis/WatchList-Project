@@ -157,7 +157,28 @@ export async function setFavorite(userId, mediaId, isFavorite) {
 }
 
 
-export async function getUserFavorites(userId) {
+export async function getUserFavorites(userId, sort, type) {
+
+  let orderBy = "um.watched_at DESC";
+
+  if (sort === "rating_desc") {
+    orderBy = "um.rating DESC NULLS LAST, um.watched_at DESC";
+  }
+
+  if (sort === "rating_asc") {
+    orderBy = "um.rating ASC NULLS LAST, um.watched_at DESC";
+  }
+
+  let filter = "um.status = 'watched' AND um.is_favorite = true";
+
+  if (type === "movie") {
+    filter += " AND m.type = 'movie'";
+  }
+
+  if (type === "series") {
+    filter += " AND m.type = 'series'";
+  }
+
   const result = await db.query(
     `SELECT 
         m.id,
@@ -172,9 +193,8 @@ export async function getUserFavorites(userId) {
      FROM user_media um
      JOIN media m ON m.id = um.media_id
      WHERE um.user_id = $1
-       AND um.status = 'watched'
-       AND um.is_favorite = true
-     ORDER BY um.rating DESC NULLS LAST, um.watched_at DESC`,
+       AND ${filter}
+     ORDER BY ${orderBy}`,
     [userId]
   );
 

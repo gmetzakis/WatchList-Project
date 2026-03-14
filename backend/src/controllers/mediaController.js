@@ -326,9 +326,10 @@ export async function removeFavorite(req, res) {
 
 export async function getFavorites(req, res) {
   const userId = req.user.id;
+  const { sort, type } = req.query;
 
   try {
-    const items = await getUserFavorites(userId);
+    const items = await getUserFavorites(userId, sort, type);
     res.json(items);
   } catch (err) {
     console.error("Get favorites error:", err);
