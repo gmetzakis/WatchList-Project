@@ -1,73 +1,61 @@
 import { useState } from "react";
-import api from "../api/axios";
-import { useAuthStore } from "../store/authStore";
 import { useNavigate } from "react-router-dom";
+import api from "../api/axios.js";
 
-export default function Login() {
+export default function LoginPage() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const setToken = useAuthStore((state) => state.setToken);
-  const setUser = useAuthStore((state) => state.setUser);
-
-  const navigate = useNavigate();
-
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
 
     try {
       const res = await api.post("/auth/login", { email, password });
-
-      setToken(res.data.token);
-      setUser(res.data.user);
-
-      navigate("/");
-    // eslint-disable-next-line no-unused-vars
+      localStorage.setItem("token", res.data.token);
+      navigate("/watched");
     } catch (err) {
-        if (err.response && err.response.data) {
-          const backendError = err.response.data.error || err.response.data.message;
-          setError(backendError || "Something went wrong");
-        } else {
-          setError("Network error");
-        }
-      }
-  };
+      setError("Invalid email or password");
+      console.error("Login error:", err);
+    }
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-neutral-900 p-8 rounded-lg w-80 space-y-4"
-      >
-        <h1 className="text-2xl font-bold text-center">Login</h1>
+    <div className="auth-container">
+      <h1 className="auth-title">Login</h1>
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+      {error && <p className="auth-error">{error}</p>}
 
+      <form className="auth-form" onSubmit={handleSubmit}>
         <input
           type="email"
           placeholder="Email"
-          className="w-full p-2 rounded bg-neutral-800"
+          className="auth-input"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={e => setEmail(e.target.value)}
+          required
         />
 
         <input
           type="password"
           placeholder="Password"
-          className="w-full p-2 rounded bg-neutral-800"
+          className="auth-input"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={e => setPassword(e.target.value)}
+          required
         />
 
-        <button
-          type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold"
-        >
+        <button className="auth-btn" type="submit">
           Login
         </button>
       </form>
+
+      <p className="auth-switch">
+        Don't have an account?{" "}
+        <a href="/register">Register</a>
+      </p>
     </div>
   );
 }

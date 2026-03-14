@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios.js";
 
-export default function Favorites() {
+export default function FavoritesPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
