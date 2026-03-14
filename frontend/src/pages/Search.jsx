@@ -48,7 +48,7 @@ export default function SearchPage() {
         {results.map((item) => (
           <Link
             key={item.id}
-            to={`/media/${item.id}`}
+            to={`/media/${item.type}/${item.id}`}
             className="media-card"
           >
             <img

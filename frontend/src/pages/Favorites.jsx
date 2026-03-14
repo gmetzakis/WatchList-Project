@@ -93,7 +93,7 @@ export default function FavoritesPage() {
       <div className="media-grid">
         {items.map(item => (
           <div key={item.tmdb_id} className="media-card">
-            <Link to={`/media/${item.tmdb_id}`}>
+            <Link to={`/media/${item.type}/${item.tmdb_id}`}>
               <img
                 src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
                 className="media-card-img"

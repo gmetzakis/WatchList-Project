@@ -33,22 +33,37 @@ export async function searchTMDB(query) {
   }));
 }
 
-export async function fetchTMDBDetails(tmdbId) {
-  console.log(`Given id is ${tmdbId}`)
-  const movieUrl = `${TMDB_BASE}/movie/${tmdbId}?api_key=${API_KEY}&language=en-US&append_to_response=credits,images,recommendations`;
-  const tvUrl = `${TMDB_BASE}/tv/${tmdbId}?api_key=${API_KEY}&language=en-US&append_to_response=credits,images,recommendations`;
+export async function fetchTMDBDetails(type, tmdbId) {
+  const tmdbType = type === "series" ? "tv" : "movie";
+
+  const url = `${TMDB_BASE}/${tmdbType}/${tmdbId}?api_key=${API_KEY}&language=en-US&append_to_response=credits,images,recommendations`;
 
   try {
-    const { data } = await axios.get(movieUrl);
-    return { ...normalizeMovie(data), type: "movie" };
-  } catch {}
+    const { data } = await fetchWithRetry(url, {
+      timeout: 5000, // optional but recommended
+    });
 
-  try {
-    const { data } = await axios.get(tvUrl);
-    return { ...normalizeTV(data), type: "tv" };
-  } catch {}
+    if (tmdbType === "movie") {
+      return { ...normalizeMovie(data), type: "movie" };
+    } else {
+      return { ...normalizeTV(data), type: "series" };
+    }
 
-  throw new Error("Media not found");
+  } catch (err) {
+    console.error("TMDB Details Error:", err.message);
+    throw new Error("Media not found");
+  }
+}
+
+async function fetchWithRetry(url, options = {}, retries = 3, delay = 300) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await axios.get(url, options);
+    } catch (err) {
+      if (i === retries - 1) throw err;
+      await new Promise(res => setTimeout(res, delay));
+    }
+  }
 }
 
 function normalizeMovie(data) {

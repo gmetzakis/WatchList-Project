@@ -1,10 +1,10 @@
 import db from "../db/index.js";
 import { fetchTMDBMedia } from "../services/tmdb.js";
 
-export async function findMediaByTMDBId(tmdbId) {
+export async function findMediaByTMDBId(tmdbId, type) {
   const result = await db.query(
-    `SELECT * FROM media WHERE tmdb_id = $1`,
-    [tmdbId]
+    `SELECT * FROM media WHERE tmdb_id = $1 and type = $2`,
+    [tmdbId, type]
   );
   return result.rows[0];
 }
@@ -24,7 +24,7 @@ export async function createMedia(mediaData) {
 }
 
 export async function findOrCreateMedia(tmdbId, type) {
-  const existing = await findMediaByTMDBId(tmdbId);
+  const existing = await findMediaByTMDBId(tmdbId, type);
   if (existing) return existing;
 
   const mediaData = await fetchTMDBMedia(tmdbId, type);

@@ -28,10 +28,17 @@ router.get("/search", async (req, res) => {
   }
 });
 
-router.get("/details/:tmdb_id", async (req, res) => {
+router.get("/details/:type/:tmdb_id", async (req, res) => {
   try {
-    const media = await fetchTMDBDetails(req.params.tmdb_id);
+    const { type, tmdb_id } = req.params;
+
+    // Normalize type for TMDb API
+    console.log(type, tmdb_id);
+    const tmdbType = type === "tv" ? "series" : type;
+    console.log(tmdbType, tmdb_id);
+    const media = await fetchTMDBDetails(tmdbType, tmdb_id);
     res.json(media);
+
   } catch (err) {
     console.error("TMDB Details Error:", err.message);
     res.status(404).json({ error: "Media not found" });

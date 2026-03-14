@@ -70,7 +70,7 @@ export default function WatchlistPage() {
             borderRadius: "8px",
             textAlign: "center"
           }}>
-            <Link to={`/media/${item.tmdb_id}`}>
+            <Link to={`/media/${item.type}/${item.tmdb_id}`}>
               <img
                 src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
                 className="media-card-img"

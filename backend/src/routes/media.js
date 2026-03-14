@@ -25,17 +25,20 @@ router.delete("/:tmdbId/favorite", authMiddleware, removeFavorite);
 
 router.get("/favorites", authMiddleware, getFavorites);
 
-router.get("/:tmdbId/status", authMiddleware, async (req, res) => {
+router.get("/:type/:tmdbId/status", authMiddleware, async (req, res) => {
   const user_id = req.user.id;
   const tmdb_id = (req.params.tmdbId);
+  const type = req.params.type;
 
   const result = await db.query(
     `SELECT user_media.status
-    FROM user_media
-    JOIN media ON media.id = user_media.media_id
-    WHERE user_media.user_id = $1 AND media.tmdb_id = $2
-    LIMIT 1`,
-    [user_id, tmdb_id]
+     FROM user_media
+     JOIN media ON media.id = user_media.media_id
+     WHERE user_media.user_id = $1
+       AND media.tmdb_id = $2
+       AND media.type = $3
+     LIMIT 1`,
+    [user_id, tmdb_id, type]
   );
 
   if (result.rows.length === 0) {

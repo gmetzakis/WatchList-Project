@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 
 export default function MediaDetails() {
-  const { tmdbId } = useParams();
+  const { type, tmdbId } = useParams();
   const navigate = useNavigate();
 
   const [media, setMedia] = useState(null);
@@ -13,10 +13,10 @@ export default function MediaDetails() {
   useEffect(() => {
     async function load() {
       try {
-        const details = await api.get(`/tmdb/details/${tmdbId}`);
+        const details = await api.get(`/tmdb/details/${type}/${tmdbId}`);
         setMedia(details.data);
 
-        const statusRes = await api.get(`/media/${tmdbId}/status`);
+        const statusRes = await api.get(`/media/${type}/${tmdbId}/status`);
         setStatus(statusRes.data.status);
       } catch (err) {
         console.error(err);
@@ -146,7 +146,7 @@ export default function MediaDetails() {
       <h2 className="details-section-title">Recommendations</h2>
       <div className="details-recommend-grid">
         {media.recommendations?.map(rec => (
-          <a key={rec.id} href={`/media/${rec.id}`} className="details-recommend-item">
+          <a key={rec.id} href={`/media/${media.type}/${rec.id}`} className="details-recommend-item">
             <img
               src={`https://image.tmdb.org/t/p/w500${rec.poster_path}`}
               className="details-recommend-img"

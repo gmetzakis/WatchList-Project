@@ -35,7 +35,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <App />
           </ProtectedRoute>
         }>
-        <Route path="media/:tmdbId" element={<MediaDetails />} />
+        <Route path="media/:type/:tmdbId" element={<MediaDetails />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="watched" element={<WatchedPage />} />
         <Route path="watchlist" element={<WatchlistPage />} />
