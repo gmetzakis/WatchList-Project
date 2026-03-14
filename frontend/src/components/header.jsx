@@ -2,7 +2,7 @@ export default function Header() {
   return (
     <header className="cinema-header">
       <div className="cinema-header-inner">
-        <div className="cinema-logo">CineTrack</div>
+        <div className="cinema-logo">MyScreenbook</div>
 
         <nav className="cinema-nav">
           <a href="/search">Search</a>

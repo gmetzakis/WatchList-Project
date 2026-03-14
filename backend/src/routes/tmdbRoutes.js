@@ -45,21 +45,4 @@ router.get("/details/:type/:tmdb_id", async (req, res) => {
   }
 });
 
-// router.get("/media/status/:id", async (req, res) => {
-//   const user_id = req.user.id;
-//   const tmdb_id = Number(req.params.ιδ);
-
-//   const record = await prisma.user_media.findFirst({
-//     where: { user_id, tmdb_id }
-//   });
-
-//   if (!record) {
-//     return res.json({ status: null });
-//   }
-
-//   return res.json({ status: record.status }); // "watchlist" | "watched"
-// });
-
-
-
 export default router;

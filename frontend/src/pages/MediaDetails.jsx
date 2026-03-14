@@ -8,6 +8,7 @@ export default function MediaDetails() {
 
   const [media, setMedia] = useState(null);
   const [status, setStatus] = useState(null);
+  const [rating, setRating] = useState(null); // ⭐ NEW
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,6 +19,7 @@ export default function MediaDetails() {
 
         const statusRes = await api.get(`/media/${type}/${tmdbId}/status`);
         setStatus(statusRes.data.status);
+        setRating(statusRes.data.rating || null); // ⭐ NEW
       } catch (err) {
         console.error(err);
       } finally {
@@ -28,7 +30,7 @@ export default function MediaDetails() {
     load();
   }, [tmdbId]);
 
- async function addToWatchlist() {
+  async function addToWatchlist() {
     const normalizedType = media.type === "tv" ? "series" : media.type;
     await api.post(`/media/${tmdbId}/watchlist`, { type: normalizedType });
     setStatus("watchlist");
@@ -54,6 +56,7 @@ export default function MediaDetails() {
       data: { type: normalizedType }
     });
     setStatus(null);
+    setRating(null); // ⭐ reset rating
   }
 
   async function moveToWatched() {
@@ -62,6 +65,28 @@ export default function MediaDetails() {
       type: normalizedType
     });
     setStatus("watched");
+  }
+
+  // ⭐ NEW — same logic as WatchedPage
+  async function handleRate(n) {
+    const normalizedType = media.type === "tv" ? "series" : media.type;
+
+    await api.post(`/media/${tmdbId}/rating`, {
+      type: normalizedType,
+      rating: n
+    });
+
+    setRating(n);
+  }
+
+  async function handleRemoveRating() {
+    const normalizedType = media.type === "tv" ? "series" : media.type;
+
+    await api.delete(`/media/${tmdbId}/rating`, {
+      data: { type: normalizedType }
+    });
+
+    setRating(null);
   }
 
   if (loading) return <div className="page-container">Loading...</div>;
@@ -127,6 +152,36 @@ export default function MediaDetails() {
             )}
 
           </div>
+
+          {/* ⭐ NEW — Rating UI only if watched */}
+          {status === "watched" && (
+            <div style={{ marginTop: "20px" }}>
+              <h3 style={{ marginBottom: "10px" }}>Your Rating</h3>
+
+              <div className="rating-row">
+                {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                  <button
+                    key={n}
+                    onClick={() => handleRate(n)}
+                    className={rating >= n ? "btn-rating active" : "btn-rating"}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+
+              {rating && (
+                <button
+                  onClick={handleRemoveRating}
+                  className="btn-remove-rating"
+                  style={{ marginTop: "10px" }}
+                >
+                  Remove rating
+                </button>
+              )}
+            </div>
+          )}
+
         </div>
       </div>
 
