@@ -1,28 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "../api/axios";
 import { useAuthStore } from "../store/authStore";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 export default function SearchPage() {
   const user = useAuthStore((state) => state.user);
-  const [query, setQuery] = useState("");
+
+  const [searchParams] = useSearchParams();
+  const initialQuery = searchParams.get("q") || "";   // ⭐ read from URL
+
+  const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  async function handleSearch(e) {
-    e.preventDefault();
-    if (!query.trim()) return;
+  // ⭐ Auto-run search when arriving from header
+  useEffect(() => {
+    if (initialQuery.trim() !== "") {
+      runSearch(initialQuery);
+    }
+  }, [initialQuery]);
 
+  async function runSearch(q) {
     setLoading(true);
-
     try {
-      const res = await api.get(`/tmdb/search?query=${query}`);
+      const res = await api.get(`/tmdb/search?query=${q}`);
       setResults(res.data.results);
     } catch (err) {
       console.error("Search error:", err);
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSearch(e) {
+    e.preventDefault();
+    if (!query.trim()) return;
+    runSearch(query);
   }
 
   return (
@@ -32,7 +45,7 @@ export default function SearchPage() {
         <input
           type="text"
           placeholder="Search movies or series..."
-          className="search-input"
+          className="searchpage-input"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
