@@ -176,9 +176,10 @@ export async function moveWatchlistToWatched(req, res) {
 
 export async function getWatchlist(req, res) {
   const userId = req.user.id;
+  const { type } = req.query;
 
   try {
-    const items = await getUserWatchlist(userId);
+    const items = await getUserWatchlist(userId, type);
     res.json(items);
   } catch (err) {
     console.error("Get watchlist error:", err);

@@ -1,24 +1,41 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios.js";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 export default function WatchlistPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const type = searchParams.get("type") || "all"; // ⭐ NEW
+
   useEffect(() => {
     load();
-  }, []);
+  }, [type]); // ⭐ reload when type changes
 
   async function load() {
     try {
-      const res = await api.get("/media/watchlist");
+      const res = await api.get("/media/watchlist", {
+        params: {
+          type: type !== "all" ? type : undefined // ⭐ send only movie/series
+        }
+      });
+
       setItems(res.data);
     } catch (err) {
       console.error("Watchlist load error:", err);
     } finally {
       setLoading(false);
     }
+  }
+
+  // ⭐ NEW: update URL with type filter
+  function updateType(newType) {
+    const params = new URLSearchParams();
+    if (newType !== "all") params.set("type", newType);
+    navigate(`/watchlist?${params.toString()}`);
   }
 
   async function handleRemove(item) {
@@ -52,6 +69,27 @@ export default function WatchlistPage() {
   return (
     <div style={{ padding: "20px" }}>
       <h1>Watchlist</h1>
+
+      {/* ⭐ NEW TYPE FILTER */}
+      <div style={{ marginBottom: "20px" }}>
+        <label style={{ marginRight: "10px" }}>Type:</label>
+        <select
+          value={type}
+          onChange={(e) => updateType(e.target.value)}
+          style={{
+            padding: "6px 10px",
+            background: "#222",
+            color: "white",
+            borderRadius: "6px",
+            border: "1px solid #444",
+            cursor: "pointer"
+          }}
+        >
+          <option value="all">All</option>
+          <option value="movie">Movies</option>
+          <option value="series">Shows</option>
+        </select>
+      </div>
 
       {items.length === 0 && (
         <p>Your watchlist is empty.</p>

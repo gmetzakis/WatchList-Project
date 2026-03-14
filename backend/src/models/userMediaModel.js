@@ -49,7 +49,18 @@ export async function updateUserMediaStatus(userId, mediaId, status) {
 }
 
 
-export async function getUserWatchlist(userId) {
+export async function getUserWatchlist(userId, type) {
+
+  let filter = "um.status = 'watchlist'";
+
+  if (type === "movie") {
+    filter += " AND m.type = 'movie'";
+  }
+
+  if (type === "series") {
+    filter += " AND m.type = 'series'";
+  }
+
   const result = await db.query(
     `SELECT 
         m.id,
@@ -62,7 +73,7 @@ export async function getUserWatchlist(userId) {
      FROM user_media um
      JOIN media m ON m.id = um.media_id
      WHERE um.user_id = $1
-       AND um.status = 'watchlist'
+       AND ${filter}
      ORDER BY um.created_at DESC`,
     [userId]
   );
