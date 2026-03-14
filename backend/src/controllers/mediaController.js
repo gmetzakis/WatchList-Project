@@ -189,10 +189,10 @@ export async function getWatchlist(req, res) {
 
 export async function getWatchedHistory(req, res) {
   const userId = req.user.id;
-  const { sort, favorites } = req.query;
+  const { sort, favorites, type } = req.query;
 
   try {
-    const items = await getUserWatched(userId, sort, favorites);
+    const items = await getUserWatched(userId, sort, favorites, type);
     res.json(items);
   } catch (err) {
     console.error("Get watched history error:", err);

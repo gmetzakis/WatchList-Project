@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/axios.js";
-import { Link } from "react-router-dom";
 
 export default function WatchedPage() {
   const [items, setItems] = useState([]);
@@ -12,17 +11,19 @@ export default function WatchedPage() {
 
   const sort = searchParams.get("sort") || "";
   const favorites = searchParams.get("favorites") || "";
+  const type = searchParams.get("type") || "all"; // ⭐ NEW
 
   useEffect(() => {
     load();
-  }, [sort, favorites]);
+  }, [sort, favorites, type]); // ⭐ include type
 
   async function load() {
     try {
       const res = await api.get("/media/watched", {
         params: {
           sort: sort || undefined,
-          favorites: favorites || undefined
+          favorites: favorites || undefined,
+          type: type !== "all" ? type : undefined // ⭐ send only movie/series
         }
       });
 
@@ -34,22 +35,31 @@ export default function WatchedPage() {
     }
   }
 
-  function updateQuery(newSort, newFavorites) {
+  // ⭐ UPDATED: now accepts type
+  function updateQuery(newSort, newFavorites, newType) {
     const params = new URLSearchParams();
 
     if (newSort) params.set("sort", newSort);
     if (newFavorites) params.set("favorites", newFavorites);
+    if (newType && newType !== "all") params.set("type", newType);
 
     navigate(`/watched?${params.toString()}`);
   }
 
+  // ⭐ UPDATED: preserve type
   function handleSortChange(e) {
-    updateQuery(e.target.value, favorites);
+    updateQuery(e.target.value, favorites, type);
   }
 
+  // ⭐ UPDATED: preserve type
   function handleFavoritesToggle() {
     const newValue = favorites === "true" ? "" : "true";
-    updateQuery(sort, newValue);
+    updateQuery(sort, newValue, type);
+  }
+
+  // ⭐ NEW: type filter handler
+  function handleTypeChange(e) {
+    updateQuery(sort, favorites, e.target.value);
   }
 
   async function handleRemove(item) {
@@ -138,6 +148,8 @@ export default function WatchedPage() {
 
       {/* FILTER BAR */}
       <div className="filter-bar">
+
+        {/* SORT */}
         <div>
           <label className="filter-label">Sort:</label>
           <select
@@ -151,12 +163,28 @@ export default function WatchedPage() {
           </select>
         </div>
 
+        {/* FAVORITES */}
         <button
           onClick={handleFavoritesToggle}
           className={favorites === "true" ? "btn-fav-toggle active" : "btn-fav-toggle"}
         >
           {favorites === "true" ? "Showing Favorites" : "Show Favorites Only"}
         </button>
+
+        {/* ⭐ NEW TYPE FILTER */}
+        <div>
+          <label className="filter-label">Type:</label>
+          <select
+            value={type}
+            onChange={handleTypeChange}
+            className="filter-select"
+          >
+            <option value="all">All</option>
+            <option value="movie">Movies</option>
+            <option value="series">Shows</option>
+          </select>
+        </div>
+
       </div>
 
       {items.length === 0 && (
@@ -227,4 +255,3 @@ export default function WatchedPage() {
     </div>
   );
 }
-

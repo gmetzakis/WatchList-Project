@@ -71,7 +71,7 @@ export async function getUserWatchlist(userId) {
 }
 
 
-export async function getUserWatched(userId, sort, favorites) {
+export async function getUserWatched(userId, sort, favorites, type) {
   let orderBy = "um.watched_at DESC";
 
   if (sort === "rating_desc") {
@@ -87,6 +87,14 @@ export async function getUserWatched(userId, sort, favorites) {
 
   if (favorites === "true") {
     filter += " AND um.is_favorite = true";
+  }
+
+  if (type === "movie") {
+    filter += " AND m.type = 'movie'";
+  }
+
+  if (type === "series") {
+    filter += " AND m.type = 'series'";
   }
 
   const result = await db.query(
