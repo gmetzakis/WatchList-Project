@@ -1,21 +1,21 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 
 export default function MediaDetails() {
-  const { tmdbId } = useParams(); // TMDb ID
+  const { tmdbId } = useParams();
+  const navigate = useNavigate();
+
   const [media, setMedia] = useState(null);
-  const [status, setStatus] = useState(null); // "watchlist" | "watched" | null
+  const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        // Load TMDb details
         const details = await api.get(`/tmdb/details/${tmdbId}`);
         setMedia(details.data);
 
-        // Load user status
         const statusRes = await api.get(`/media/${tmdbId}/status`);
         setStatus(statusRes.data.status);
       } catch (err) {
@@ -28,86 +28,81 @@ export default function MediaDetails() {
     load();
   }, [tmdbId]);
 
-  // --- ACTIONS ---
-
-  async function addToWatchlist() {
-    console.log(`TO GAMWID EINAI ${media.id}`)
-    await api.post(`/media/${media.id}/watchlist`, {
-      type: media.type
-    });
+ async function addToWatchlist() {
+    const normalizedType = media.type === "tv" ? "series" : media.type;
+    await api.post(`/media/${tmdbId}/watchlist`, { type: normalizedType });
     setStatus("watchlist");
   }
 
   async function removeFromWatchlist() {
-    await api.delete(`/media/${media.id}/watchlist`, {
-      data: { type: media.type }
+    const normalizedType = media.type === "tv" ? "series" : media.type;
+    await api.delete(`/media/${tmdbId}/watchlist`, {
+      data: { type: normalizedType }
     });
     setStatus(null);
   }
 
   async function markAsWatched() {
-    await api.post(`/media/${media.id}/watched`, {
-      type: media.type
-    });
+    const normalizedType = media.type === "tv" ? "series" : media.type;
+    await api.post(`/media/${tmdbId}/watched`, { type: normalizedType });
     setStatus("watched");
   }
 
   async function removeFromWatched() {
-    await api.delete(`/media/${media.id}/watched`, {
-      data: { type: media.type }
+    const normalizedType = media.type === "tv" ? "series" : media.type;
+    await api.delete(`/media/${tmdbId}/watched`, {
+      data: { type: normalizedType }
     });
     setStatus(null);
   }
 
   async function moveToWatched() {
-    await api.post(`/media/${media.id}/watchlist-to-watched`, {
-      type: media.type
+    const normalizedType = media.type === "tv" ? "series" : media.type;
+    await api.post(`/media/${tmdbId}/watchlist-to-watched`, {
+      type: normalizedType
     });
     setStatus("watched");
   }
 
-  if (loading) return <p className="text-white p-6">Loading...</p>;
-  if (!media) return <p className="text-white p-6">Not found</p>;
+  if (loading) return <div className="page-container">Loading...</div>;
+  if (!media) return <div className="page-container">Not found</div>;
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-      {/* HEADER SECTION */}
-      <div className="flex gap-6">
+    <div className="details-container">
+
+      <button className="details-back" onClick={() => navigate(-1)}>
+        ← Back
+      </button>
+
+      <div className="details-layout">
+
         <img
           src={`https://image.tmdb.org/t/p/w500${media.poster_path}`}
           alt={media.title}
-          className="w-64 rounded"
+          className="details-poster"
         />
 
-        <div>
-          <h1 className="text-3xl font-bold">{media.title}</h1>
-          <p className="text-neutral-400">{media.release_year}</p>
-          <p className="mt-4 max-w-xl">{media.overview}</p>
+        <div className="details-info">
+          <h1 className="details-title">{media.title}</h1>
+          <p className="details-year">{media.release_year}</p>
 
-          <p className="mt-4 text-sm text-neutral-400">
+          <p className="details-overview">{media.overview}</p>
+
+          <p className="details-meta">
             {media.genres?.map(g => g.name).join(", ")}
           </p>
 
-          <p className="mt-2 text-sm text-neutral-400">
-            Runtime: {media.runtime} min
-          </p>
+          <p className="details-meta">Runtime: {media.runtime} min</p>
 
-          {/* --- BUTTONS --- */}
-          <div className="mt-6 flex gap-4">
+          <div className="details-actions">
 
             {status === null && (
               <>
-                <button
-                  onClick={addToWatchlist}
-                  className="px-4 py-2 bg-blue-600 rounded"
-                >
+                <button className="btn btn-unfavorite" onClick={addToWatchlist}>
                   Add to Watchlist
                 </button>
 
-                <button
-                  onClick={markAsWatched}
-                  className="px-4 py-2 bg-green-600 rounded"
-                >
+                <button className="btn btn-remove" onClick={markAsWatched}>
                   Mark as Watched
                 </button>
               </>
@@ -115,64 +110,52 @@ export default function MediaDetails() {
 
             {status === "watchlist" && (
               <>
-                <button
-                  onClick={moveToWatched}
-                  className="px-4 py-2 bg-green-600 rounded"
-                >
+                <button className="btn btn-remove" onClick={moveToWatched}>
                   Move to Watched
                 </button>
 
-                <button
-                  onClick={removeFromWatchlist}
-                  className="px-4 py-2 bg-red-600 rounded"
-                >
+                <button className="btn btn-unfavorite" onClick={removeFromWatchlist}>
                   Remove from Watchlist
                 </button>
               </>
             )}
 
             {status === "watched" && (
-              <>
-                <button
-                  onClick={removeFromWatched}
-                  className="px-4 py-2 bg-red-600 rounded"
-                >
-                  Remove from Watched
-                </button>
-              </>
+              <button className="btn btn-remove" onClick={removeFromWatched}>
+                Remove from Watched
+              </button>
             )}
 
           </div>
         </div>
       </div>
 
-      {/* CAST */}
-      <h2 className="text-2xl mt-10 mb-4">Cast</h2>
-      <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-8 gap-4">
+      <h2 className="details-section-title">Cast</h2>
+      <div className="details-cast-grid">
         {media.credits?.cast?.slice(0, 12).map(actor => (
-          <div key={actor.id} className="text-center">
+          <div key={actor.id} className="details-cast-item">
             <img
               src={`https://image.tmdb.org/t/p/w300${actor.profile_path}`}
-              className="rounded mb-2"
+              className="details-cast-img"
             />
-            <p className="text-sm">{actor.name}</p>
+            <p className="details-cast-name">{actor.name}</p>
           </div>
         ))}
       </div>
 
-      {/* RECOMMENDATIONS */}
-      <h2 className="text-2xl mt-10 mb-4">Recommendations</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+      <h2 className="details-section-title">Recommendations</h2>
+      <div className="details-recommend-grid">
         {media.recommendations?.map(rec => (
-          <a key={rec.id} href={`/media/${rec.id}`} className="block">
+          <a key={rec.id} href={`/media/${rec.id}`} className="details-recommend-item">
             <img
               src={`https://image.tmdb.org/t/p/w500${rec.poster_path}`}
-              className="rounded"
+              className="details-recommend-img"
             />
-            <p className="mt-2 text-sm text-center">{rec.title || rec.name}</p>
+            <p className="details-recommend-title">{rec.title || rec.name}</p>
           </a>
         ))}
       </div>
+
     </div>
   );
 }

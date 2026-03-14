@@ -8,6 +8,8 @@ import WatchlistPage from "./pages/Watchlist.jsx";
 import FavoritesPage from "./pages/Favorites.jsx";
 import LoginPage from "./pages/Login.jsx";
 import RegisterPage from "./pages/Register.jsx";
+import SearchPage from "./pages/Search.jsx";
+import MediaDetails from "./pages/MediaDetails.jsx";
 
 import "./index.css";
 import "./styles/cinema.css";
@@ -33,6 +35,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <App />
           </ProtectedRoute>
         }>
+        <Route path="media/:tmdbId" element={<MediaDetails />} />
+        <Route path="search" element={<SearchPage />} />
         <Route path="watched" element={<WatchedPage />} />
         <Route path="watchlist" element={<WatchlistPage />} />
         <Route path="favorites" element={<FavoritesPage />} />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios.js";
+import { Link } from "react-router-dom";
 
 export default function FavoritesPage() {
   const [items, setItems] = useState([]);
@@ -92,11 +93,12 @@ export default function FavoritesPage() {
       <div className="media-grid">
         {items.map(item => (
           <div key={item.tmdb_id} className="media-card">
-            <img
-              src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
-              alt={item.title}
-              className="media-card-img"
-            />
+            <Link to={`/media/${item.tmdb_id}`}>
+              <img
+                src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+                className="media-card-img"
+              />
+            </Link>
 
             <h3 className="media-title">{item.title}</h3>
             <p className="media-year">{item.release_year}</p>

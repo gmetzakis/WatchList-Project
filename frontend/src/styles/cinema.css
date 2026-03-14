@@ -363,3 +363,138 @@ body {
 .auth-switch a:hover {
   text-shadow: 0 0 8px rgba(255,215,0,0.3);
 }
+
+/* ===========================
+   SEARCH BAR
+   =========================== */
+
+.search-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #1c1c1c;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--favorite);
+}
+
+.search-btn {
+  padding: 12px 18px;
+  border-radius: 6px;
+  border: none;
+  background: var(--favorite);
+  color: black;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.search-btn:hover {
+  background: var(--favorite-dark);
+}
+
+.details-container {
+  padding: 24px;
+}
+
+.details-back {
+  background: transparent;
+  border: none;
+  color: var(--favorite);
+  cursor: pointer;
+  margin-bottom: 20px;
+  font-size: 1rem;
+}
+
+.details-layout {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 40px;
+}
+
+.details-poster {
+  width: 320px;
+  border-radius: 12px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.8);
+}
+
+.details-info {
+  flex: 1;
+}
+
+.details-title {
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+}
+
+.details-year {
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.details-overview {
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.details-meta {
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.details-actions {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.details-section-title {
+  font-size: 1.6rem;
+  margin: 40px 0 20px;
+}
+
+.details-cast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.details-cast-img {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.details-cast-name {
+  text-align: center;
+  margin-top: 6px;
+  font-size: 0.9rem;
+}
+
+.details-recommend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+}
+
+.details-recommend-img {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.details-recommend-title {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 0.9rem;
+}

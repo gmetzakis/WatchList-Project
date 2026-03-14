@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios.js";
+import { Link } from "react-router-dom";
 
 export default function WatchlistPage() {
   const [items, setItems] = useState([]);
@@ -69,11 +70,12 @@ export default function WatchlistPage() {
             borderRadius: "8px",
             textAlign: "center"
           }}>
-            <img
-              src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
-              alt={item.title}
-              style={{ width: "100%", borderRadius: "6px" }}
-            />
+            <Link to={`/media/${item.tmdb_id}`}>
+              <img
+                src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+                className="media-card-img"
+              />
+            </Link>
 
             <h3 style={{ color: "white", marginTop: "10px" }}>{item.title}</h3>
             <p style={{ color: "#aaa" }}>{item.release_year}</p>
