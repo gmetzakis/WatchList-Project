@@ -92,63 +92,6 @@ body {
 }
 
 /* ===========================
-   GRID LAYOUT
-   =========================== */
-
-.media-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 28px;
-  margin-top: 24px;
-}
-
-/* ===========================
-   MEDIA CARD (CINEMATIC)
-   =========================== */
-
-.media-card {
-  background: var(--card-bg);
-  padding: 14px;
-  border-radius: 12px;
-  text-align: center;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-  box-shadow: 0 0 20px var(--shadow-strong);
-}
-
-.media-card:hover {
-  transform: scale(1.05);
-  background: var(--card-bg-hover);
-  box-shadow: 0 0 25px var(--shadow-soft), 0 0 40px var(--shadow-strong);
-}
-
-/* Poster */
-.media-card-img {
-  width: 100%;
-  border-radius: 10px;
-  margin-bottom: 12px;
-  box-shadow: 0 0 18px rgba(0, 0, 0, 0.8);
-  transition: 0.25s ease;
-}
-
-.media-card:hover .media-card-img {
-  box-shadow: 0 0 25px rgba(255, 255, 255, 0.12), 0 0 35px rgba(0, 0, 0, 0.9);
-}
-
-/* Title + Year */
-.media-title {
-  color: var(--text);
-  margin-top: 10px;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.media-year {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  margin-bottom: 10px;
-}
-
-/* ===========================
    RATING
    =========================== */
 
@@ -377,16 +320,6 @@ body {
   margin-bottom: 24px;
 }
 
-.search-input {
-  flex: 1;
-  padding: 12px;
-  border-radius: 6px;
-  border: 1px solid #333;
-  background: #1c1c1c;
-  color: var(--text);
-  font-size: 1rem;
-}
-
 .search-input:focus {
   outline: none;
   border-color: var(--favorite);
@@ -547,151 +480,10 @@ body {
 
 .control-bar {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.favorite-icon {
-  font-size: 22px;
-  cursor: pointer;
-  color: #666;
-  transition: color 0.2s ease, transform 0.15s ease;
-}
-
-.favorite-icon.active {
-  color: #e63946;
-}
-
-.favorite-icon:hover {
-  transform: scale(1.15);
-}
-
-.watched-icon {
-  font-size: 20px;
-  cursor: pointer;
-  color: #4caf50;
-  transition: transform 0.15s ease;
-}
-
-.watched-icon:hover {
-  transform: scale(1.15);
-}
-
-.rating-stars {
-  display: flex;
-  gap: 3px;
-}
-
-.star {
-  font-size: 18px;
-  cursor: pointer;
-  color: #555;
-  transition: color 0.2s ease, transform 0.15s ease;
-}
-
-.star.active {
-  color: gold;
-}
-
-.star:hover {
-  transform: scale(1.2);
-}
-
-.remove-rating {
-  font-size: 16px;
-  cursor: pointer;
-  color: #b33;
-  margin-left: 6px;
-  transition: transform 0.15s ease;
-}
-
-.remove-rating:hover {
-  transform: scale(1.2);
-}
-
-.control-bar {
-  display: flex;
   flex-direction: column;
   align-items: center;
   margin-top: 8px;
   gap: 6px;
-}
-
-.control-icons {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.rating-stars {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: 100%;
-  gap: 3px;
-}
-
-.star {
-  font-size: 18px;
-  cursor: pointer;
-  color: #555;
-  transition: color 0.2s ease, transform 0.15s ease;
-}
-
-.star.active {
-  color: gold;
-}
-
-.star:hover {
-  transform: scale(1.2);
-}
-
-.watched-icon {
-  font-size: 22px;
-  cursor: pointer;
-  color: #4caf50;
-  transition: transform 0.15s ease;
-}
-
-.watched-icon:hover {
-  transform: scale(1.15);
-}
-
-.media-image-wrapper {
-  position: relative;
-}
-
-.hover-controls {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-
-  padding: 8px 0;
-
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(2px);
-
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s ease;
-}
-
-.media-card:hover .hover-controls {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.control-icons {
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 
 .favorite-icon {
@@ -711,17 +503,6 @@ body {
   color: #e63946;
 }
 
-.watched-icon {
-  font-size: 42px;
-  cursor: pointer;
-  color: #4caf50;
-  transition: transform 0.15s ease;
-}
-
-.watched-icon:hover {
-  transform: scale(1.15);
-}
-
 .remove-rating {
   font-size: 18px;
   cursor: pointer;
@@ -732,13 +513,6 @@ body {
 .remove-rating:hover {
   transform: scale(1.2);
   color: #fff ;
-}
-
-.rating-stars {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 3px;
 }
 
 .star {
@@ -762,26 +536,6 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 18px; /* tighter, more cinematic */
   padding: 10px 0;
-}
-
-.media-card {
-  background: #0d0d0d;
-  border-radius: 8px;
-  overflow: hidden;
-  position: relative;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.media-card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-}
-
-.media-card-img {
-  width: 100%;
-  height: 270px; /* bigger, more cinematic */
-  object-fit: cover;
-  border-bottom: 1px solid #222;
 }
 
 .media-title {
@@ -820,3 +574,87 @@ body {
   color: #ddd;
   margin-left: 4px;
 }
+
+.media-image-wrapper {
+  position: relative;
+  overflow: visible; /* allows the zoom to escape the card */
+}
+
+.media-card {
+  transition: transform 0.3s ease;
+  z-index: 1;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.media-card:hover {
+  z-index: 50; /* brings it above all other cards */
+  transform: translateY(-6px);
+}
+
+.hover-title {
+  text-align: center;
+  margin-bottom: 10px;
+
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.media-card:hover .hover-title {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hover-title-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.hover-year-text {
+  font-size: 13px;
+  color: #ccc;
+}
+
+.media-card-img {
+  transition: transform 0.35s ease, filter 0.35s ease;
+  transform-origin: center;
+}
+
+.media-card:hover .media-card-img {
+  transform: scale(1.42);
+  filter: brightness(0.45);
+}
+
+.hover-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.media-card:hover .hover-controls {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.control-icons {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 14px;
+}
+
+.rating-stars {
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+}
+

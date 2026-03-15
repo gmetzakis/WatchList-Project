@@ -220,6 +220,11 @@ export default function WatchedPage() {
                     <EyeOff size={32} /> 
                   </span>
 
+                  <div className="hover-title">
+                    <span className="hover-title-text">{item.title}</span>
+                    <span className="hover-year-text">{item.release_year}</span>
+                  </div>
+
                 </div>
 
                 {/* ⭐ RATING */}
@@ -252,10 +257,6 @@ export default function WatchedPage() {
                 </div>
               </div>
             </div>
-
-            <h3 className="media-title">{item.title}</h3>
-            <p className="media-year">{item.release_year}</p>
-
           </div>
         ))}
       </div>
