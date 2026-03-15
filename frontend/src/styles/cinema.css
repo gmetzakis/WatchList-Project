@@ -486,147 +486,60 @@ body {
   gap: 6px;
 }
 
-.favorite-icon {
-  font-size: 42px;
-  cursor: pointer;
-  color: #b1adad;
-  transition: transform 0.15s ease, color 0.2s ease;
-}
-
-.favorite-icon.active svg {
-  stroke: #e63946;
-  fill: #e63946; /* THIS is what makes it filled */
-}
-
-.favorite-icon:hover {
-  transform: scale(1.15);
-  color: #e63946;
-}
-
-.remove-rating {
-  font-size: 18px;
-  cursor: pointer;
-  color: #b1adad; 
-  transition: transform 0.15s ease;
-}
-
-.remove-rating:hover {
-  transform: scale(1.2);
-  color: #fff ;
-}
-
-.star {
-  font-size: 15px;
-  cursor: pointer;
-  color: #555; /* neutral white */
-  transition: transform 0.15s ease;
-}
-
-.star.active {
-  color: gold;
-}
-
-.star:hover {
-  transform: scale(1.2);
-  color: #fff;
-}
+/* ===========================
+   POSTER GRID
+   =========================== */
 
 .media-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 18px; /* tighter, more cinematic */
+  gap: 18px;
   padding: 10px 0;
 }
 
-.media-title {
-  font-size: 15px;
-  font-weight: 600;
-  margin: 8px 8px 0 8px;
-  text-align: center;
-
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* YEAR */
-.media-year {
-  font-size: 13px;
-  color: #aaa;
-  text-align: center;
-  margin-bottom: 6px;
-}
-
-.watched-icon {
-  font-size: 42px;
-  cursor: pointer;
-  color: #b1adad; /* neutral white */
-  transition: transform 0.15s ease;
-}
-
-.watched-icon:hover {
-  transform: scale(1.2);
-  color: #fff;
-}
-
-.rating-label {
-  font-size: 15px;
-  color: #ddd;
-  margin-left: 4px;
-}
-
-.media-image-wrapper {
-  position: relative;
-  overflow: visible; /* allows the zoom to escape the card */
-}
+/* ===========================
+   MEDIA CARD
+   =========================== */
 
 .media-card {
-  transition: transform 0.3s ease;
-  z-index: 1;
+  position: relative;
   padding: 0;
   background: none;
   box-shadow: none;
+  transition: transform 0.3s ease;
+  z-index: 1;
 }
 
 .media-card:hover {
-  z-index: 50; /* brings it above all other cards */
+  z-index: 50;
   transform: translateY(-6px);
 }
 
-.hover-title {
-  text-align: center;
-  margin-bottom: 10px;
+/* ===========================
+   POSTER IMAGE
+   =========================== */
 
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 0.25s ease, transform 0.25s ease;
-}
-
-.media-card:hover .hover-title {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.hover-title-text {
-  font-size: 15px;
-  font-weight: 600;
-  color: #fff;
-}
-
-.hover-year-text {
-  font-size: 13px;
-  color: #ccc;
+.media-image-wrapper {
+  position: relative;
+  overflow: visible;
 }
 
 .media-card-img {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
   transition: transform 0.35s ease, filter 0.35s ease;
   transform-origin: center;
 }
 
 .media-card:hover .media-card-img {
   transform: scale(1.42);
-  filter: brightness(0.45);
+  filter: brightness(0.38) contrast(1.1) blur(3px);
 }
+
+/* ===========================
+   HOVER OVERLAY
+   =========================== */
 
 .hover-controls {
   position: absolute;
@@ -641,20 +554,146 @@ body {
   pointer-events: auto;
 }
 
-.control-icons {
+/* ===========================
+   TITLE + YEAR — TOP LEFT
+   =========================== */
+
+.hover-title {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  display: flex;
-  gap: 14px;
+  text-align: left;
+  width: 100%; 
 }
 
+.hover-title-text {
+  display: block;
+  font-size: 20px;        /* bigger title */
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;      /* more breathing */
+  margin-bottom: 4px;     /* space between title & year */
+}
+
+.hover-year-text {
+  display: block;
+  font-size: 15px;        /* smaller year */
+  color: #ccc;
+  line-height: 1.2;
+}
+
+
+/* ===========================
+   ICONS — TOP RIGHT
+   =========================== */
+
+.control-icons {
+  position: absolute;
+  bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;   /* ← REAL spacing */
+}
+
+
+.favorite-icon,
+.watched-icon {
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.2s ease;
+  color: #b1adad;
+}
+
+.favorite-icon:hover,
+.watched-icon:hover {
+  transform: scale(1.15);
+  color: #fff;
+}
+
+.favorite-icon.active svg {
+  stroke: #e63946;
+  fill: #e63946;
+}
+
+/* ===========================
+   RATING — BOTTOM LEFT
+   =========================== */
 .rating-stars {
   position: absolute;
-  bottom: 50px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
+  bottom: 0px;
+  display: block;
+  align-items: center;
   gap: 6px;
 }
 
+
+.star {
+  font-size: 18px;
+  cursor: pointer;
+  color: #555;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.star.active {
+  color: gold;
+}
+
+.star:hover {
+  transform: scale(1.2);
+  color: #fff;
+}
+
+.rating-label {
+  font-size: 15px;
+  color: #ddd;
+  margin-left: 4px;
+}
+
+.remove-rating {
+  margin-left: 10px;
+  position: relative;
+  top: 1px;
+}
+
+.remove-rating:hover {
+  transform: scale(1.2);
+  color: #fff;
+}
+
+
+.rating-inline {
+  margin-top: 6px;
+  align-items: center;
+  gap: 6px;
+}
+
+.rating-inline .star {
+  font-size: 16px;
+  cursor: pointer;
+  color: #666;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.rating-inline .star.active {
+  color: gold;
+}
+
+.rating-inline .star:hover {
+  transform: scale(1.2);
+  color: #fff;
+}
+
+.rating-inline .rating-label {
+  font-size: 15px;
+  color: #ddd;
+}
+
+.rating-inline .remove-rating {
+  margin-left: 8px;
+  cursor: pointer;
+  color: #bbb;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.rating-inline .remove-rating:hover {
+  transform: scale(1.2);
+  color: #fff;
+}

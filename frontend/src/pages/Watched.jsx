@@ -197,66 +197,53 @@ export default function WatchedPage() {
                 />
               </Link>
 
-              {/* HOVER CONTROL BAR */}
+              {/* HOVER OVERLAY */}
               <div className="hover-controls">
 
+                {/* TITLE + YEAR — TOP LEFT */}
+                <div className="hover-title">
+                  <span className="hover-title-text">{item.title}</span>
+                  <span className="hover-year-text">{item.release_year}</span>
+                  <div className="rating-inline">
+                    {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                      <span
+                        key={n}
+                        className={item.rating >= n ? "star active" : "star"}
+                        onClick={() => handleRate(item, n)}
+                      >
+                        ★
+                      </span>
+                    ))}
+
+                    {item.rating && (
+                      <span className="rating-label">{item.rating}/10</span>
+                    )}
+                  </div>
+
+                </div>
+
+                {/* ICONS — bottom left */}
                 <div className="control-icons">
-                  {/* ❤️ FAVORITE */}
                   <span
                     className={`favorite-icon ${item.is_favorite ? "active" : ""}`}
                     onClick={() =>
                       item.is_favorite ? handleUnfavorite(item) : handleFavorite(item)
                     }
                   >
-                    {item.is_favorite ? <Heart size={32} /> : <Heart size={32} />}
+                    <Heart size={32} />
                   </span>
 
-                  {/* 👁 WATCHED */}
                   <span
                     className="watched-icon active"
                     onClick={() => handleRemove(item)}
                     title="Remove from watched"
                   >
-                    <EyeOff size={32} /> 
+                    <EyeOff size={32} />
                   </span>
-
-                  <div className="hover-title">
-                    <span className="hover-title-text">{item.title}</span>
-                    <span className="hover-year-text">{item.release_year}</span>
-                  </div>
-
-                </div>
-
-                {/* ⭐ RATING */}
-                <div className="rating-stars">
-                  {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                    <span
-                      key={n}
-                      className={item.rating >= n ? "star active" : "star"}
-                      onClick={() => handleRate(item, n)}
-                    >
-                      ★
-                    </span>
-                  ))}
-
-                  {/* Rating label */}
-                  {item.rating && (
-                    <span className="rating-label">{item.rating}/10</span>
-                  )}
-
-                  {/* Remove rating button */}
-                  {item.rating && (
-                    <span
-                      className="remove-rating"
-                      onClick={() => handleRemoveRating(item)}
-                      title="Remove rating"
-                    >
-                      <Eraser size={19} /> 
-                    </span>
-                  )}
                 </div>
               </div>
             </div>
+
           </div>
         ))}
       </div>

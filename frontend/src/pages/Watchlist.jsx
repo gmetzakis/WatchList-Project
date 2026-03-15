@@ -3,7 +3,6 @@ import api from "../api/axios.js";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Trash, Eye } from "lucide-react";
 
-
 export default function WatchlistPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -103,9 +102,16 @@ export default function WatchlistPage() {
                 />
               </Link>
 
-              {/* HOVER CONTROL BAR */}
+              {/* HOVER OVERLAY */}
               <div className="hover-controls">
 
+                {/* TITLE + YEAR — TOP LEFT */}
+                <div className="hover-title">
+                  <span className="hover-title-text">{item.title}</span>
+                  <span className="hover-year-text">{item.release_year}</span>
+                </div>
+
+                {/* ICONS — BOTTOM RIGHT */}
                 <div className="control-icons">
                   
                   {/* MOVE TO WATCHED */}
@@ -117,22 +123,19 @@ export default function WatchlistPage() {
                     <Eye size={32} />
                   </span>
 
-                  {/* ⨯ REMOVE FROM WATCHLIST */}
+                  {/* REMOVE FROM WATCHLIST */}
                   <span
-                    className="remove-rating"
+                    className="watched-icon"
                     onClick={() => handleRemove(item)}
                     title="Remove from watchlist"
                   >
-                    <Trash size={25} />
+                    <Trash size={32} />
                   </span>
 
                 </div>
 
               </div>
             </div>
-
-            <h3 className="media-title">{item.title}</h3>
-            <p className="media-year">{item.release_year}</p>
 
           </div>
         ))}

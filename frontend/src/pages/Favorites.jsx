@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios.js";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Heart, Eraser, EyeOff, Trash2 } from "lucide-react";
+import { Heart, Eraser, EyeOff } from "lucide-react";
 
 export default function FavoritesPage() {
   const [items, setItems] = useState([]);
@@ -163,12 +163,37 @@ export default function FavoritesPage() {
                 />
               </Link>
 
-              {/* HOVER CONTROLS */}
+              {/* HOVER OVERLAY */}
               <div className="hover-controls">
 
+                {/* TITLE + YEAR — TOP LEFT */}
+                <div className="hover-title">
+                  <span className="hover-title-text">{item.title}</span>
+                  <span className="hover-year-text">{item.release_year}</span>
+
+                  {/* INLINE RATING */}
+                  <div className="rating-inline">
+                    {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                      <span
+                        key={n}
+                        className={item.rating >= n ? "star active" : "star"}
+                        onClick={() => handleRate(item, n)}
+                      >
+                        ★
+                      </span>
+                    ))}
+
+                    {item.rating && (
+                      <span className="rating-label">{item.rating}/10</span>
+                    )}
+
+                  </div>
+                </div>
+
+                {/* ICONS — BOTTOM RIGHT */}
                 <div className="control-icons">
 
-                  {/* ❤️ FAVORITE (remove only) */}
+                  {/* REMOVE FROM FAVORITES */}
                   <span
                     className="favorite-icon active"
                     onClick={() => handleRemoveFavorite(item)}
@@ -177,7 +202,7 @@ export default function FavoritesPage() {
                     <Heart size={32} />
                   </span>
 
-                  {/* 👁 REMOVE FROM WATCHED */}
+                  {/* REMOVE FROM WATCHED */}
                   <span
                     className="watched-icon"
                     onClick={() => handleRemoveWatched(item)}
@@ -188,38 +213,8 @@ export default function FavoritesPage() {
 
                 </div>
 
-                {/* ⭐ RATING */}
-                <div className="rating-stars">
-                  {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                    <span
-                      key={n}
-                      className={item.rating >= n ? "star active" : "star"}
-                      onClick={() => handleRate(item, n)}
-                    >
-                      ★
-                    </span>
-                  ))}
-
-                  {item.rating && (
-                    <span className="rating-label">{item.rating}/10</span>
-                  )}
-
-                  {item.rating && (
-                    <span
-                      className="remove-rating"
-                      onClick={() => handleRemoveRating(item)}
-                      title="Remove rating"
-                    >
-                      <Eraser size={19} />
-                    </span>
-                  )}
-                </div>
-
               </div>
             </div>
-
-            <h3 className="media-title">{item.title}</h3>
-            <p className="media-year">{item.release_year}</p>
 
           </div>
         ))}
