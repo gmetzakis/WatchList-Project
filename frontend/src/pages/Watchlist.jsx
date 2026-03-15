@@ -94,13 +94,14 @@ export default function WatchlistPage() {
         {items.map(item => (
           <div key={item.tmdb_id} className="media-card">
 
-            <div className="media-image-wrapper">
-              <Link to={`/media/${item.type}/${item.tmdb_id}`}>
-                <img
-                  src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
-                  className="media-card-img"
-                />
-              </Link>
+            <Link
+              to={`/media/${item.type}/${item.tmdb_id}`}
+              className="media-image-wrapper"
+            >
+              <img
+                src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+                className="media-card-img"
+              />
 
               {/* HOVER OVERLAY */}
               <div className="hover-controls">
@@ -117,7 +118,11 @@ export default function WatchlistPage() {
                   {/* MOVE TO WATCHED */}
                   <span
                     className="watched-icon"
-                    onClick={() => handleMoveToWatched(item)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleMoveToWatched(item);
+                    }}
                     title="Move to watched"
                   >
                     <Eye size={32} />
@@ -126,7 +131,11 @@ export default function WatchlistPage() {
                   {/* REMOVE FROM WATCHLIST */}
                   <span
                     className="watched-icon"
-                    onClick={() => handleRemove(item)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleRemove(item);
+                    }}
                     title="Remove from watchlist"
                   >
                     <Trash size={32} />
@@ -135,7 +144,8 @@ export default function WatchlistPage() {
                 </div>
 
               </div>
-            </div>
+            </Link>
+
 
           </div>
         ))}

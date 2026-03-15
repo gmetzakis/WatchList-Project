@@ -155,13 +155,14 @@ export default function FavoritesPage() {
         {items.map(item => (
           <div key={item.tmdb_id} className="media-card">
 
-            <div className="media-image-wrapper">
-              <Link to={`/media/${item.type}/${item.tmdb_id}`}>
-                <img
-                  src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
-                  className="media-card-img"
-                />
-              </Link>
+            <Link
+              to={`/media/${item.type}/${item.tmdb_id}`}
+              className="media-image-wrapper"
+            >
+              <img
+                src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+                className="media-card-img"
+              />
 
               {/* HOVER OVERLAY */}
               <div className="hover-controls">
@@ -177,7 +178,11 @@ export default function FavoritesPage() {
                       <span
                         key={n}
                         className={item.rating >= n ? "star active" : "star"}
-                        onClick={() => handleRate(item, n)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleRate(item, n);
+                        }}
                       >
                         ★
                       </span>
@@ -186,7 +191,6 @@ export default function FavoritesPage() {
                     {item.rating && (
                       <span className="rating-label">{item.rating}/10</span>
                     )}
-
                   </div>
                 </div>
 
@@ -196,7 +200,11 @@ export default function FavoritesPage() {
                   {/* REMOVE FROM FAVORITES */}
                   <span
                     className="favorite-icon active"
-                    onClick={() => handleRemoveFavorite(item)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleRemoveFavorite(item);
+                    }}
                     title="Remove from favorites"
                   >
                     <Heart size={32} />
@@ -205,7 +213,11 @@ export default function FavoritesPage() {
                   {/* REMOVE FROM WATCHED */}
                   <span
                     className="watched-icon"
-                    onClick={() => handleRemoveWatched(item)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleRemoveWatched(item);
+                    }}
                     title="Remove from watched"
                   >
                     <EyeOff size={32} />
@@ -214,7 +226,8 @@ export default function FavoritesPage() {
                 </div>
 
               </div>
-            </div>
+            </Link>
+
 
           </div>
         ))}

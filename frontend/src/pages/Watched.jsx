@@ -189,13 +189,14 @@ export default function WatchedPage() {
         {items.map(item => (
           <div key={item.tmdb_id} className="media-card">
 
-            <div className="media-image-wrapper">
-              <Link to={`/media/${item.type}/${item.tmdb_id}`}>
-                <img
-                  src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
-                  className="media-card-img"
-                />
-              </Link>
+            <Link
+              to={`/media/${item.type}/${item.tmdb_id}`}
+              className="media-image-wrapper"
+            >
+              <img
+                src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+                className="media-card-img"
+              />
 
               {/* HOVER OVERLAY */}
               <div className="hover-controls">
@@ -204,12 +205,17 @@ export default function WatchedPage() {
                 <div className="hover-title">
                   <span className="hover-title-text">{item.title}</span>
                   <span className="hover-year-text">{item.release_year}</span>
+
                   <div className="rating-inline">
                     {[1,2,3,4,5,6,7,8,9,10].map(n => (
                       <span
                         key={n}
                         className={item.rating >= n ? "star active" : "star"}
-                        onClick={() => handleRate(item, n)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleRate(item, n);
+                        }}
                       >
                         ★
                       </span>
@@ -219,30 +225,39 @@ export default function WatchedPage() {
                       <span className="rating-label">{item.rating}/10</span>
                     )}
                   </div>
-
                 </div>
 
                 {/* ICONS — bottom left */}
                 <div className="control-icons">
+
                   <span
                     className={`favorite-icon ${item.is_favorite ? "active" : ""}`}
-                    onClick={() =>
-                      item.is_favorite ? handleUnfavorite(item) : handleFavorite(item)
-                    }
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      item.is_favorite ? handleUnfavorite(item) : handleFavorite(item);
+                    }}
                   >
                     <Heart size={32} />
                   </span>
 
                   <span
                     className="watched-icon active"
-                    onClick={() => handleRemove(item)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleRemove(item);
+                    }}
                     title="Remove from watched"
                   >
                     <EyeOff size={32} />
                   </span>
+
                 </div>
+
               </div>
-            </div>
+            </Link>
+
 
           </div>
         ))}
