@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios.js";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Heart, Eraser, EyeOff, Trash2 } from "lucide-react";
 
 export default function FavoritesPage() {
   const [items, setItems] = useState([]);
@@ -10,18 +11,18 @@ export default function FavoritesPage() {
   const navigate = useNavigate();
 
   const sort = searchParams.get("sort") || "";
-  const type = searchParams.get("type") || "all"; // ⭐ NEW
+  const type = searchParams.get("type") || "all";
 
   useEffect(() => {
     load();
-  }, [sort, type]); // ⭐ reload when filters change
+  }, [sort, type]);
 
   async function load() {
     try {
       const res = await api.get("/media/favorites", {
         params: {
           sort: sort || undefined,
-          type: type !== "all" ? type : undefined // ⭐ send only movie/series
+          type: type !== "all" ? type : undefined
         }
       });
 
@@ -33,7 +34,6 @@ export default function FavoritesPage() {
     }
   }
 
-  // ⭐ NEW: update URL with both filters
   function updateQuery(newSort, newType) {
     const params = new URLSearchParams();
 
@@ -43,12 +43,10 @@ export default function FavoritesPage() {
     navigate(`/favorites?${params.toString()}`);
   }
 
-  // ⭐ UPDATED: preserve type
   function handleSortChange(e) {
     updateQuery(e.target.value, type);
   }
 
-  // ⭐ NEW: type filter handler
   function handleTypeChange(e) {
     updateQuery(sort, e.target.value);
   }
@@ -118,10 +116,9 @@ export default function FavoritesPage() {
     <div className="page-container">
       <h1>Favorites</h1>
 
-      {/* ⭐ FILTER BAR */}
-      <div className="filter-bar" style={{ marginBottom: "20px" }}>
+      {/* FILTER BAR */}
+      <div className="filter-bar">
 
-        {/* SORT */}
         <div>
           <label className="filter-label">Sort:</label>
           <select
@@ -135,8 +132,7 @@ export default function FavoritesPage() {
           </select>
         </div>
 
-        {/* TYPE */}
-        <div style={{ marginLeft: "20px" }}>
+        <div>
           <label className="filter-label">Type:</label>
           <select
             value={type}
@@ -158,53 +154,73 @@ export default function FavoritesPage() {
       <div className="media-grid">
         {items.map(item => (
           <div key={item.tmdb_id} className="media-card">
-            <Link to={`/media/${item.type}/${item.tmdb_id}`}>
-              <img
-                src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
-                className="media-card-img"
-              />
-            </Link>
+
+            <div className="media-image-wrapper">
+              <Link to={`/media/${item.type}/${item.tmdb_id}`}>
+                <img
+                  src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+                  className="media-card-img"
+                />
+              </Link>
+
+              {/* HOVER CONTROLS */}
+              <div className="hover-controls">
+
+                <div className="control-icons">
+
+                  {/* ❤️ FAVORITE (remove only) */}
+                  <span
+                    className="favorite-icon active"
+                    onClick={() => handleRemoveFavorite(item)}
+                    title="Remove from favorites"
+                  >
+                    <Heart size={32} />
+                  </span>
+
+                  {/* 👁 REMOVE FROM WATCHED */}
+                  <span
+                    className="watched-icon"
+                    onClick={() => handleRemoveWatched(item)}
+                    title="Remove from watched"
+                  >
+                    <EyeOff size={32} />
+                  </span>
+
+                </div>
+
+                {/* ⭐ RATING */}
+                <div className="rating-stars">
+                  {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                    <span
+                      key={n}
+                      className={item.rating >= n ? "star active" : "star"}
+                      onClick={() => handleRate(item, n)}
+                    >
+                      ★
+                    </span>
+                  ))}
+
+                  {item.rating && (
+                    <span className="rating-label">{item.rating}/10</span>
+                  )}
+
+                  {item.rating && (
+                    <span
+                      className="remove-rating"
+                      onClick={() => handleRemoveRating(item)}
+                      title="Remove rating"
+                    >
+                      <Eraser size={19} />
+                    </span>
+                  )}
+                </div>
+
+              </div>
+            </div>
 
             <h3 className="media-title">{item.title}</h3>
             <p className="media-year">{item.release_year}</p>
 
-            {/* Rating */}
-            <div className="rating-row">
-              {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                <button
-                  key={n}
-                  onClick={() => handleRate(item, n)}
-                  className={item.rating >= n ? "btn-rating active" : "btn-rating"}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-
-            {item.rating && (
-              <button
-                onClick={() => handleRemoveRating(item)}
-                className="btn-remove-rating"
-              >
-                Remove rating
-              </button>
-            )}
-
-            {/* Remove from favorites */}
-            <button
-              onClick={() => handleRemoveFavorite(item)}
-              className="btn btn-unfavorite"
-            >
-              Remove Favorite
-            </button>
-
-            {/* Remove from watched */}
-            <button
-              onClick={() => handleRemoveWatched(item)}
-              className="btn btn-remove"
-            >
-              Remove from Watched
-            </button>
           </div>
         ))}
       </div>

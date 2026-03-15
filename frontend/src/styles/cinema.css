@@ -2,6 +2,9 @@
    GLOBAL THEME
    =========================== */
 
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap');
+
+
 :root {
   --bg: #0a0a0a;
   --bg-alt: #0f0f0f;
@@ -23,7 +26,7 @@
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: "Inter", sans-serif;
+  font-family: "Montserrat", sans-serif;
   margin: 0;
   padding: 0;
 }
@@ -692,22 +695,24 @@ body {
 }
 
 .favorite-icon {
-  font-size: 32px;
+  font-size: 42px;
   cursor: pointer;
-  color: #666;
+  color: #b1adad;
   transition: transform 0.15s ease, color 0.2s ease;
 }
 
-.favorite-icon.active {
-  color: #e63946;
+.favorite-icon.active svg {
+  stroke: #e63946;
+  fill: #e63946; /* THIS is what makes it filled */
 }
 
 .favorite-icon:hover {
   transform: scale(1.15);
+  color: #e63946;
 }
 
 .watched-icon {
-  font-size: 32px;
+  font-size: 42px;
   cursor: pointer;
   color: #4caf50;
   transition: transform 0.15s ease;
@@ -720,12 +725,13 @@ body {
 .remove-rating {
   font-size: 18px;
   cursor: pointer;
-  color: #b33;
+  color: #b1adad; 
   transition: transform 0.15s ease;
 }
 
 .remove-rating:hover {
   transform: scale(1.2);
+  color: #fff ;
 }
 
 .rating-stars {
@@ -738,8 +744,8 @@ body {
 .star {
   font-size: 15px;
   cursor: pointer;
-  color: #555;
-  transition: color 0.2s ease, transform 0.15s ease;
+  color: #555; /* neutral white */
+  transition: transform 0.15s ease;
 }
 
 .star.active {
@@ -748,4 +754,69 @@ body {
 
 .star:hover {
   transform: scale(1.2);
+  color: #fff;
+}
+
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 18px; /* tighter, more cinematic */
+  padding: 10px 0;
+}
+
+.media-card {
+  background: #0d0d0d;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.media-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+}
+
+.media-card-img {
+  width: 100%;
+  height: 270px; /* bigger, more cinematic */
+  object-fit: cover;
+  border-bottom: 1px solid #222;
+}
+
+.media-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 8px 8px 0 8px;
+  text-align: center;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* YEAR */
+.media-year {
+  font-size: 13px;
+  color: #aaa;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.watched-icon {
+  font-size: 42px;
+  cursor: pointer;
+  color: #b1adad; /* neutral white */
+  transition: transform 0.15s ease;
+}
+
+.watched-icon:hover {
+  transform: scale(1.2);
+  color: #fff;
+}
+
+.rating-label {
+  font-size: 15px;
+  color: #ddd;
+  margin-left: 4px;
 }

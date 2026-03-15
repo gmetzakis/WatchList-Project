@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios.js";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Trash, Eye } from "lucide-react";
+
 
 export default function WatchlistPage() {
   const [items, setItems] = useState([]);
@@ -9,17 +11,17 @@ export default function WatchlistPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const type = searchParams.get("type") || "all"; // ⭐ NEW
+  const type = searchParams.get("type") || "all";
 
   useEffect(() => {
     load();
-  }, [type]); // ⭐ reload when type changes
+  }, [type]);
 
   async function load() {
     try {
       const res = await api.get("/media/watchlist", {
         params: {
-          type: type !== "all" ? type : undefined // ⭐ send only movie/series
+          type: type !== "all" ? type : undefined
         }
       });
 
@@ -31,7 +33,6 @@ export default function WatchlistPage() {
     }
   }
 
-  // ⭐ NEW: update URL with type filter
   function updateType(newType) {
     const params = new URLSearchParams();
     if (newType !== "all") params.set("type", newType);
@@ -67,88 +68,72 @@ export default function WatchlistPage() {
   }
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="page-container">
       <h1>Watchlist</h1>
 
-      {/* ⭐ NEW TYPE FILTER */}
-      <div style={{ marginBottom: "20px" }}>
-        <label style={{ marginRight: "10px" }}>Type:</label>
-        <select
-          value={type}
-          onChange={(e) => updateType(e.target.value)}
-          style={{
-            padding: "6px 10px",
-            background: "#222",
-            color: "white",
-            borderRadius: "6px",
-            border: "1px solid #444",
-            cursor: "pointer"
-          }}
-        >
-          <option value="all">All</option>
-          <option value="movie">Movies</option>
-          <option value="series">Shows</option>
-        </select>
+      {/* TYPE FILTER */}
+      <div className="filter-bar">
+        <div>
+          <label className="filter-label">Type:</label>
+          <select
+            value={type}
+            onChange={(e) => updateType(e.target.value)}
+            className="filter-select"
+          >
+            <option value="all">All</option>
+            <option value="movie">Movies</option>
+            <option value="series">Shows</option>
+          </select>
+        </div>
       </div>
 
       {items.length === 0 && (
         <p>Your watchlist is empty.</p>
       )}
 
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-        gap: "20px",
-        marginTop: "20px"
-      }}>
+      <div className="media-grid">
         {items.map(item => (
-          <div key={item.tmdb_id} style={{
-            background: "#222",
-            padding: "12px",
-            borderRadius: "8px",
-            textAlign: "center"
-          }}>
-            <Link to={`/media/${item.type}/${item.tmdb_id}`}>
-              <img
-                src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
-                className="media-card-img"
-              />
-            </Link>
+          <div key={item.tmdb_id} className="media-card">
 
-            <h3 style={{ color: "white", marginTop: "10px" }}>{item.title}</h3>
-            <p style={{ color: "#aaa" }}>{item.release_year}</p>
+            <div className="media-image-wrapper">
+              <Link to={`/media/${item.type}/${item.tmdb_id}`}>
+                <img
+                  src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+                  className="media-card-img"
+                />
+              </Link>
 
-            <button
-              onClick={() => handleMoveToWatched(item)}
-              style={{
-                width: "100%",
-                padding: "8px",
-                background: "green",
-                border: "none",
-                borderRadius: "6px",
-                color: "white",
-                cursor: "pointer",
-                marginTop: "10px"
-              }}
-            >
-              Move to Watched
-            </button>
+              {/* HOVER CONTROL BAR */}
+              <div className="hover-controls">
 
-            <button
-              onClick={() => handleRemove(item)}
-              style={{
-                width: "100%",
-                padding: "8px",
-                background: "red",
-                border: "none",
-                borderRadius: "6px",
-                color: "white",
-                cursor: "pointer",
-                marginTop: "10px"
-              }}
-            >
-              Remove
-            </button>
+                <div className="control-icons">
+                  
+                  {/* MOVE TO WATCHED */}
+                  <span
+                    className="watched-icon"
+                    onClick={() => handleMoveToWatched(item)}
+                    title="Move to watched"
+                  >
+                    <Eye size={32} />
+                  </span>
+
+                  {/* ⨯ REMOVE FROM WATCHLIST */}
+                  <span
+                    className="remove-rating"
+                    onClick={() => handleRemove(item)}
+                    title="Remove from watchlist"
+                  >
+                    <Trash size={25} />
+                  </span>
+
+                </div>
+
+              </div>
+            </div>
+
+            <h3 className="media-title">{item.title}</h3>
+            <p className="media-year">{item.release_year}</p>
+
           </div>
         ))}
       </div>

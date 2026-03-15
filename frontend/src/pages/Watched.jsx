@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/axios.js";
+import { Heart, Eraser, EyeOff } from "lucide-react";
 
 export default function WatchedPage() {
   const [items, setItems] = useState([]);
@@ -207,7 +208,7 @@ export default function WatchedPage() {
                       item.is_favorite ? handleUnfavorite(item) : handleFavorite(item)
                     }
                   >
-                    {item.is_favorite ? "♥" : "♡"}
+                    {item.is_favorite ? <Heart size={32} /> : <Heart size={32} />}
                   </span>
 
                   {/* 👁 WATCHED */}
@@ -216,7 +217,7 @@ export default function WatchedPage() {
                     onClick={() => handleRemove(item)}
                     title="Remove from watched"
                   >
-                    👁
+                    <EyeOff size={32} /> 
                   </span>
 
                 </div>
@@ -245,7 +246,7 @@ export default function WatchedPage() {
                       onClick={() => handleRemoveRating(item)}
                       title="Remove rating"
                     >
-                      ⨯
+                      <Eraser size={19} /> 
                     </span>
                   )}
                 </div>
