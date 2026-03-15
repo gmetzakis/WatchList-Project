@@ -11,11 +11,11 @@ export default function WatchedPage() {
 
   const sort = searchParams.get("sort") || "";
   const favorites = searchParams.get("favorites") || "";
-  const type = searchParams.get("type") || "all"; // ⭐ NEW
+  const type = searchParams.get("type") || "all";
 
   useEffect(() => {
     load();
-  }, [sort, favorites, type]); // ⭐ include type
+  }, [sort, favorites, type]);
 
   async function load() {
     try {
@@ -23,7 +23,7 @@ export default function WatchedPage() {
         params: {
           sort: sort || undefined,
           favorites: favorites || undefined,
-          type: type !== "all" ? type : undefined // ⭐ send only movie/series
+          type: type !== "all" ? type : undefined
         }
       });
 
@@ -35,7 +35,6 @@ export default function WatchedPage() {
     }
   }
 
-  // ⭐ UPDATED: now accepts type
   function updateQuery(newSort, newFavorites, newType) {
     const params = new URLSearchParams();
 
@@ -46,18 +45,15 @@ export default function WatchedPage() {
     navigate(`/watched?${params.toString()}`);
   }
 
-  // ⭐ UPDATED: preserve type
   function handleSortChange(e) {
     updateQuery(e.target.value, favorites, type);
   }
 
-  // ⭐ UPDATED: preserve type
   function handleFavoritesToggle() {
     const newValue = favorites === "true" ? "" : "true";
     updateQuery(sort, newValue, type);
   }
 
-  // ⭐ NEW: type filter handler
   function handleTypeChange(e) {
     updateQuery(sort, favorites, e.target.value);
   }
@@ -149,7 +145,6 @@ export default function WatchedPage() {
       {/* FILTER BAR */}
       <div className="filter-bar">
 
-        {/* SORT */}
         <div>
           <label className="filter-label">Sort:</label>
           <select
@@ -163,7 +158,6 @@ export default function WatchedPage() {
           </select>
         </div>
 
-        {/* FAVORITES */}
         <button
           onClick={handleFavoritesToggle}
           className={favorites === "true" ? "btn-fav-toggle active" : "btn-fav-toggle"}
@@ -171,7 +165,6 @@ export default function WatchedPage() {
           {favorites === "true" ? "Showing Favorites" : "Show Favorites Only"}
         </button>
 
-        {/* ⭐ NEW TYPE FILTER */}
         <div>
           <label className="filter-label">Type:</label>
           <select
@@ -194,61 +187,74 @@ export default function WatchedPage() {
       <div className="media-grid">
         {items.map(item => (
           <div key={item.tmdb_id} className="media-card">
-            <Link to={`/media/${item.type}/${item.tmdb_id}`}>
-              <img
-                src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
-                className="media-card-img"
-              />
-            </Link>
+
+            <div className="media-image-wrapper">
+              <Link to={`/media/${item.type}/${item.tmdb_id}`}>
+                <img
+                  src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+                  className="media-card-img"
+                />
+              </Link>
+
+              {/* HOVER CONTROL BAR */}
+              <div className="hover-controls">
+
+                <div className="control-icons">
+                  {/* ❤️ FAVORITE */}
+                  <span
+                    className={`favorite-icon ${item.is_favorite ? "active" : ""}`}
+                    onClick={() =>
+                      item.is_favorite ? handleUnfavorite(item) : handleFavorite(item)
+                    }
+                  >
+                    {item.is_favorite ? "♥" : "♡"}
+                  </span>
+
+                  {/* 👁 WATCHED */}
+                  <span
+                    className="watched-icon active"
+                    onClick={() => handleRemove(item)}
+                    title="Remove from watched"
+                  >
+                    👁
+                  </span>
+
+                </div>
+
+                {/* ⭐ RATING */}
+                <div className="rating-stars">
+                  {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                    <span
+                      key={n}
+                      className={item.rating >= n ? "star active" : "star"}
+                      onClick={() => handleRate(item, n)}
+                    >
+                      ★
+                    </span>
+                  ))}
+
+                  {/* Rating label */}
+                  {item.rating && (
+                    <span className="rating-label">{item.rating}/10</span>
+                  )}
+
+                  {/* Remove rating button */}
+                  {item.rating && (
+                    <span
+                      className="remove-rating"
+                      onClick={() => handleRemoveRating(item)}
+                      title="Remove rating"
+                    >
+                      ⨯
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
 
             <h3 className="media-title">{item.title}</h3>
             <p className="media-year">{item.release_year}</p>
 
-            {/* Rating */}
-            <div className="rating-row">
-              {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                <button
-                  key={n}
-                  onClick={() => handleRate(item, n)}
-                  className={item.rating >= n ? "btn-rating active" : "btn-rating"}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-
-            {item.rating && (
-              <button
-                onClick={() => handleRemoveRating(item)}
-                className="btn-remove-rating"
-              >
-                Remove rating
-              </button>
-            )}
-
-            {/* Favorite / Unfavorite */}
-            {item.is_favorite ? (
-              <button
-                onClick={() => handleUnfavorite(item)}
-                className="btn btn-unfavorite"
-              >
-                Remove Favorite
-              </button>
-            ) : (
-              <button
-                onClick={() => handleFavorite(item)}
-                className="btn btn-favorite"
-              >
-                Add to Favorites
-              </button>
-            )}
-
-            <button
-              onClick={() => handleRemove(item)}
-              className="btn btn-remove"
-            >
-              Remove
-            </button>
           </div>
         ))}
       </div>
