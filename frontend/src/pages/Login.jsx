@@ -17,8 +17,12 @@ export default function LoginPage() {
       localStorage.setItem("token", res.data.token);
       navigate("/watched");
     } catch (err) {
-      setError("Invalid email or password");
-      console.error("Login error:", err);
+        if (err.response && err.response.data) {
+            const backendError = err.response.data.error || err.response.data.message;
+            setError(backendError || "Something went wrong");
+        } else {
+          setError("Network error!!");
+        }
     }
   }
 

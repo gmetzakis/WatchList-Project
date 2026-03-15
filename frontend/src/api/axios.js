@@ -1,14 +1,36 @@
 import axios from "axios";
 import { useAuthStore } from "../store/authStore";
 
-const api = axios.create({
-  baseURL: "http://localhost:5000",
-});
+let baseURLs = "";
+if (import.meta.env.VITE_PC_RUNNING === "army_service_room") {
+  baseURLs = "https://friendly-invention-v5vxr4q6j5rh6qj7-5000.app.github.dev/"
+}
+else {
+  baseURLs = "http://localhost:5000"
+}
 
-api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token;
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+const api = axios.create({
+    baseURL: baseURLs,
+  });
+
+
+if (import.meta.env.VITE_PC_RUNNING === "army_service_room") {
+  api.interceptors.request.use((config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  });
+}
+
+else {
+  api.interceptors.request.use((config) => {
+    const token = useAuthStore.getState().token;
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
+  });
+}
+
 
 export default api;

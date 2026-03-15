@@ -2,7 +2,7 @@ import env from "dotenv";
 env.config();
 
 //Added this to DEACTIVATE CERTIFICATE AUTHORIZATION!!
-if (process.env.PC_RUNNING === "army") {
+if (process.env.PC_RUNNING === "army_internet_room") {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 }
 
