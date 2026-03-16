@@ -785,7 +785,6 @@ body {
   width: 100%;
   overflow-x: hidden;
   overflow-y: visible;
-  padding: 40px 0;
 }
 
 .media-tape {
@@ -899,4 +898,97 @@ body {
 
 .rating-section-title .star.active {
   font-size: 1.1em;
+}
+
+/* --------------------------------------------- */
+/* TAPE VIEW — BIGGER HOVER DETAILS              */
+/* --------------------------------------------- */
+
+/* Bigger title */
+.media-tape .hover-title-text {
+  display: block;
+  font-size: 1.8rem;       /* bigger title */
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;      /* more breathing */
+  margin-bottom: 4px;     /* space between title & year */
+}
+
+/* Bigger year */
+.media-tape .hover-year-text {
+  font-size: 1.5rem;
+  opacity: 0.9;
+}
+
+/* Bigger stars */
+.media-tape .rating-inline .star {
+  font-size: 1.4rem;
+  margin-right: 4px;
+}
+
+/* Bigger rating label */
+.media-tape .rating-inline .rating-label {
+  font-size: 1.2rem;
+  margin-left: 6px;
+}
+
+/* Bigger icons (favorite, watched) */
+.media-tape .control-icons span svg {
+  width: 40px;
+  height: 40px;
+}
+
+/* More spacing between icons */
+.media-tape .control-icons {
+  position: absolute;
+  bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;   /* ← REAL spacing */
+}
+
+/* More breathing room inside hover overlay */
+.media-tape .hover-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  font-size: 1.2rem;
+}
+
+/* Slightly more spacing inside the title block */
+.media-tape .hover-title {
+  gap: 6px;
+}
+
+/* Optional: subtle scale-up on hover for cinematic feel */
+.media-tape .media-card:hover .hover-controls {
+  transform: scale(1.04);
+  transform-origin: center;
+  transition: transform 0.2s ease;
+}
+
+
+.section-transition-arrow {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) translateY(0);
+  font-size: 140px;
+  color: rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  z-index: 1; /* κάτω από overlays, πάνω από background */
+}
+
+.section-transition-arrow.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) translateY(20px);
+}
+
+.section-transition-arrow.up.show {
+  transform: translate(-50%, -50%) translateY(-20px);
 }
