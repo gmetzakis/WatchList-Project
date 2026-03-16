@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/axios.js";
-import { Heart, Eraser, EyeOff } from "lucide-react";
+import { Heart, Eraser, EyeOff, LayoutGrid, GalleryVertical } from "lucide-react";
 
 export default function WatchedPage() {
   const [items, setItems] = useState([]);
@@ -241,12 +241,22 @@ export default function WatchedPage() {
       {/* FILTER BAR */}
       <div className="filter-bar">
 
-        <button
-          className="view-toggle-btn"
-          onClick={() => setViewMode(viewMode === "grid" ? "tape" : "grid")}
-        >
-          {viewMode === "grid" ? "Switch to Tape View" : "Switch to Grid View"}
-        </button>
+        <div className="view-toggle-container">
+          <div
+            className={`view-toggle-box ${viewMode === "grid" ? "active" : ""}`}
+            onClick={() => setViewMode("grid")}
+          >
+            <LayoutGrid size={22} />
+          </div>
+
+          <div
+            className={`view-toggle-box ${viewMode === "tape" ? "active" : ""}`}
+            onClick={() => setViewMode("tape")}
+          >
+            <GalleryVertical size={22} />
+          </div>
+        </div>
+
 
         <div>
           <label className="filter-label">Sort:</label>
