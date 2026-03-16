@@ -31,7 +31,7 @@ router.get("/:type/:tmdbId/status", authMiddleware, async (req, res) => {
   const type = req.params.type;
 
   const result = await db.query(
-    `SELECT user_media.status, rating
+    `SELECT user_media.status, rating, is_favorite
      FROM user_media
      JOIN media ON media.id = user_media.media_id
      WHERE user_media.user_id = $1
@@ -45,7 +45,7 @@ router.get("/:type/:tmdbId/status", authMiddleware, async (req, res) => {
     return res.json({ status: null });
   }
 
-  res.json({ status: result.rows[0].status, rating: result.rows[0].rating });
+  res.json({ status: result.rows[0].status, rating: result.rows[0].rating, favorite: result.rows[0].is_favorite });
 });
 
 
