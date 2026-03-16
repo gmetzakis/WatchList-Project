@@ -33,8 +33,9 @@ body {
 
 /* Page container */
 .page-container {
-  padding: 24px;
-  max-width: 1400px;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 20px; /* optional breathing room */
   margin: 0 auto;
 }
 
@@ -199,7 +200,8 @@ body {
 }
 
 .cinema-header-inner {
-  max-width: 1400px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
   padding: 0 24px;
 
@@ -738,3 +740,104 @@ body {
   overflow: visible;
   display: block;   /* ← THIS FIXES FIREFOX */
 }
+
+.media-tape {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  overflow-x: auto;
+  overflow-y: hidden;      /* important: accept the clipping */
+  padding: 40px 0;         /* give vertical breathing room */
+}
+
+
+.media-tape::-webkit-scrollbar {
+  height: 8px;
+}
+
+.media-tape::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+.media-tape .media-card {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  margin-bottom: 20px;
+}
+
+.media-tape .media-card:hover {
+  transform: scale(0.9);
+  z-index: 1000;             /* ensures it floats above others */
+  overflow-x: visible;
+  overflow-y: visible;
+}
+
+.tape-wrapper {
+  position: relative;
+  width: 100%;
+  margin-top: 20px;
+  padding: 0 60px; /* space so arrows don't overlap cards */
+  overflow: visible;
+}
+
+.tape-scroll {
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: visible;
+  padding: 40px 0;
+}
+
+.media-tape {
+  display: flex;
+  gap: 32px;
+  overflow: visible;
+}
+
+.tape-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+  background: rgba(0,0,0,0.6);
+  border: none;
+  color: #bbb;
+  font-size: 150px;
+  width: 5px;
+  height: 80px;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+/* Move arrows OUTSIDE the tape */
+.tape-arrow.left {
+  left: 0;              /* no negative offset */
+  transform: translate(-100%, -50%); /* move outside visually */
+}
+
+.tape-arrow.right {
+  right: 0;
+  transform: translate(100%, -50%);
+}
+
+.tape-arrow:hover {
+  transform: translateY(-50%) scale(1.2);
+  color: #fff;
+}
+
+
+.media-card {
+  position: relative;
+  z-index: 1;
+  transition: transform 0.2s ease, z-index 0.2s ease;
+}
+
+.media-card:hover {
+  transform: translateY(-20px) scale(1.05);
+  z-index: 20;
+}
+

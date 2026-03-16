@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/axios.js";
 import { Heart, Eraser, EyeOff } from "lucide-react";
@@ -13,6 +13,101 @@ export default function WatchedPage() {
   const sort = searchParams.get("sort") || "";
   const favorites = searchParams.get("favorites") || "";
   const type = searchParams.get("type") || "all";
+
+  const [viewMode, setViewMode] = useState("grid"); 
+  // "grid" | "tape"
+
+ const scrollRef = useRef(null);
+
+  function scrollLeft() {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: -600, behavior: "smooth" });
+    }
+  }
+
+  function scrollRight() {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: 600, behavior: "smooth" });
+    }
+  }
+
+  function renderCard(item) {
+    return (
+      <div key={item.tmdb_id} className="media-card">
+
+        <Link
+          to={`/media/${item.type}/${item.tmdb_id}`}
+          className="media-image-wrapper"
+        >
+          <img
+            src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+            className="media-card-img"
+          />
+
+          {/* HOVER OVERLAY */}
+          <div className="hover-controls">
+
+            {/* TITLE + YEAR — TOP LEFT */}
+            <div className="hover-title">
+              <span className="hover-title-text">{item.title}</span>
+              <span className="hover-year-text">{item.release_year}</span>
+
+              <div className="rating-inline">
+                {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                  <span
+                    key={n}
+                    className={item.rating >= n ? "star active" : "star"}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleRate(item, n);
+                    }}
+                  >
+                    ★
+                  </span>
+                ))}
+
+                {item.rating && (
+                  <span className="rating-label">{item.rating}/10</span>
+                )}
+              </div>
+            </div>
+
+            {/* ICONS — bottom left */}
+            <div className="control-icons">
+
+              <span
+                className={`favorite-icon ${item.is_favorite ? "active" : ""}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  item.is_favorite ? handleUnfavorite(item) : handleFavorite(item);
+                }}
+              >
+                <Heart size={32} />
+              </span>
+
+              <span
+                className="watched-icon active"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleRemove(item);
+                }}
+                title="Remove from watched"
+              >
+                <EyeOff size={32} />
+              </span>
+
+            </div>
+
+          </div>
+        </Link>
+
+      </div>
+    );
+  }
+
 
   useEffect(() => {
     load();
@@ -146,6 +241,13 @@ export default function WatchedPage() {
       {/* FILTER BAR */}
       <div className="filter-bar">
 
+        <button
+          className="view-toggle-btn"
+          onClick={() => setViewMode(viewMode === "grid" ? "tape" : "grid")}
+        >
+          {viewMode === "grid" ? "Switch to Tape View" : "Switch to Grid View"}
+        </button>
+
         <div>
           <label className="filter-label">Sort:</label>
           <select
@@ -185,83 +287,30 @@ export default function WatchedPage() {
         <p>You haven't watched anything yet.</p>
       )}
 
-      <div className="media-grid">
-        {items.map(item => (
-          <div key={item.tmdb_id} className="media-card">
+      {/* GRID VIEW */}
+      {viewMode === "grid" && (
+        <div className="media-grid">
+          {items.map(item => renderCard(item))}
+        </div>
+      )}
 
-            <Link
-              to={`/media/${item.type}/${item.tmdb_id}`}
-              className="media-image-wrapper"
-            >
-              <img
-                src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
-                className="media-card-img"
-              />
+      {/* TAPE VIEW */}
+      {viewMode === "tape" && (
+        <div className="tape-wrapper">
 
-              {/* HOVER OVERLAY */}
-              <div className="hover-controls">
+          <button className="tape-arrow left" onClick={scrollLeft}>‹</button>
 
-                {/* TITLE + YEAR — TOP LEFT */}
-                <div className="hover-title">
-                  <span className="hover-title-text">{item.title}</span>
-                  <span className="hover-year-text">{item.release_year}</span>
-
-                  <div className="rating-inline">
-                    {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                      <span
-                        key={n}
-                        className={item.rating >= n ? "star active" : "star"}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleRate(item, n);
-                        }}
-                      >
-                        ★
-                      </span>
-                    ))}
-
-                    {item.rating && (
-                      <span className="rating-label">{item.rating}/10</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* ICONS — bottom left */}
-                <div className="control-icons">
-
-                  <span
-                    className={`favorite-icon ${item.is_favorite ? "active" : ""}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      item.is_favorite ? handleUnfavorite(item) : handleFavorite(item);
-                    }}
-                  >
-                    <Heart size={32} />
-                  </span>
-
-                  <span
-                    className="watched-icon active"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleRemove(item);
-                    }}
-                    title="Remove from watched"
-                  >
-                    <EyeOff size={32} />
-                  </span>
-
-                </div>
-
-              </div>
-            </Link>
-
-
+          <div className="tape-scroll" ref={scrollRef}>
+            <div className="media-tape">
+              {items.map(item => renderCard(item))}
+            </div>
           </div>
-        ))}
-      </div>
+
+          <button className="tape-arrow right" onClick={scrollRight}>›</button>
+
+        </div>
+      )}
     </div>
   );
+
 }
