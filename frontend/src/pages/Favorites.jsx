@@ -115,6 +115,32 @@ export default function FavoritesPage() {
     );
   }
 
+    // Reusable tape component for grouped mode
+  function RatingTape({ items, title }) {
+    const localRef = useRef(null);
+
+    function left() {
+      localRef.current?.scrollBy({ left: -600, behavior: "smooth" });
+    }
+    function right() {
+      localRef.current?.scrollBy({ left: 600, behavior: "smooth" });
+    }
+
+    return (
+      <div className="tape-wrapper">
+        <button className="tape-arrow left" onClick={left}>‹</button>
+
+        <div className="tape-scroll" ref={localRef}>
+          <div className="media-tape">
+            {filteredItems.map(item => renderCard(item))}
+          </div>
+        </div>
+
+        <button className="tape-arrow right" onClick={right}>›</button>
+      </div>
+    );
+  }
+
   useEffect(() => {
     load();
   }, [sort, type, genre]);
@@ -222,13 +248,30 @@ export default function FavoritesPage() {
     return <div>Loading favorites...</div>;
   }
 
-  const filteredItems = selectedGenre === "all"
-    ? items
-    : items.filter(item =>
-        Array.isArray(item.genres) &&
-        item.genres.includes(selectedGenre)
-      );
+  const isRatingSort = sort === "rating_desc" || sort === "rating_asc";
 
+  // Group items by rating
+  const grouped = {
+    1: [], 2: [], 3: [], 4: [], 5: [],
+    6: [], 7: [], 8: [], 9: [], 10: [],
+    unrated: []
+  };
+
+  const filteredItems = selectedGenre === "all"
+  ? items
+  : items.filter(item =>
+      Array.isArray(item.genres) &&
+      item.genres.includes(selectedGenre)
+    );
+
+  filteredItems.forEach(item => {
+    if (!item.rating) grouped.unrated.push(item);
+    else grouped[item.rating].push(item);
+  });
+
+  const orderDesc = [10,9,8,7,6,5,4,3,2,1,"unrated"];
+  const orderAsc = [1,2,3,4,5,6,7,8,9,10,"unrated"];
+  const activeOrder = sort === "rating_desc" ? orderDesc : orderAsc;
 
   return (
     <div className="page-container">
@@ -299,28 +342,61 @@ export default function FavoritesPage() {
         <p>You have no favorite movies or series yet.</p>
       )}
 
-      {/* GRID VIEW */}
-      {viewMode === "grid" && (
-        <div className="media-grid">
-          {filteredItems.map(item => renderCard(item))}
+      {/* GROUPED MODE */}
+      {isRatingSort && (
+        <div className="rating-groups">
+          {activeOrder.map(key => {
+            const bucket = grouped[key];
+            if (!bucket || bucket.length === 0) return null;
+
+            const title = key === "unrated"
+              ? "Unrated"
+              : (
+                  <>
+                    {key}/10 <span className="star active">★</span>
+                  </>
+                );
+            return (
+              <div key={key} className="rating-section">
+                <h2 className="rating-section-title">{title}</h2>
+
+                {viewMode === "grid" ? (
+                  <div className="media-grid">
+                    {bucket.map(item => renderCard(item))}
+                  </div>
+                ) : (
+                  <RatingTape items={bucket} title={title}
+                    />
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* TAPE VIEW */}
-      {viewMode === "tape" && (
-        <div className="tape-wrapper">
-
-          <button className="tape-arrow left" onClick={scrollLeft}>‹</button>
-
-          <div className="tape-scroll" ref={scrollRef}>
-            <div className="media-tape">
+      {/* NON-GROUPED MODE */}
+      {!isRatingSort && (
+        <>
+          {viewMode === "grid" && (
+            <div className="media-grid">
               {filteredItems.map(item => renderCard(item))}
             </div>
-          </div>
+          )}
 
-          <button className="tape-arrow right" onClick={scrollRight}>›</button>
+          {viewMode === "tape" && (
+            <div className="tape-wrapper">
+              <button className="tape-arrow left" onClick={scrollLeft}>‹</button>
 
-        </div>
+              <div className="tape-scroll" ref={scrollRef}>
+                <div className="media-tape">
+                  {filteredItems.map(item => renderCard(item))}
+                </div>
+              </div>
+
+              <button className="tape-arrow right" onClick={scrollRight}>›</button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
