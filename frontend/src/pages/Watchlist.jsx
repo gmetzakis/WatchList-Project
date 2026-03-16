@@ -5,12 +5,16 @@ import { Trash, Eye, LayoutGrid, GalleryVertical } from "lucide-react";
 
 export default function WatchlistPage() {
   const [items, setItems] = useState([]);
+  const [availableGenres, setAvailableGenres] = useState([]);
+  const [selectedGenre, setSelectedGenre] = useState("all");
+
   const [loading, setLoading] = useState(true);
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const type = searchParams.get("type") || "all";
+  const genre = searchParams.get("genre") || "all";
 
   const [viewMode, setViewMode] = useState("grid"); 
   // "grid" | "tape"
@@ -91,7 +95,7 @@ export default function WatchlistPage() {
 
   useEffect(() => {
     load();
-  }, [type]);
+  }, [type, genre]);
 
   async function load() {
     try {
@@ -101,7 +105,9 @@ export default function WatchlistPage() {
         }
       });
 
-      setItems(res.data);
+      setItems(res.data.items);
+      setAvailableGenres(res.data.genres || []);
+
     } catch (err) {
       console.error("Watchlist load error:", err);
     } finally {
@@ -109,10 +115,16 @@ export default function WatchlistPage() {
     }
   }
 
-  function updateType(newType) {
+  function updateQuery(newType, newGenre) {
     const params = new URLSearchParams();
     if (newType !== "all") params.set("type", newType);
+    if (newGenre && newGenre !== "all") params.set("genre", newGenre);
     navigate(`/watchlist?${params.toString()}`);
+  }
+
+  function handleGenreChange(e) {
+    setSelectedGenre(e.target.value);
+    updateQuery(sort, favorites, type, e.target.value);
   }
 
   async function handleRemove(item) {
@@ -143,6 +155,14 @@ export default function WatchlistPage() {
     return <div>Loading watchlist...</div>;
   }
 
+  const filteredItems = selectedGenre === "all"
+    ? items
+    : items.filter(item =>
+        Array.isArray(item.genres) &&
+        item.genres.includes(selectedGenre)
+      );
+
+
   return (
     <div className="page-container">
       <h1>Watchlist</h1>
@@ -170,12 +190,26 @@ export default function WatchlistPage() {
           <label className="filter-label">Type:</label>
           <select
             value={type}
-            onChange={(e) => updateType(e.target.value)}
+            onChange={(e) => updateQuery(e.target.value)}
             className="filter-select"
           >
             <option value="all">All</option>
             <option value="movie">Movies</option>
             <option value="series">Shows</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="filter-label">Genre:</label>
+          <select
+            value={selectedGenre}
+            onChange={handleGenreChange}
+            className="filter-select"
+          >
+            <option value="all">All</option>
+            {availableGenres.map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
           </select>
         </div>
       </div>
@@ -187,7 +221,7 @@ export default function WatchlistPage() {
       {/* GRID VIEW */}
       {viewMode === "grid" && (
         <div className="media-grid">
-          {items.map(item => renderCard(item))}
+          {filteredItems.map(item => renderCard(item))}
         </div>
       )}
 
@@ -199,7 +233,7 @@ export default function WatchlistPage() {
 
           <div className="tape-scroll" ref={scrollRef}>
             <div className="media-tape">
-              {items.map(item => renderCard(item))}
+              {filteredItems.map(item => renderCard(item))}
             </div>
           </div>
 

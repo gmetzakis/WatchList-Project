@@ -50,7 +50,6 @@ export async function addToWatchlist(req, res) {
   const userId = req.user.id;
   const { tmdbId } = req.params;
   const { type, genres } = req.body;
-  console.log("ENADIO:",genres);
 
   if (!type || !["movie", "series"].includes(type)) {
     return res.status(400).json({ error: "Invalid or missing type" });
@@ -182,11 +181,22 @@ export async function getWatchlist(req, res) {
   try {
     const items = await getUserWatchlist(userId, type);
     
+    // Extract unique genres from items
+    const allGenres = new Set();
+
     items.forEach(item => {
       item.genres = mapGenres(parseGenreSet(item.genres));
+      if (Array.isArray(item.genres)) {
+        item.genres.forEach(g => {
+          if (g) allGenres.add(g);
+        });
+      }
     });
-
-    res.json(items);
+    
+    res.json({
+      items,
+      genres: Array.from(allGenres).sort()
+    });
   } catch (err) {
     console.error("Get watchlist error:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -200,10 +210,22 @@ export async function getWatchedHistory(req, res) {
 
   try {
     const items = await getUserWatched(userId, sort, favorites, type);
+    // Extract unique genres from items
+    const allGenres = new Set();
+
     items.forEach(item => {
       item.genres = mapGenres(parseGenreSet(item.genres));
+      if (Array.isArray(item.genres)) {
+        item.genres.forEach(g => {
+          if (g) allGenres.add(g);
+        });
+      }
     });
-    res.json(items);
+
+    res.json({
+      items,
+      genres: Array.from(allGenres).sort()
+    });
   } catch (err) {
     console.error("Get watched history error:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -339,10 +361,22 @@ export async function getFavorites(req, res) {
 
   try {
     const items = await getUserFavorites(userId, sort, type);
+    // Extract unique genres from items
+    const allGenres = new Set();
+
     items.forEach(item => {
       item.genres = mapGenres(parseGenreSet(item.genres));
+      if (Array.isArray(item.genres)) {
+        item.genres.forEach(g => {
+          if (g) allGenres.add(g);
+        });
+      }
     });
-    res.json(items);
+    
+    res.json({
+      items,
+      genres: Array.from(allGenres).sort()
+    });
   } catch (err) {
     console.error("Get favorites error:", err);
     res.status(500).json({ error: "Internal server error" });

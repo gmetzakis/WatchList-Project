@@ -5,6 +5,9 @@ import { Heart, Eraser, EyeOff, LayoutGrid, GalleryVertical } from "lucide-react
 
 export default function FavoritesPage() {
   const [items, setItems] = useState([]);
+  const [availableGenres, setAvailableGenres] = useState([]);
+  const [selectedGenre, setSelectedGenre] = useState("all");
+
   const [loading, setLoading] = useState(true);
 
   const [searchParams] = useSearchParams();
@@ -12,6 +15,7 @@ export default function FavoritesPage() {
 
   const sort = searchParams.get("sort") || "";
   const type = searchParams.get("type") || "all";
+  const genre = searchParams.get("genre") || "all";
 
   const [viewMode, setViewMode] = useState("grid"); 
   // "grid" | "tape"
@@ -113,7 +117,7 @@ export default function FavoritesPage() {
 
   useEffect(() => {
     load();
-  }, [sort, type]);
+  }, [sort, type, genre]);
 
   async function load() {
     try {
@@ -124,7 +128,9 @@ export default function FavoritesPage() {
         }
       });
 
-      setItems(res.data);
+      setItems(res.data.items);
+      setAvailableGenres(res.data.genres || []);
+
     } catch (err) {
       console.error("Favorites load error:", err);
     } finally {
@@ -132,11 +138,12 @@ export default function FavoritesPage() {
     }
   }
 
-  function updateQuery(newSort, newType) {
+  function updateQuery(newSort, newType, newGenre) {
     const params = new URLSearchParams();
 
     if (newSort) params.set("sort", newSort);
     if (newType && newType !== "all") params.set("type", newType);
+    if (newGenre && newGenre !== "all") params.set("genre", newGenre);
 
     navigate(`/favorites?${params.toString()}`);
   }
@@ -147,6 +154,11 @@ export default function FavoritesPage() {
 
   function handleTypeChange(e) {
     updateQuery(sort, e.target.value);
+  }
+
+  function handleGenreChange(e) {
+    setSelectedGenre(e.target.value);
+    updateQuery(sort, favorites, type, e.target.value);
   }
 
   async function handleRemoveFavorite(item) {
@@ -210,6 +222,14 @@ export default function FavoritesPage() {
     return <div>Loading favorites...</div>;
   }
 
+  const filteredItems = selectedGenre === "all"
+    ? items
+    : items.filter(item =>
+        Array.isArray(item.genres) &&
+        item.genres.includes(selectedGenre)
+      );
+
+
   return (
     <div className="page-container">
       <h1>Favorites</h1>
@@ -259,6 +279,20 @@ export default function FavoritesPage() {
           </select>
         </div>
 
+        <div>
+          <label className="filter-label">Genre:</label>
+          <select
+            value={selectedGenre}
+            onChange={handleGenreChange}
+            className="filter-select"
+          >
+            <option value="all">All</option>
+            {availableGenres.map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+        </div>
+
       </div>
 
       {items.length === 0 && (
@@ -268,7 +302,7 @@ export default function FavoritesPage() {
       {/* GRID VIEW */}
       {viewMode === "grid" && (
         <div className="media-grid">
-          {items.map(item => renderCard(item))}
+          {filteredItems.map(item => renderCard(item))}
         </div>
       )}
 
@@ -280,7 +314,7 @@ export default function FavoritesPage() {
 
           <div className="tape-scroll" ref={scrollRef}>
             <div className="media-tape">
-              {items.map(item => renderCard(item))}
+              {filteredItems.map(item => renderCard(item))}
             </div>
           </div>
 

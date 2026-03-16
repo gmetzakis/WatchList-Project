@@ -5,6 +5,9 @@ import { Heart, EyeOff, LayoutGrid, GalleryVertical } from "lucide-react";
 
 export default function WatchedPage() {
   const [items, setItems] = useState([]);
+  const [availableGenres, setAvailableGenres] = useState([]);
+  const [selectedGenre, setSelectedGenre] = useState("all");
+
   const [loading, setLoading] = useState(true);
 
   const [searchParams] = useSearchParams();
@@ -13,6 +16,8 @@ export default function WatchedPage() {
   const sort = searchParams.get("sort") || "";
   const favorites = searchParams.get("favorites") || "";
   const type = searchParams.get("type") || "all";
+  const genre = searchParams.get("genre") || "all";
+
 
   const [viewMode, setViewMode] = useState("grid");
 
@@ -110,7 +115,7 @@ export default function WatchedPage() {
 
         <div className="tape-scroll" ref={localRef}>
           <div className="media-tape">
-            {items.map(item => renderCard(item))}
+            {filteredItems.map(item => renderCard(item))}
           </div>
         </div>
 
@@ -121,7 +126,7 @@ export default function WatchedPage() {
 
   useEffect(() => {
     load();
-  }, [sort, favorites, type]);
+  }, [sort, favorites, type, genre]);
 
   async function load() {
     try {
@@ -132,7 +137,9 @@ export default function WatchedPage() {
           type: type !== "all" ? type : undefined
         }
       });
-      setItems(res.data);
+      setItems(res.data.items);
+      setAvailableGenres(res.data.genres);
+
     } catch (err) {
       console.error("Watched load error:", err);
     } finally {
@@ -140,11 +147,12 @@ export default function WatchedPage() {
     }
   }
 
-  function updateQuery(newSort, newFavorites, newType) {
+  function updateQuery(newSort, newFavorites, newType, newGenre) {
     const params = new URLSearchParams();
     if (newSort) params.set("sort", newSort);
     if (newFavorites) params.set("favorites", newFavorites);
     if (newType && newType !== "all") params.set("type", newType);
+    if (newGenre && newGenre !== "all") params.set("genre", newGenre);
     navigate(`/watched?${params.toString()}`);
   }
 
@@ -158,6 +166,11 @@ export default function WatchedPage() {
 
   function handleTypeChange(e) {
     updateQuery(sort, favorites, e.target.value);
+  }
+
+  function handleGenreChange(e) {
+    setSelectedGenre(e.target.value);
+    updateQuery(sort, favorites, type, e.target.value);
   }
 
   async function handleRemove(item) {
@@ -214,7 +227,14 @@ export default function WatchedPage() {
     unrated: []
   };
 
-  items.forEach(item => {
+  const filteredItems = selectedGenre === "all"
+  ? items
+  : items.filter(item =>
+      Array.isArray(item.genres) &&
+      item.genres.includes(selectedGenre)
+    );
+
+  filteredItems.forEach(item => {
     if (!item.rating) grouped.unrated.push(item);
     else grouped[item.rating].push(item);
   });
@@ -253,6 +273,21 @@ export default function WatchedPage() {
             <option value="rating_asc">Rating Asc</option>
           </select>
         </div>
+
+        <div>
+          <label className="filter-label">Genre:</label>
+          <select
+            value={genre}
+            onChange={handleGenreChange}
+            className="filter-select"
+          >
+            <option value="all">All</option>
+            {availableGenres.map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+        </div>
+
 
         <button
           onClick={handleFavoritesToggle}
@@ -310,7 +345,7 @@ export default function WatchedPage() {
         <>
           {viewMode === "grid" && (
             <div className="media-grid">
-              {items.map(item => renderCard(item))}
+              {filteredItems.map(item => renderCard(item))}
             </div>
           )}
 
@@ -320,7 +355,7 @@ export default function WatchedPage() {
 
               <div className="tape-scroll" ref={scrollRef}>
                 <div className="media-tape">
-                  {items.map(item => renderCard(item))}
+                  {filteredItems.map(item => renderCard(item))}
                 </div>
               </div>
 
