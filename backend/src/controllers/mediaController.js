@@ -7,7 +7,7 @@ import { incrementWatchedCount, decrementWatchedCount } from "../models/userProf
 export async function markAsWatched(req, res) {
   const userId = req.user.id;
   const { tmdbId } = req.params;
-  const { type } = req.body;
+  const { type, genres } = req.body;
 
   if (!type || !["movie", "series"].includes(type)) {
     return res.status(400).json({ error: "Invalid or missing type" });
@@ -29,7 +29,7 @@ export async function markAsWatched(req, res) {
     }
 
     // Step 3: Insert or update user_media
-    await addUserMedia(userId, media.id, "watched", true);
+    await addUserMedia(userId, media.id, "watched", genres, true);
 
     // Step 4: Update profile stats
     await incrementWatchedCount(userId, type);
@@ -49,7 +49,8 @@ export async function markAsWatched(req, res) {
 export async function addToWatchlist(req, res) {
   const userId = req.user.id;
   const { tmdbId } = req.params;
-  const { type } = req.body;
+  const { type, genres } = req.body;
+  console.log("ENADIO:",genres);
 
   if (!type || !["movie", "series"].includes(type)) {
     return res.status(400).json({ error: "Invalid or missing type" });
@@ -68,7 +69,7 @@ export async function addToWatchlist(req, res) {
       await decrementWatchedCount(userId, type);
     }    
 
-    await addUserMedia(userId, media.id, "watchlist");
+    await addUserMedia(userId, media.id, "watchlist", genres);
 
     res.status(201).json({
       media,
@@ -180,6 +181,11 @@ export async function getWatchlist(req, res) {
 
   try {
     const items = await getUserWatchlist(userId, type);
+    
+    items.forEach(item => {
+      item.genres = mapGenres(parseGenreSet(item.genres));
+    });
+
     res.json(items);
   } catch (err) {
     console.error("Get watchlist error:", err);
@@ -194,6 +200,9 @@ export async function getWatchedHistory(req, res) {
 
   try {
     const items = await getUserWatched(userId, sort, favorites, type);
+    items.forEach(item => {
+      item.genres = mapGenres(parseGenreSet(item.genres));
+    });
     res.json(items);
   } catch (err) {
     console.error("Get watched history error:", err);
@@ -330,9 +339,61 @@ export async function getFavorites(req, res) {
 
   try {
     const items = await getUserFavorites(userId, sort, type);
+    items.forEach(item => {
+      item.genres = mapGenres(parseGenreSet(item.genres));
+    });
     res.json(items);
   } catch (err) {
     console.error("Get favorites error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
+}
+
+const GENRE_MAP = {
+  28: "Action",
+  12: "Adventure",
+  16: "Animation",
+  35: "Comedy",
+  80: "Crime",
+  99: "Documentary",
+  18: "Drama",
+  10751: "Family",
+  14: "Fantasy",
+  36: "History",
+  27: "Horror",
+  10402: "Music",
+  9648: "Mystery",
+  10749: "Romance",
+  878: "Science Fiction",
+  10770: "TV Movie",
+  53: "Thriller",
+  10752: "War",
+  37: "Western",
+  10759: "Action & Adventure",
+  10762: "Kids",
+  10763: "News",
+  10764: "Reality",
+  10765: "Sci-Fi & Fantasy",
+  10766: "Soap",
+  10767: "Talk",
+  10768: "War & Politics"
+};
+
+function mapGenres(ids) {
+  if (!Array.isArray(ids)) {
+    ids = [ids]; // convert single value to array
+  }
+
+  return ids
+    .map(id => GENRE_MAP[id])
+    .filter(Boolean); // remove undefined
+}
+
+function parseGenreSet(str) {
+  if (!str) return [];
+  return str
+    .replace(/[{}"]/g, "") // remove { } "
+    .split(",")            // split by comma
+    .map(s => s.trim())    // clean spaces
+    .filter(Boolean);      // remove empty
 }

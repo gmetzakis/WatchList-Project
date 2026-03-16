@@ -620,6 +620,12 @@ body {
   color: #b1adad;
 }
 
+.unbookmark-icon {
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.2s ease;
+  color: #0b7508;
+}
+
 .favorite-icon:hover,
 .watched-icon:hover {
   transform: scale(1.15);
@@ -968,27 +974,4 @@ body {
   transform: scale(1.04);
   transform-origin: center;
   transition: transform 0.2s ease;
-}
-
-
-.section-transition-arrow {
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%) translateY(0);
-  font-size: 140px;
-  color: rgba(255, 255, 255, 0.18);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.35s ease, transform 0.35s ease;
-  z-index: 1; /* κάτω από overlays, πάνω από background */
-}
-
-.section-transition-arrow.show {
-  opacity: 1;
-  transform: translate(-50%, -50%) translateY(20px);
-}
-
-.section-transition-arrow.up.show {
-  transform: translate(-50%, -50%) translateY(-20px);
 }

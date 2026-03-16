@@ -31,8 +31,10 @@ export default function MediaDetails() {
   }, [tmdbId]);
 
   async function addToWatchlist() {
+    const ids = new Set(media.genres.map(g => String(g.id)));
+    const idArray = [...ids];
     const normalizedType = media.type === "tv" ? "series" : media.type;
-    await api.post(`/media/${tmdbId}/watchlist`, { type: normalizedType });
+    await api.post(`/media/${tmdbId}/watchlist`, { type: normalizedType, genres: idArray });
     setStatus("watchlist");
   }
 
@@ -45,8 +47,10 @@ export default function MediaDetails() {
   }
 
   async function markAsWatched() {
+    const ids = new Set(media.genres.map(g => String(g.id)));
+    const idArray = [...ids];
     const normalizedType = media.type === "tv" ? "series" : media.type;
-    await api.post(`/media/${tmdbId}/watched`, { type: normalizedType });
+    await api.post(`/media/${tmdbId}/watched`, { type: normalizedType, genres: idArray });
     setStatus("watched");
   }
 

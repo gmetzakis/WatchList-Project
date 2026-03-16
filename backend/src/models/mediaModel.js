@@ -10,14 +10,15 @@ export async function findMediaByTMDBId(tmdbId, type) {
 }
 
 export async function createMedia(mediaData) {
-  const { tmdb_id, type, title, poster_path, release_year } = mediaData;
+  const { tmdb_id, type, title, poster_path, genres, release_year } = mediaData;
   console.log(mediaData);
+  console.log(genres);
 
   const result = await db.query(
-    `INSERT INTO media (tmdb_id, type, title, poster_path, release_year)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO media (tmdb_id, type, title, poster_path, genres, release_year)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
-    [tmdb_id, type, title, poster_path, release_year]
+    [tmdb_id, type, title, poster_path, genres, release_year]
   );
 
   return result.rows[0];

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../api/axios";
 import { Link, useSearchParams } from "react-router-dom";
-import { Heart, Eye, EyeOff, BookmarkPlus, Trash } from "lucide-react";
+import { Heart, Eye, EyeOff, Bookmark, BookmarkMinus, BookmarkPlus } from "lucide-react";
 
 export default function SearchPage() {
   const [searchParams] = useSearchParams();
@@ -86,7 +86,7 @@ export default function SearchPage() {
   // ---------------------------
   async function addToWatchlist(item) {
     const type = item.type === "tv" ? "series" : item.type;
-    await api.post(`/media/${item.id}/watchlist`, { type });
+    await api.post(`/media/${item.id}/watchlist`, { type: type, genres: item.genres });
     updateItem(item.id, { status: "watchlist" });
   }
 
@@ -98,7 +98,7 @@ export default function SearchPage() {
 
   async function markAsWatched(item) {
     const type = item.type === "tv" ? "series" : item.type;
-    await api.post(`/media/${item.id}/watched`, { type });
+    await api.post(`/media/${item.id}/watched`, { type: type, genres: item.genres });
     updateItem(item.id, { status: "watched" });
   }
 
@@ -228,18 +228,18 @@ export default function SearchPage() {
                     <>
                       <span
                         className="watched-icon"
-                        onClick={(e) => { stop(e); moveToWatched(item); }}
-                        title="Move to Watched"
+                        onClick={(e) => { stop(e); removeFromWatchlist(item); }}
+                        title="Remove from Watchlist"
                       >
-                        <Eye size={32} />
+                        <BookmarkMinus size={32} />
                       </span>
 
                       <span
                         className="watched-icon"
-                        onClick={(e) => { stop(e); removeFromWatchlist(item); }}
-                        title="Remove from Watchlist"
+                        onClick={(e) => { stop(e); moveToWatched(item); }}
+                        title="Move to Watched"
                       >
-                        <Trash size={32} />
+                        <Eye size={32} />
                       </span>
                     </>
                   )}

@@ -15,6 +15,7 @@ export async function fetchTMDBMedia(tmdbId, type) {
     type,
     title: type === "movie" ? data.title : data.name,
     poster_path: data.poster_path,
+    genres: data.genres,
     release_year: (type === "movie" ? data.release_date : data.first_air_date)?.slice(0, 4)
   };
 }
@@ -29,6 +30,7 @@ export async function searchTMDB(query) {
     type: item.media_type,
     title: item.title || item.name,
     poster_path: item.poster_path,
+    genres: item.genre_ids,
     release_year: (item.release_date || item.first_air_date)?.slice(0, 4)
   }));
 }

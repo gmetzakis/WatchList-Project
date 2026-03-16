@@ -10,16 +10,16 @@ export async function findUserMedia(userId, mediaId) {
 }
 
 
-export async function addUserMedia(userId, mediaId, status, setWatchedAt = false) {
+export async function addUserMedia(userId, mediaId, status, genres, setWatchedAt = false) {
   const result = await db.query(
-    `INSERT INTO user_media (user_id, media_id, status, watched_at)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO user_media (user_id, media_id, status, genres, watched_at)
+     VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (user_id, media_id)
      DO UPDATE SET 
        status = EXCLUDED.status,
        watched_at = EXCLUDED.watched_at
      RETURNING *`,
-    [userId, mediaId, status, setWatchedAt ? new Date() : null]
+    [userId, mediaId, status, genres, setWatchedAt ? new Date() : null]
   );
 
   return result.rows[0];
@@ -69,7 +69,8 @@ export async function getUserWatchlist(userId, type) {
         m.title,
         m.poster_path,
         m.release_year,
-        um.created_at AS added_at
+        um.created_at AS added_at,
+        um.genres
      FROM user_media um
      JOIN media m ON m.id = um.media_id
      WHERE um.user_id = $1
@@ -118,7 +119,8 @@ export async function getUserWatched(userId, sort, favorites, type) {
         m.release_year,
         um.watched_at,
         um.rating,
-        um.is_favorite
+        um.is_favorite,
+        um.genres
      FROM user_media um
      JOIN media m ON m.id = um.media_id
      WHERE um.user_id = $1
@@ -189,7 +191,8 @@ export async function getUserFavorites(userId, sort, type) {
         m.release_year,
         um.watched_at,
         um.rating,
-        um.is_favorite
+        um.is_favorite,
+        um.genres
      FROM user_media um
      JOIN media m ON m.id = um.media_id
      WHERE um.user_id = $1
