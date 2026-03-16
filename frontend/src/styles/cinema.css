@@ -716,3 +716,9 @@ body {
 .media-image-wrapper:hover .media-card-img {
   transform: scale(1.3);
 }
+
+.media-image-wrapper {
+  position: relative;
+  overflow: visible;
+  display: block;   /* ← THIS FIXES FIREFOX */
+}
