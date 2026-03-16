@@ -155,19 +155,24 @@ export default function MediaDetails() {
 
           {/* ⭐ NEW — Rating UI only if watched */}
           {status === "watched" && (
-            <div style={{ marginTop: "20px" }}>
-              <h3 style={{ marginBottom: "10px" }}>Your Rating</h3>
+            <div style={{ marginTop: "50px" }}>
 
-              <div className="rating-row">
+              <div className="rating-inline">
                 {[1,2,3,4,5,6,7,8,9,10].map(n => (
                   <button
                     key={n}
                     onClick={() => handleRate(n)}
-                    className={rating >= n ? "btn-rating active" : "btn-rating"}
+                    style={{ fontSize: "24px" }}
+                    className={rating >= n ? "star active" : "star"}
                   >
-                    {n}
+                    ★
                   </button>
                 ))}
+
+                {rating && (
+                      <span style={{ fontSize: "18px" }} className="rating-label">{rating}/10</span>
+                )}
+
               </div>
 
               {rating && (
