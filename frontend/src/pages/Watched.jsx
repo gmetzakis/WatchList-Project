@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/axios.js";
-import { Heart, Eraser, EyeOff, LayoutGrid, GalleryVertical } from "lucide-react";
+import { Heart, EyeOff, LayoutGrid, GalleryVertical } from "lucide-react";
 
 export default function WatchedPage() {
   const [items, setItems] = useState([]);
@@ -14,27 +14,22 @@ export default function WatchedPage() {
   const favorites = searchParams.get("favorites") || "";
   const type = searchParams.get("type") || "all";
 
-  const [viewMode, setViewMode] = useState("grid"); 
-  // "grid" | "tape"
+  const [viewMode, setViewMode] = useState("grid");
 
- const scrollRef = useRef(null);
+  // Single-tape scroll (non-grouped mode)
+  const scrollRef = useRef(null);
 
   function scrollLeft() {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -600, behavior: "smooth" });
-    }
+    scrollRef.current?.scrollBy({ left: -600, behavior: "smooth" });
   }
 
   function scrollRight() {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 600, behavior: "smooth" });
-    }
+    scrollRef.current?.scrollBy({ left: 600, behavior: "smooth" });
   }
 
   function renderCard(item) {
     return (
       <div key={item.tmdb_id} className="media-card">
-
         <Link
           to={`/media/${item.type}/${item.tmdb_id}`}
           className="media-image-wrapper"
@@ -44,10 +39,7 @@ export default function WatchedPage() {
             className="media-card-img"
           />
 
-          {/* HOVER OVERLAY */}
           <div className="hover-controls">
-
-            {/* TITLE + YEAR — TOP LEFT */}
             <div className="hover-title">
               <span className="hover-title-text">{item.title}</span>
               <span className="hover-year-text">{item.release_year}</span>
@@ -66,16 +58,13 @@ export default function WatchedPage() {
                     ★
                   </span>
                 ))}
-
                 {item.rating && (
                   <span className="rating-label">{item.rating}/10</span>
                 )}
               </div>
             </div>
 
-            {/* ICONS — bottom left */}
             <div className="control-icons">
-
               <span
                 className={`favorite-icon ${item.is_favorite ? "active" : ""}`}
                 onClick={(e) => {
@@ -94,20 +83,41 @@ export default function WatchedPage() {
                   e.stopPropagation();
                   handleRemove(item);
                 }}
-                title="Remove from watched"
               >
                 <EyeOff size={32} />
               </span>
-
             </div>
-
           </div>
         </Link>
-
       </div>
     );
   }
 
+  // Reusable tape component for grouped mode
+  function RatingTape({ items, title }) {
+    const localRef = useRef(null);
+
+    function left() {
+      localRef.current?.scrollBy({ left: -600, behavior: "smooth" });
+    }
+    function right() {
+      localRef.current?.scrollBy({ left: 600, behavior: "smooth" });
+    }
+
+    return (
+      <div className="tape-wrapper">
+        <button className="tape-arrow left" onClick={left}>‹</button>
+
+        <div className="tape-scroll" ref={localRef}>
+          <div className="media-tape">
+            {items.map(item => renderCard(item))}
+          </div>
+        </div>
+
+        <button className="tape-arrow right" onClick={right}>›</button>
+      </div>
+    );
+  }
 
   useEffect(() => {
     load();
@@ -122,7 +132,6 @@ export default function WatchedPage() {
           type: type !== "all" ? type : undefined
         }
       });
-
       setItems(res.data);
     } catch (err) {
       console.error("Watched load error:", err);
@@ -133,11 +142,9 @@ export default function WatchedPage() {
 
   function updateQuery(newSort, newFavorites, newType) {
     const params = new URLSearchParams();
-
     if (newSort) params.set("sort", newSort);
     if (newFavorites) params.set("favorites", newFavorites);
     if (newType && newType !== "all") params.set("type", newType);
-
     navigate(`/watched?${params.toString()}`);
   }
 
@@ -146,8 +153,7 @@ export default function WatchedPage() {
   }
 
   function handleFavoritesToggle() {
-    const newValue = favorites === "true" ? "" : "true";
-    updateQuery(sort, newValue, type);
+    updateQuery(sort, favorites === "true" ? "" : "true", type);
   }
 
   function handleTypeChange(e) {
@@ -160,9 +166,7 @@ export default function WatchedPage() {
         data: { type: item.type }
       });
       setItems(prev => prev.filter(i => i.tmdb_id !== item.tmdb_id));
-    } catch (err) {
-      console.error("Remove watched error:", err);
-    }
+    } catch (err) {}
   }
 
   async function handleRate(item, rating) {
@@ -171,31 +175,10 @@ export default function WatchedPage() {
         type: item.type,
         rating
       });
-
       setItems(prev =>
-        prev.map(i =>
-          i.tmdb_id === item.tmdb_id ? { ...i, rating } : i
-        )
+        prev.map(i => i.tmdb_id === item.tmdb_id ? { ...i, rating } : i)
       );
-    } catch (err) {
-      console.error("Rate error:", err);
-    }
-  }
-
-  async function handleRemoveRating(item) {
-    try {
-      await api.delete(`/media/${item.tmdb_id}/rating`, {
-        data: { type: item.type }
-      });
-
-      setItems(prev =>
-        prev.map(i =>
-          i.tmdb_id === item.tmdb_id ? { ...i, rating: null } : i
-        )
-      );
-    } catch (err) {
-      console.error("Remove rating error:", err);
-    }
+    } catch (err) {}
   }
 
   async function handleFavorite(item) {
@@ -203,15 +186,10 @@ export default function WatchedPage() {
       await api.post(`/media/${item.tmdb_id}/favorite`, {
         type: item.type
       });
-
       setItems(prev =>
-        prev.map(i =>
-          i.tmdb_id === item.tmdb_id ? { ...i, is_favorite: true } : i
-        )
+        prev.map(i => i.tmdb_id === item.tmdb_id ? { ...i, is_favorite: true } : i)
       );
-    } catch (err) {
-      console.error("Favorite error:", err);
-    }
+    } catch (err) {}
   }
 
   async function handleUnfavorite(item) {
@@ -219,26 +197,36 @@ export default function WatchedPage() {
       await api.delete(`/media/${item.tmdb_id}/favorite`, {
         data: { type: item.type }
       });
-
       setItems(prev =>
-        prev.map(i =>
-          i.tmdb_id === item.tmdb_id ? { ...i, is_favorite: false } : i
-        )
+        prev.map(i => i.tmdb_id === item.tmdb_id ? { ...i, is_favorite: false } : i)
       );
-    } catch (err) {
-      console.error("Unfavorite error:", err);
-    }
+    } catch (err) {}
   }
 
-  if (loading) {
-    return <div>Loading watched history...</div>;
-  }
+  if (loading) return <div>Loading watched history...</div>;
+
+  const isRatingSort = sort === "rating_desc" || sort === "rating_asc";
+
+  // Group items by rating
+  const grouped = {
+    1: [], 2: [], 3: [], 4: [], 5: [],
+    6: [], 7: [], 8: [], 9: [], 10: [],
+    unrated: []
+  };
+
+  items.forEach(item => {
+    if (!item.rating) grouped.unrated.push(item);
+    else grouped[item.rating].push(item);
+  });
+
+  const orderDesc = [10,9,8,7,6,5,4,3,2,1,"unrated"];
+  const orderAsc = [1,2,3,4,5,6,7,8,9,10,"unrated"];
+  const activeOrder = sort === "rating_desc" ? orderDesc : orderAsc;
 
   return (
     <div className="page-container">
       <h1>Watched</h1>
 
-      {/* FILTER BAR */}
       <div className="filter-bar">
 
         <div className="view-toggle-container">
@@ -257,14 +245,9 @@ export default function WatchedPage() {
           </div>
         </div>
 
-
         <div>
           <label className="filter-label">Sort:</label>
-          <select
-            value={sort}
-            onChange={handleSortChange}
-            className="filter-select"
-          >
+          <select value={sort} onChange={handleSortChange} className="filter-select">
             <option value="">None</option>
             <option value="rating_desc">Rating Desc</option>
             <option value="rating_asc">Rating Asc</option>
@@ -280,47 +263,72 @@ export default function WatchedPage() {
 
         <div>
           <label className="filter-label">Type:</label>
-          <select
-            value={type}
-            onChange={handleTypeChange}
-            className="filter-select"
-          >
+          <select value={type} onChange={handleTypeChange} className="filter-select">
             <option value="all">All</option>
             <option value="movie">Movies</option>
             <option value="series">Shows</option>
           </select>
         </div>
-
       </div>
 
-      {items.length === 0 && (
-        <p>You haven't watched anything yet.</p>
-      )}
+      {items.length === 0 && <p>You haven't watched anything yet.</p>}
 
-      {/* GRID VIEW */}
-      {viewMode === "grid" && (
-        <div className="media-grid">
-          {items.map(item => renderCard(item))}
+      {/* GROUPED MODE */}
+      {isRatingSort && (
+        <div className="rating-groups">
+          {activeOrder.map(key => {
+            const bucket = grouped[key];
+            if (!bucket || bucket.length === 0) return null;
+
+            const title = key === "unrated"
+              ? "Unrated"
+              : (
+                  <>
+                    {key}/10 <span className="star active">★</span>
+                  </>
+                );
+            return (
+              <div key={key} className="rating-section">
+                <h2 className="rating-section-title">{title}</h2>
+
+                {viewMode === "grid" ? (
+                  <div className="media-grid">
+                    {bucket.map(item => renderCard(item))}
+                  </div>
+                ) : (
+                  <RatingTape items={bucket} title={title}
+                    />
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* TAPE VIEW */}
-      {viewMode === "tape" && (
-        <div className="tape-wrapper">
-
-          <button className="tape-arrow left" onClick={scrollLeft}>‹</button>
-
-          <div className="tape-scroll" ref={scrollRef}>
-            <div className="media-tape">
+      {/* NON-GROUPED MODE */}
+      {!isRatingSort && (
+        <>
+          {viewMode === "grid" && (
+            <div className="media-grid">
               {items.map(item => renderCard(item))}
             </div>
-          </div>
+          )}
 
-          <button className="tape-arrow right" onClick={scrollRight}>›</button>
+          {viewMode === "tape" && (
+            <div className="tape-wrapper">
+              <button className="tape-arrow left" onClick={scrollLeft}>‹</button>
 
-        </div>
+              <div className="tape-scroll" ref={scrollRef}>
+                <div className="media-tape">
+                  {items.map(item => renderCard(item))}
+                </div>
+              </div>
+
+              <button className="tape-arrow right" onClick={scrollRight}>›</button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
-
 }

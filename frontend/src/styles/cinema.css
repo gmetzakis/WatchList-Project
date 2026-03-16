@@ -841,6 +841,25 @@ body {
   z-index: 20;
 }
 
+.rating-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  margin-top: 30px;
+}
+
+.rating-section {
+  width: 100%;
+}
+
+.rating-section-title {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 14px;
+  padding-left: 4px;
+  color: rgba(255,255,255,0.9);
+}
+
 .view-toggle-container {
   display: flex;
   gap: 12px;
@@ -857,7 +876,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: 
+  transition:
     background 0.2s ease,
     border-color 0.2s ease,
     transform 0.2s ease,
@@ -876,4 +895,8 @@ body {
   border-color: rgba(255,255,255,0.5);
   color: white;
   transform: scale(1.12);
+}
+
+.rating-section-title .star.active {
+  font-size: 1.1em;
 }
