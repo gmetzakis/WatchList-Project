@@ -39,30 +39,33 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="page-container">
-      
-      <form className="search-bar" onSubmit={handleSearch}>
-        <input
-          type="text"
-          placeholder="Search movies or series..."
-          className="searchpage-input"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+  <div className="page-container">
+    
+    <form className="search-bar" onSubmit={handleSearch}>
+      <input
+        type="text"
+        placeholder="Search movies or series..."
+        className="searchpage-input"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
 
-        <button className="search-btn" type="submit">
-          Search
-        </button>
-      </form>
+      <button className="search-btn" type="submit">
+        Search
+      </button>
+    </form>
 
-      {loading && <p>Searching...</p>}
+    {loading && <p>Searching...</p>}
 
-      <div className="media-grid">
-        {results.map((item) => (
+    <div className="media-grid">
+       {results
+        .filter(item => item.poster_path)   // ⬅️ skip items without images
+        .map((item) => (
+        <div key={item.id} className="media-card">
+
           <Link
-            key={item.id}
             to={`/media/${item.type}/${item.id}`}
-            className="media-card"
+            className="media-image-wrapper"
           >
             <img
               src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
@@ -70,13 +73,28 @@ export default function SearchPage() {
               className="media-card-img"
             />
 
-            <h3 className="media-title">{item.title || item.name}</h3>
-            <p className="media-year">
-              {(item.release_date || item.first_air_date || "").slice(0, 4)}
-            </p>
+            {/* HOVER OVERLAY */}
+            <div className="hover-controls">
+
+              {/* TITLE + YEAR — TOP LEFT */}
+              <div className="hover-title">
+                <span className="hover-title-text">
+                  {item.title || item.name}
+                </span>
+
+                <span className="hover-year-text">
+                  {(item.release_year || "").slice(0, 4)}
+                </span>
+              </div>
+
+            </div>
           </Link>
-        ))}
-      </div>
+
+        </div>
+      ))}
     </div>
-  );
+
+  </div>
+);
+
 }
