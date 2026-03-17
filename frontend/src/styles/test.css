@@ -901,12 +901,13 @@ body {
 }
 
 .star {
-  font-size: 18px;
+  font-size: 20px;
   cursor: pointer;
   color: rgba(100, 100, 100, 0.7);
   transition: all 0.2s cubic-bezier(0.23, 1, 0.320, 1);
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
   display: inline-block;
+  transform-origin: center;
 }
 
 .star.active {
@@ -942,7 +943,7 @@ body {
 .rating-inline {
   margin-top: 6px;
   align-items: center;
-  gap: 6px;
+  gap: 1px;
 }
 
 .rating-inline .star {
@@ -965,7 +966,7 @@ body {
 }
 
 .rating-inline .rating-label {
-  font-size: 14.5px;
+  font-size: 15px;
   color: #ddd;
 }
 

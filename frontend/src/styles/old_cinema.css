@@ -1,0 +1,977 @@
+/* ===========================
+   GLOBAL THEME
+   =========================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap');
+
+
+:root {
+  --bg: #0a0a0a;
+  --bg-alt: #0f0f0f;
+  --card-bg: #141414;
+  --card-bg-hover: #1a1a1a;
+
+  --text: #f2f2f2;
+  --text-muted: #999;
+
+  --accent: #e50914; /* Netflix red */
+  --favorite: #d4af37; /* muted gold */
+  --favorite-dark: #b8962f;
+
+  --shadow-strong: rgba(0, 0, 0, 0.85);
+  --shadow-soft: rgba(255, 255, 255, 0.12);
+}
+
+/* Background + Typography */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Montserrat", sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Page container */
+.page-container {
+  width: 100%;
+  max-width: 100%;
+  padding: 0 20px; /* optional breathing room */
+  margin: 0 auto;
+}
+
+/* ===========================
+   FILTER BAR
+   =========================== */
+
+.filter-bar {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.filter-label {
+  color: var(--text);
+  margin-right: 10px;
+  font-weight: 500;
+}
+
+.filter-select {
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #222;
+  color: var(--text);
+  border: 1px solid #444;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.filter-select:hover {
+  background: #2c2c2c;
+}
+
+.btn-fav-toggle {
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: #333;
+  color: var(--text);
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.25s ease;
+}
+
+.btn-fav-toggle:hover {
+  background: #3d3d3d;
+}
+
+.btn-fav-toggle.active {
+  background: var(--favorite);
+  color: black;
+  box-shadow: 0 0 12px var(--favorite-dark);
+}
+
+/* ===========================
+   RATING
+   =========================== */
+
+.rating-row {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.btn-rating {
+  width: 28px;
+  height: 28px;
+  margin: 2px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  background: #333;
+  color: var(--text);
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.btn-rating:hover {
+  background: #444;
+}
+
+.btn-rating.active {
+  background: var(--favorite);
+  color: black;
+  box-shadow: 0 0 8px var(--favorite-dark);
+}
+
+/* Remove rating */
+.btn-remove-rating {
+  margin-bottom: 10px;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: 0.2s ease;
+}
+
+.btn-remove-rating:hover {
+  color: #ff4d4d;
+}
+
+/* ===========================
+   ACTION BUTTONS
+   =========================== */
+
+.btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  margin-top: 8px;
+  font-weight: 600;
+  transition: 0.25s ease;
+}
+
+/* Remove watched */
+.btn-remove {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-remove:hover {
+  background: #ff1a1a;
+}
+
+/* Add to favorites */
+.btn-favorite {
+  background: var(--favorite);
+  color: black;
+}
+
+.btn-favorite:hover {
+  background: var(--favorite-dark);
+}
+
+/* Remove favorite */
+.btn-unfavorite {
+  background: #333;
+  color: var(--text);
+}
+
+.btn-unfavorite:hover {
+  background: #444;
+}
+
+/* ===========================
+   CINEMATIC HEADER
+   =========================== */
+
+.cinema-header {
+  width: 100%;
+  padding: 18px 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(0,0,0,0));
+  backdrop-filter: blur(6px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
+
+.cinema-header-inner {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cinema-logo {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--favorite);
+  letter-spacing: 1px;
+  text-shadow: 0 0 12px rgba(255,215,0,0.3);
+}
+
+.cinema-nav {
+  display: flex;
+  gap: 24px;
+}
+
+.cinema-nav a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: 0.25s ease;
+  padding-bottom: 2px;
+}
+
+.cinema-nav a:hover {
+  color: var(--favorite);
+  text-shadow: 0 0 8px rgba(255,215,0,0.3);
+}
+
+/* ===========================
+   AUTH PAGES (LOGIN / REGISTER)
+   =========================== */
+
+.auth-container {
+  max-width: 380px;
+  margin: 80px auto;
+  background: #141414;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.8);
+  text-align: center;
+}
+
+.auth-title {
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  color: var(--favorite);
+  text-shadow: 0 0 10px rgba(255,215,0,0.25);
+}
+
+.auth-error {
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-input {
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #1c1c1c;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--favorite);
+}
+
+.auth-btn {
+  padding: 12px;
+  border-radius: 6px;
+  border: none;
+  background: var(--favorite);
+  color: black;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.auth-btn:hover {
+  background: var(--favorite-dark);
+}
+
+.auth-switch {
+  margin-top: 16px;
+  color: var(--text-muted);
+}
+
+.auth-switch a {
+  color: var(--favorite);
+  text-decoration: none;
+}
+
+.auth-switch a:hover {
+  text-shadow: 0 0 8px rgba(255,215,0,0.3);
+}
+
+/* ===========================
+   SEARCH BAR
+   =========================== */
+
+.search-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--favorite);
+}
+
+.search-btn {
+  padding: 12px 18px;
+  border-radius: 6px;
+  border: none;
+  background: var(--favorite);
+  color: black;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.search-btn:hover {
+  background: var(--favorite-dark);
+}
+
+.details-container {
+  padding: 24px;
+}
+
+.details-back {
+  background: transparent;
+  border: none;
+  color: var(--favorite);
+  cursor: pointer;
+  margin-bottom: 20px;
+  font-size: 1rem;
+}
+
+.details-layout {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 40px;
+}
+
+.details-poster {
+  width: 320px;
+  border-radius: 12px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.8);
+}
+
+.details-info {
+  flex: 1;
+}
+
+.details-title {
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+}
+
+.details-year {
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.details-overview {
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.details-meta {
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.details-actions {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.details-section-title {
+  font-size: 1.6rem;
+  margin: 40px 0 20px;
+}
+
+.details-cast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.details-cast-img {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.details-cast-name {
+  text-align: center;
+  margin-top: 6px;
+  font-size: 0.9rem;
+}
+
+.details-recommend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+}
+
+.details-recommend-img {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.details-recommend-title {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  font-size: 22px;
+  cursor: pointer;
+  color: white;
+  transition: color 0.2s ease;
+}
+
+.search-icon:hover {
+  color: #ccc;
+}
+
+.search-input {
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #111;
+  border: 1px solid #333;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: white;
+  width: 200px;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: 
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    width 0.2s ease;
+}
+
+.search-wrapper.open .search-input {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-50%) translateX(0);
+}
+
+.searchpage-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #1a1a1a;
+  color: white;
+}
+
+.searchpage-input:focus {
+  border-color: #666;
+  outline: none;
+}
+
+
+.control-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 8px;
+  gap: 6px;
+}
+
+/* ===========================
+   POSTER GRID
+   =========================== */
+
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 18px;
+  padding: 10px 0;
+}
+
+/* ===========================
+   MEDIA CARD
+   =========================== */
+
+.media-card {
+  position: relative;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  transition: transform 0.3s ease;
+  z-index: 1;
+}
+
+.media-card:hover {
+  z-index: 50;
+  transform: translateY(-6px);
+}
+
+/* ===========================
+   POSTER IMAGE
+   =========================== */
+
+.media-image-wrapper {
+  position: relative;
+  overflow: visible;
+}
+
+.media-card-img {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  transition: transform 0.35s ease, filter 0.35s ease;
+  transform-origin: center;
+}
+
+.media-card:hover .media-card-img {
+  transform: scale(1.42);
+  filter: brightness(0.38) contrast(1.1) blur(3px);
+}
+
+/* ===========================
+   HOVER OVERLAY
+   =========================== */
+
+.hover-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.media-card:hover .hover-controls {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ===========================
+   TITLE + YEAR — TOP LEFT
+   =========================== */
+
+.hover-title {
+  position: absolute;
+  text-align: left;
+  width: 100%; 
+}
+
+.hover-title-text {
+  display: block;
+  font-size: 20px;        /* bigger title */
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;      /* more breathing */
+  margin-bottom: 4px;     /* space between title & year */
+}
+
+.hover-year-text {
+  display: block;
+  font-size: 15px;        /* smaller year */
+  color: #ccc;
+  line-height: 1.2;
+}
+
+
+/* ===========================
+   ICONS — TOP RIGHT
+   =========================== */
+
+.control-icons {
+  position: absolute;
+  bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;   /* ← REAL spacing */
+}
+
+
+.favorite-icon,
+.watched-icon {
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.2s ease;
+  color: #b1adad;
+}
+
+.unbookmark-icon {
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.2s ease;
+  color: #0b7508;
+}
+
+.favorite-icon:hover,
+.watched-icon:hover {
+  transform: scale(1.15);
+  color: #fff;
+}
+
+.favorite-icon.active svg {
+  stroke: #e63946;
+  fill: #e63946;
+}
+
+/* ===========================
+   RATING — BOTTOM LEFT
+   =========================== */
+.rating-stars {
+  position: absolute;
+  bottom: 0px;
+  display: block;
+  align-items: center;
+  gap: 6px;
+}
+
+
+.star {
+  font-size: 18px;
+  cursor: pointer;
+  color: #555;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.star.active {
+  color: gold;
+}
+
+.star:hover {
+  transform: scale(1.2);
+  color: #fff;
+}
+
+.rating-label {
+  font-size: 15px;
+  color: #ddd;
+  margin-left: 4px;
+}
+
+.remove-rating {
+  margin-left: 10px;
+  position: relative;
+  top: 1px;
+}
+
+.remove-rating:hover {
+  transform: scale(1.2);
+  color: #fff;
+}
+
+
+.rating-inline {
+  margin-top: 6px;
+  align-items: center;
+  gap: 6px;
+}
+
+.rating-inline .star {
+  font-size: 16px;
+  cursor: pointer;
+  color: #666;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.rating-inline .star.active {
+  color: gold;
+}
+
+.rating-inline .star:hover {
+  transform: scale(1.2);
+  color: #fff;
+}
+
+.rating-inline .rating-label {
+  font-size: 15px;
+  color: #ddd;
+}
+
+.rating-inline .remove-rating {
+  margin-left: 8px;
+  cursor: pointer;
+  color: #bbb;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.rating-inline .remove-rating:hover {
+  transform: scale(1.2);
+  color: #fff;
+}
+
+.media-title {
+  margin-top: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  text-align: left;
+}
+
+.media-year {
+  font-size: 14px;
+  color: #bbb;
+  margin-top: 2px;
+  text-align: left;
+}
+
+.media-image-wrapper:hover .media-card-img {
+  transform: scale(1.3);
+}
+
+.media-image-wrapper {
+  position: relative;
+  overflow: visible;
+  display: block;   /* ← THIS FIXES FIREFOX */
+}
+
+.media-tape {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  overflow-x: auto;
+  overflow-y: hidden;      /* important: accept the clipping */
+  padding: 40px 0;         /* give vertical breathing room */
+}
+
+
+.media-tape::-webkit-scrollbar {
+  height: 8px;
+}
+
+.media-tape::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+.media-tape .media-card {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  margin-bottom: 20px;
+}
+
+.media-tape .media-card:hover {
+  transform: scale(0.9);
+  z-index: 1000;             /* ensures it floats above others */
+  overflow-x: visible;
+  overflow-y: visible;
+}
+
+.tape-wrapper {
+  position: relative;
+  width: 100%;
+  margin-top: 20px;
+  padding: 0 60px; /* space so arrows don't overlap cards */
+  overflow: visible;
+}
+
+.tape-scroll {
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+.media-tape {
+  display: flex;
+  gap: 32px;
+  overflow: visible;
+}
+
+.tape-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+  background: rgba(0,0,0,0.6);
+  border: none;
+  color: #bbb;
+  font-size: 150px;
+  width: 5px;
+  height: 80px;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+/* Move arrows OUTSIDE the tape */
+.tape-arrow.left {
+  left: 0;              /* no negative offset */
+  transform: translate(-100%, -50%); /* move outside visually */
+}
+
+.tape-arrow.right {
+  right: 0;
+  transform: translate(100%, -50%);
+}
+
+.tape-arrow:hover {
+  transform: translateY(-50%) scale(1.2);
+  color: #fff;
+}
+
+
+.media-card {
+  position: relative;
+  z-index: 1;
+  transition: transform 0.2s ease, z-index 0.2s ease;
+}
+
+.media-card:hover {
+  transform: translateY(-20px) scale(1.05);
+  z-index: 20;
+}
+
+.rating-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  margin-top: 30px;
+}
+
+.rating-section {
+  width: 100%;
+}
+
+.rating-section-title {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 14px;
+  padding-left: 4px;
+  color: rgba(255,255,255,0.9);
+}
+
+.view-toggle-container {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.view-toggle-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    color 0.2s ease;
+  color: rgba(255,255,255,0.6);
+}
+
+.view-toggle-box:hover {
+  transform: scale(1.12);
+  background: rgba(255,255,255,0.15);
+  color: white;
+}
+
+.view-toggle-box.active {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.5);
+  color: white;
+  transform: scale(1.12);
+}
+
+.rating-section-title .star.active {
+  font-size: 1.1em;
+}
+
+/* --------------------------------------------- */
+/* TAPE VIEW — BIGGER HOVER DETAILS              */
+/* --------------------------------------------- */
+
+/* Bigger title */
+.media-tape .hover-title-text {
+  display: block;
+  font-size: 1.8rem;       /* bigger title */
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;      /* more breathing */
+  margin-bottom: 4px;     /* space between title & year */
+}
+
+/* Bigger year */
+.media-tape .hover-year-text {
+  font-size: 1.5rem;
+  opacity: 0.9;
+}
+
+/* Bigger stars */
+.media-tape .rating-inline .star {
+  font-size: 1.4rem;
+  margin-right: 4px;
+}
+
+/* Bigger rating label */
+.media-tape .rating-inline .rating-label {
+  font-size: 1.2rem;
+  margin-left: 6px;
+}
+
+/* Bigger icons (favorite, watched) */
+.media-tape .control-icons span svg {
+  width: 40px;
+  height: 40px;
+}
+
+/* More spacing between icons */
+.media-tape .control-icons {
+  position: absolute;
+  bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;   /* ← REAL spacing */
+}
+
+/* More breathing room inside hover overlay */
+.media-tape .hover-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  font-size: 1.2rem;
+}
+
+/* Slightly more spacing inside the title block */
+.media-tape .hover-title {
+  gap: 6px;
+}
+
+/* Optional: subtle scale-up on hover for cinematic feel */
+.media-tape .media-card:hover .hover-controls {
+  transform: scale(1.04);
+  transform-origin: center;
+  transition: transform 0.2s ease;
+}
