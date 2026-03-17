@@ -1,7 +1,55 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useMemo } from "react";
 import api from "../api/axios.js";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Heart, Eraser, EyeOff, LayoutGrid, GalleryVertical } from "lucide-react";
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
+
+// Extracted EmblaCarousel component
+function EmblaCarousel({ items, renderCard }) {
+  // Using useMemo ensures the plugin is instantiated exactly once per carousel instance
+  const plugins = useMemo(() => [
+    Autoplay({ delay: 4000, stopOnInteraction: true, stopOnMouseEnter: true })
+  ], []);
+
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: false,
+      align: 'start',
+      slidesToScroll: 3,
+      breakpoints: {
+        '(min-width: 768px)': { slidesToScroll: 4 },
+        '(min-width: 1024px)': { slidesToScroll: 5 }
+      }
+    },
+    plugins
+  );
+
+  const scrollPrev = () => {
+    if (emblaApi) emblaApi.scrollPrev();
+  };
+  const scrollNext = () => {
+    if (emblaApi) emblaApi.scrollNext();
+  };
+
+  return (
+    <div className="embla-carousel">
+      <button className="embla-arrow left" onClick={scrollPrev}>‹</button>
+
+      <div className="embla-viewport" ref={emblaRef}>
+        <div className="embla-container">
+          {items.map((item) => (
+            <div key={item.tmdb_id} className="embla-slide">
+              {renderCard(item)}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button className="embla-arrow right" onClick={scrollNext}>›</button>
+    </div>
+  );
+}
 
 export default function FavoritesPage() {
   const [items, setItems] = useState([]);
@@ -19,20 +67,6 @@ export default function FavoritesPage() {
 
   const [viewMode, setViewMode] = useState("grid"); 
   // "grid" | "tape"
-
-  const scrollRef = useRef(null);
-
-  function scrollLeft() {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -600, behavior: "smooth" });
-    }
-  }
-
-  function scrollRight() {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 600, behavior: "smooth" });
-    }
-  }
 
   function renderCard(item) {
     return (
@@ -111,32 +145,6 @@ export default function FavoritesPage() {
           </div>
         </Link>
 
-      </div>
-    );
-  }
-
-    // Reusable tape component for grouped mode
-  function RatingTape({ items, title }) {
-    const localRef = useRef(null);
-
-    function left() {
-      localRef.current?.scrollBy({ left: -600, behavior: "smooth" });
-    }
-    function right() {
-      localRef.current?.scrollBy({ left: 600, behavior: "smooth" });
-    }
-
-    return (
-      <div className="tape-wrapper">
-        <button className="tape-arrow left" onClick={left}>‹</button>
-
-        <div className="tape-scroll" ref={localRef}>
-          <div className="media-tape">
-            {items.map(item => renderCard(item))}
-          </div>
-        </div>
-
-        <button className="tape-arrow right" onClick={right}>›</button>
       </div>
     );
   }
@@ -365,8 +373,7 @@ export default function FavoritesPage() {
                     {bucket.map(item => renderCard(item))}
                   </div>
                 ) : (
-                  <RatingTape items={bucket} title={title}
-                    />
+                  <EmblaCarousel items={bucket} renderCard={renderCard} />
                 )}
               </div>
             );
@@ -384,17 +391,7 @@ export default function FavoritesPage() {
           )}
 
           {viewMode === "tape" && (
-            <div className="tape-wrapper">
-              <button className="tape-arrow left" onClick={scrollLeft}>‹</button>
-
-              <div className="tape-scroll" ref={scrollRef}>
-                <div className="media-tape">
-                  {filteredItems.map(item => renderCard(item))}
-                </div>
-              </div>
-
-              <button className="tape-arrow right" onClick={scrollRight}>›</button>
-            </div>
+             <EmblaCarousel items={filteredItems} renderCard={renderCard} />
           )}
         </>
       )}

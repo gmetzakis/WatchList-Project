@@ -1,9 +1,56 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/axios.js";
 import { Heart, EyeOff, LayoutGrid, GalleryVertical } from "lucide-react";
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
+
+// Extracted EmblaCarousel component
+function EmblaCarousel({ items, renderCard }) {
+  // Using useMemo ensures the plugin is instantiated exactly once per carousel instance
+  // This prevents shared-plugin crashes, and prevents infinite initialization loops.
+  const plugins = useMemo(() => [
+    Autoplay({ delay: 4000, stopOnInteraction: true, stopOnMouseEnter: true })
+  ], []);
+
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: false,
+      align: 'start',
+      slidesToScroll: 3,
+      breakpoints: {
+        '(min-width: 768px)': { slidesToScroll: 4 },
+        '(min-width: 1024px)': { slidesToScroll: 5 }
+      }
+    },
+    plugins
+  );
+
+  const scrollPrev = () => {
+    if (emblaApi) emblaApi.scrollPrev();
+  };
+  const scrollNext = () => {
+    if (emblaApi) emblaApi.scrollNext();
+  };
+
+  return (
+    <div className="embla-carousel">
+      <button className="embla-arrow left" onClick={scrollPrev}>‹</button>
+
+      <div className="embla-viewport" ref={emblaRef}>
+        <div className="embla-container">
+          {items.map((item) => (
+            <div key={item.tmdb_id} className="embla-slide">
+              {renderCard(item)}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button className="embla-arrow right" onClick={scrollNext}>›</button>
+    </div>
+  );
+}
 
 export default function WatchedPage() {
   const [items, setItems] = useState([]);
@@ -20,41 +67,7 @@ export default function WatchedPage() {
   const type = searchParams.get("type") || "all";
   const genre = searchParams.get("genre") || "all";
 
-
   const [viewMode, setViewMode] = useState("grid");
-
-  // Embla Carousel setup for non-grouped mode
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    {
-      loop: false,
-      align: 'start',
-      slidesToScroll: 3,
-      breakpoints: {
-        '(min-width: 768px)': { slidesToScroll: 4 },
-        '(min-width: 1024px)': { slidesToScroll: 5 }
-      }
-    },
-    [Autoplay({ delay: 4000 })]
-  );
-
-  const [isHovered, setIsHovered] = useState(false);
-
-  const scrollPrev = () => emblaApi?.scrollPrev();
-  const scrollNext = () => emblaApi?.scrollNext();
-
-  // Handle autoplay pause on hover
-  useEffect(() => {
-    if (!emblaApi) return;
-
-    const autoplay = emblaApi.plugins().autoplay;
-    if (autoplay) {
-      if (isHovered) {
-        autoplay.stop();
-      } else {
-        autoplay.play();
-      }
-    }
-  }, [emblaApi, isHovered]);
 
   function renderCard(item) {
     return (
@@ -118,73 +131,6 @@ export default function WatchedPage() {
             </div>
           </div>
         </Link>
-      </div>
-    );
-  }
-
-  // Embla Carousel component for grouped mode
-  function EmblaCarousel({ items, title }) {
-    const [emblaRef, emblaApi] = useEmblaCarousel(
-      {
-        loop: false,
-        align: 'start',
-        slidesToScroll: 3,
-        breakpoints: {
-          '(min-width: 768px)': { slidesToScroll: 4 },
-          '(min-width: 1024px)': { slidesToScroll: 5 }
-        }
-      },
-      [Autoplay({ delay: 4000 })]
-    );
-
-    const [isHovered, setIsHovered] = useState(false);
-
-    const scrollPrev = () => emblaApi?.scrollPrev();
-    const scrollNext = () => emblaApi?.scrollNext();
-
-    // Handle autoplay pause on hover
-    useEffect(() => {
-      if (!emblaApi) return;
-
-      const autoplay = emblaApi.plugins().autoplay;
-      if (autoplay) {
-        if (isHovered) {
-          autoplay.stop();
-        } else {
-          autoplay.play();
-        }
-      }
-    }, [emblaApi, isHovered]);
-
-    // Start autoplay initially
-    useEffect(() => {
-      if (!emblaApi) return;
-
-      const autoplay = emblaApi.plugins().autoplay;
-      if (autoplay) {
-        autoplay.play();
-      }
-    }, [emblaApi]);
-
-    return (
-      <div
-        className="embla-carousel"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        <button className="embla-arrow left" onClick={scrollPrev}>‹</button>
-
-        <div className="embla-viewport" ref={emblaRef}>
-          <div className="embla-container">
-            {items.map((item, index) => (
-              <div key={item.tmdb_id} className="embla-slide">
-                {renderCard(item)}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <button className="embla-arrow right" onClick={scrollNext}>›</button>
       </div>
     );
   }
@@ -396,7 +342,7 @@ export default function WatchedPage() {
                     {bucket.map(item => renderCard(item))}
                   </div>
                 ) : (
-                  <EmblaCarousel items={bucket} title={title} />
+                  <EmblaCarousel items={bucket} renderCard={renderCard} />
                 )}
               </div>
             );
@@ -414,25 +360,7 @@ export default function WatchedPage() {
           )}
 
           {viewMode === "tape" && (
-            <div
-              className="embla-carousel"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-            >
-              <button className="embla-arrow left" onClick={scrollPrev}>‹</button>
-
-              <div className="embla-viewport" ref={emblaRef}>
-                <div className="embla-container">
-                  {filteredItems.map((item, index) => (
-                    <div key={item.tmdb_id} className="embla-slide">
-                      {renderCard(item)}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <button className="embla-arrow right" onClick={scrollNext}>›</button>
-            </div>
+            <EmblaCarousel items={filteredItems} renderCard={renderCard} />
           )}
         </>
       )}
