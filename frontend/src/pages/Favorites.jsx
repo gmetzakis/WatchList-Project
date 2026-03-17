@@ -132,7 +132,7 @@ export default function FavoritesPage() {
 
         <div className="tape-scroll" ref={localRef}>
           <div className="media-tape">
-            {filteredItems.map(item => renderCard(item))}
+            {items.map(item => renderCard(item))}
           </div>
         </div>
 
