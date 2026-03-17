@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/axios.js";
 import { Heart, EyeOff, LayoutGrid, GalleryVertical } from "lucide-react";
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
 
 export default function WatchedPage() {
   const [items, setItems] = useState([]);
@@ -21,16 +23,38 @@ export default function WatchedPage() {
 
   const [viewMode, setViewMode] = useState("grid");
 
-  // Single-tape scroll (non-grouped mode)
-  const scrollRef = useRef(null);
+  // Embla Carousel setup for non-grouped mode
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: false,
+      align: 'start',
+      slidesToScroll: 3,
+      breakpoints: {
+        '(min-width: 768px)': { slidesToScroll: 4 },
+        '(min-width: 1024px)': { slidesToScroll: 5 }
+      }
+    },
+    [Autoplay({ delay: 4000 })]
+  );
 
-  function scrollLeft() {
-    scrollRef.current?.scrollBy({ left: -600, behavior: "smooth" });
-  }
+  const [isHovered, setIsHovered] = useState(false);
 
-  function scrollRight() {
-    scrollRef.current?.scrollBy({ left: 600, behavior: "smooth" });
-  }
+  const scrollPrev = () => emblaApi?.scrollPrev();
+  const scrollNext = () => emblaApi?.scrollNext();
+
+  // Handle autoplay pause on hover
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    const autoplay = emblaApi.plugins().autoplay;
+    if (autoplay) {
+      if (isHovered) {
+        autoplay.stop();
+      } else {
+        autoplay.play();
+      }
+    }
+  }, [emblaApi, isHovered]);
 
   function renderCard(item) {
     return (
@@ -98,28 +122,69 @@ export default function WatchedPage() {
     );
   }
 
-  // Reusable tape component for grouped mode
-  function RatingTape({ items, title }) {
-    const localRef = useRef(null);
+  // Embla Carousel component for grouped mode
+  function EmblaCarousel({ items, title }) {
+    const [emblaRef, emblaApi] = useEmblaCarousel(
+      {
+        loop: false,
+        align: 'start',
+        slidesToScroll: 3,
+        breakpoints: {
+          '(min-width: 768px)': { slidesToScroll: 4 },
+          '(min-width: 1024px)': { slidesToScroll: 5 }
+        }
+      },
+      [Autoplay({ delay: 4000 })]
+    );
 
-    function left() {
-      localRef.current?.scrollBy({ left: -600, behavior: "smooth" });
-    }
-    function right() {
-      localRef.current?.scrollBy({ left: 600, behavior: "smooth" });
-    }
+    const [isHovered, setIsHovered] = useState(false);
+
+    const scrollPrev = () => emblaApi?.scrollPrev();
+    const scrollNext = () => emblaApi?.scrollNext();
+
+    // Handle autoplay pause on hover
+    useEffect(() => {
+      if (!emblaApi) return;
+
+      const autoplay = emblaApi.plugins().autoplay;
+      if (autoplay) {
+        if (isHovered) {
+          autoplay.stop();
+        } else {
+          autoplay.play();
+        }
+      }
+    }, [emblaApi, isHovered]);
+
+    // Start autoplay initially
+    useEffect(() => {
+      if (!emblaApi) return;
+
+      const autoplay = emblaApi.plugins().autoplay;
+      if (autoplay) {
+        autoplay.play();
+      }
+    }, [emblaApi]);
 
     return (
-      <div className="tape-wrapper">
-        <button className="tape-arrow left" onClick={left}>‹</button>
+      <div
+        className="embla-carousel"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <button className="embla-arrow left" onClick={scrollPrev}>‹</button>
 
-        <div className="tape-scroll" ref={localRef}>
-          <div className="media-tape">
-            {items.map(item => renderCard(item))}
+        <div className="embla-viewport" ref={emblaRef}>
+          <div className="embla-container">
+            {items.map((item, index) => (
+              <div key={item.tmdb_id} className="embla-slide">
+                {renderCard(item)}
+              </div>
+            ))}
           </div>
         </div>
 
-        <button className="tape-arrow right" onClick={right}>›</button>
+        <button className="embla-arrow right" onClick={scrollNext}>›</button>
       </div>
     );
   }
@@ -331,8 +396,7 @@ export default function WatchedPage() {
                     {bucket.map(item => renderCard(item))}
                   </div>
                 ) : (
-                  <RatingTape items={bucket} title={title}
-                    />
+                  <EmblaCarousel items={bucket} title={title} />
                 )}
               </div>
             );
@@ -350,16 +414,24 @@ export default function WatchedPage() {
           )}
 
           {viewMode === "tape" && (
-            <div className="tape-wrapper">
-              <button className="tape-arrow left" onClick={scrollLeft}>‹</button>
+            <div
+              className="embla-carousel"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+            >
+              <button className="embla-arrow left" onClick={scrollPrev}>‹</button>
 
-              <div className="tape-scroll" ref={scrollRef}>
-                <div className="media-tape">
-                  {filteredItems.map(item => renderCard(item))}
+              <div className="embla-viewport" ref={emblaRef}>
+                <div className="embla-container">
+                  {filteredItems.map((item, index) => (
+                    <div key={item.tmdb_id} className="embla-slide">
+                      {renderCard(item)}
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <button className="tape-arrow right" onClick={scrollRight}>›</button>
+              <button className="embla-arrow right" onClick={scrollNext}>›</button>
             </div>
           )}
         </>

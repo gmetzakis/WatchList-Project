@@ -1,0 +1,87 @@
+/* ===========================
+   EMBLA CAROUSEL
+   =========================== */
+
+.embla-carousel {
+  position: relative;
+  width: 100%;
+  margin-top: 20px;
+  overflow: visible;
+  z-index: auto; /* Allow each carousel to have its own stacking context */
+}
+
+.embla-viewport {
+  width: 100%;
+  overflow: visible;
+  position: relative;
+}
+
+.embla-container {
+  display: flex;
+  gap: 32px;
+  padding: 0 60px; /* space so arrows don't overlap cards */
+  position: relative;
+}
+
+.embla-slide {
+  flex: 0 0 220px;
+  min-width: 0;
+}
+
+.embla-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+  background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(20,20,20,0.8));
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  color: var(--favorite-glow);
+  font-size: 150px;
+  width: 5px;
+  height: 80px;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+.embla-arrow.left {
+  left: 0;
+  transform: translate(-100%, -50%);
+}
+
+.embla-arrow.right {
+  right: 0;
+  transform: translate(100%, -50%);
+}
+
+.embla-arrow:hover {
+  transform: translateY(-50%) scale(1.2);
+  color: #fff;
+  background: linear-gradient(135deg, rgba(20,20,20,0.9), rgba(30,30,30,0.95));
+  border-color: var(--favorite-glow);
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.4), var(--glow-gold);
+}
+
+.embla-arrow:active {
+  transform: translateY(-50%) scale(1.1);
+}
+
+/* Embla carousel specific card hover - stays in flex flow */
+.embla-container .media-card {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.embla-container .media-card:hover {
+  z-index: 999999 !important;
+  transform: translateY(-12px) scale(1.02);
+}
+
+.embla-container .media-card:hover .media-card-img {
+  transform: scale(1.15);
+  filter: brightness(0.38) contrast(1.1) blur(3px) drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+}
