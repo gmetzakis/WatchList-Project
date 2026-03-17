@@ -13,24 +13,12 @@ const api = axios.create({
     baseURL: baseURLs,
   });
 
-
-if (import.meta.env.VITE_PC_RUNNING === "army_service_room") {
-  api.interceptors.request.use((config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  });
-}
-
-else {
-  api.interceptors.request.use((config) => {
-    const token = useAuthStore.getState().token;
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-  });
-}
-
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export default api;
