@@ -1,0 +1,64 @@
+/* ===========================
+   ACTION BUTTONS
+   =========================== */
+
+.btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  margin-top: 10px;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.95rem;
+}
+
+/* Remove watched */
+.btn-remove {
+  background: linear-gradient(135deg, var(--accent), #ff1a1a);
+  color: white;
+  box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
+}
+
+.btn-remove:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-cinematic);
+}
+
+.btn-remove:active {
+  transform: translateY(-1px);
+}
+
+/* Add to favorites */
+.btn-favorite {
+  background: linear-gradient(135deg, var(--favorite), #ffd700);
+  color: black;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+  font-weight: 700;
+}
+
+.btn-favorite:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(212, 175, 55, 0.5), var(--glow-gold);
+}
+
+.btn-favorite:active {
+  transform: translateY(-1px);
+}
+
+/* Remove favorite */
+.btn-unfavorite {
+  background: linear-gradient(135deg, #333, #444);
+  color: var(--text);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.btn-unfavorite:hover {
+  background: linear-gradient(135deg, #444, #555);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+

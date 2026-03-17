@@ -1,0 +1,500 @@
+/* ===========================
+   MEDIA CARD
+   =========================== */
+
+.media-card {
+  position: relative;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+  z-index: 1;
+  cursor: pointer;
+}
+
+.media-card:hover {
+  z-index: 50;
+  transform: translateY(-12px) scale(1.02);
+}
+
+/* ===========================
+   POSTER IMAGE
+   =========================== */
+
+.media-image-wrapper {
+  position: relative;
+  overflow: visible;
+}
+
+.media-card-img {
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+  transform-origin: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.media-card:hover .media-card-img {
+  transform: scale(1.42);
+  filter: brightness(0.38) contrast(1.1) blur(3px);
+}
+
+/* ===========================
+   HOVER OVERLAY
+   =========================== */
+
+.hover-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.media-card:hover .hover-controls {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ===========================
+   TITLE + YEAR — TOP LEFT
+   =========================== */
+
+.hover-title {
+  position: absolute;
+  text-align: left;
+  width: 100%; 
+}
+
+.hover-title-text {
+  display: block;
+  font-size: 20px;        /* bigger title */
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;      /* more breathing */
+  margin-bottom: 4px;     /* space between title & year */
+}
+
+.hover-year-text {
+  display: block;
+  font-size: 15px;        /* smaller year */
+  color: #ccc;
+  line-height: 1.2;
+}
+
+
+/* ===========================
+   ICONS — TOP RIGHT
+   =========================== */
+
+.control-icons {
+  position: absolute;
+  bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;   /* ← REAL spacing */
+}
+
+.favorite-icon,
+.watched-icon {
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.23, 1, 0.320, 1);
+  color: rgba(177, 173, 173, 0.8);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+.unbookmark-icon {
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.23, 1, 0.320, 1);
+  color: #0b7508;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+.favorite-icon:hover,
+.watched-icon:hover,
+.unbookmark-icon:hover {
+  transform: scale(1.25) rotate(5deg);
+  color: #fff;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+}
+
+.favorite-icon.active svg {
+  stroke: var(--accent-glow);
+  fill: var(--accent-glow);
+  filter: drop-shadow(var(--glow-red));
+}
+
+.favorite-icon.active:hover {
+  transform: scale(1.3) rotate(-5deg);
+}
+
+/* ===========================
+   RATING — BOTTOM LEFT
+   =========================== */
+
+.rating-stars {
+  position: absolute;
+  bottom: 0px;
+  display: block;
+  align-items: center;
+  gap: 6px;
+}
+
+.star {
+  font-size: 18px;
+  cursor: pointer;
+  color: rgba(100, 100, 100, 0.7);
+  transition: all 0.2s cubic-bezier(0.23, 1, 0.320, 1);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  display: inline-block;
+}
+
+.star.active {
+  color: var(--favorite-glow);
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+}
+
+.star:hover {
+  transform: scale(1.3) rotate(15deg) !important;
+  color: #fff !important;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)) !important;
+}
+
+.rating-label {
+  font-size: 15px;
+  color: #ddd;
+  margin-left: 4px;
+}
+
+.remove-rating {
+  margin-left: 8px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+
+.remove-rating:hover {
+  transform: scale(1.2);
+  opacity: 1;
+}
+
+
+.rating-inline {
+  margin-top: 6px;
+  align-items: center;
+  gap: 6px;
+}
+
+.rating-inline .star {
+  font-size: 16px;
+  cursor: pointer;
+  color: rgba(150, 150, 150, 0.6);
+  transition: all 0.2s cubic-bezier(0.23, 1, 0.320, 1);
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+}
+
+.rating-inline .star.active {
+  color: var(--favorite-glow);
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.5));
+}
+
+.rating-inline .star:hover {
+  transform: scale(1.2) rotate(15deg);
+  color: #fff;
+  filter: drop-shadow(var(--glow-gold));
+}
+
+.rating-inline .rating-label {
+  font-size: 14.5px;
+  color: #ddd;
+}
+
+.rating-inline .remove-rating {
+  margin-left: 4px;
+  cursor: pointer;
+  color: rgba(200, 200, 200, 0.6);
+  transition: all 0.2s ease;
+  font-size: 0.65rem;
+}
+
+.rating-inline .remove-rating:hover {
+  transform: scale(1.2);
+  color: #fff;
+}
+
+.media-title {
+  margin-top: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  text-align: left;
+  transition: all 0.3s ease;
+}
+
+.media-year {
+  font-size: 0.9rem;
+  color: rgba(200, 200, 200, 0.8);
+  margin-top: 4px;
+  text-align: left;
+  transition: color 0.3s ease;
+}
+
+.media-image-wrapper:hover .media-card-img {
+  transform: scale(1.3);
+}
+
+.media-image-wrapper {
+  position: relative;
+  overflow: visible;
+  display: block;   /* ← THIS FIXES FIREFOX */
+}
+
+.media-tape {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  overflow-x: auto;
+  overflow-y: hidden;      /* important: accept the clipping */
+  padding: 40px 0;         /* give vertical breathing room */
+}
+
+
+.media-tape::-webkit-scrollbar {
+  height: 10px;
+}
+
+.media-tape::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 5px;
+}
+
+.media-tape::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--favorite), var(--favorite-dark));
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+.media-tape::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--favorite-glow), var(--favorite));
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+}
+
+.media-tape .media-card {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  margin-bottom: 20px;
+}
+
+.media-tape .media-card:hover {
+  transform: scale(1.02);
+  z-index: 1000;
+  overflow-x: visible;
+  overflow-y: visible;
+}
+
+.tape-wrapper {
+  position: relative;
+  width: 100%;
+  margin-top: 20px;
+  padding: 0 60px; /* space so arrows don't overlap cards */
+  overflow: visible;
+}
+
+.tape-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.media-tape {
+  display: flex;
+  gap: 32px;
+  overflow: visible;
+}
+
+.tape-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+  background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(20,20,20,0.8));
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  color: var(--favorite-glow);
+  font-size: 150px;
+  width: 5px;
+  height: 80px;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+/* Move arrows OUTSIDE the tape */
+.tape-arrow.left {
+  left: 0;
+  transform: translate(-100%, -50%);
+}
+
+.tape-arrow.right {
+  right: 0;
+  transform: translate(100%, -50%);
+}
+
+.tape-arrow:hover {
+  transform: translateY(-50%) scale(1.2);
+  color: #fff;
+  background: linear-gradient(135deg, rgba(20,20,20,0.9), rgba(30,30,30,0.95));
+  border-color: var(--favorite-glow);
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.4), var(--glow-gold);
+}
+
+.tape-arrow:active {
+  transform: translateY(-50%) scale(1.1);
+}
+
+
+.media-card {
+  position: relative;
+  z-index: 1;
+  transition: transform 0.2s ease, z-index 0.2s ease;
+}
+
+.media-card:hover {
+  transform: translateY(-20px) scale(1.05);
+  z-index: 20;
+}
+
+.rating-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  margin-top: 30px;
+}
+
+.rating-section {
+  width: 100%;
+}
+
+.rating-section-title {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 14px;
+  padding-left: 4px;
+  color: rgba(255,255,255,0.9);
+}
+
+.view-toggle-container {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.view-toggle-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    color 0.2s ease;
+  color: rgba(255,255,255,0.6);
+}
+
+.view-toggle-box:hover {
+  transform: scale(1.12);
+  background: rgba(255,255,255,0.15);
+  color: white;
+}
+
+.view-toggle-box.active {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.5);
+  color: white;
+  transform: scale(1.12);
+}
+
+.rating-section-title .star.active {
+  font-size: 1.1em;
+}
+
+/* --------------------------------------------- */
+/* TAPE VIEW — BIGGER HOVER DETAILS              */
+/* --------------------------------------------- */
+
+/* Bigger title */
+.media-tape .hover-title-text {
+  display: block;
+  font-size: 1.8rem;       /* bigger title */
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;      /* more breathing */
+  margin-bottom: 4px;     /* space between title & year */
+}
+
+/* Bigger year */
+.media-tape .hover-year-text {
+  font-size: 1.5rem;
+  opacity: 0.9;
+}
+
+/* Bigger stars */
+.media-tape .rating-inline .star {
+  font-size: 1.4rem;
+  margin-right: 4px;
+}
+
+/* Bigger rating label */
+.media-tape .rating-inline .rating-label {
+  font-size: 1.2rem;
+  margin-left: 6px;
+}
+
+/* Bigger icons (favorite, watched) */
+.media-tape .control-icons span svg {
+  width: 40px;
+  height: 40px;
+}
+
+/* More spacing between icons */
+.media-tape .control-icons {
+  position: absolute;
+  bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;   /* ← REAL spacing */
+}
+
+/* More breathing room inside hover overlay */
+.media-tape .hover-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  font-size: 1.2rem;
+}
+
+/* Slightly more spacing inside the title block */
+.media-tape .hover-title {
+  gap: 6px;
+}
+
+/* Optional: subtle scale-up on hover for cinematic feel */
+.media-tape .media-card:hover .hover-controls {
+  transform: scale(1.04);
+  transform-origin: center;
+  transition: transform 0.2s ease;
+}

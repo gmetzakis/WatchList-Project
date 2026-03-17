@@ -1,0 +1,46 @@
+/* ===========================
+   GLOBAL THEME
+   =========================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap');
+
+:root {
+  --bg: #0a0a0a;
+  --bg-alt: #0f0f0f;
+  --card-bg: #141414;
+  --card-bg-hover: #1a1a1a;
+
+  --text: #f2f2f2;
+  --text-muted: #999;
+
+  --accent: #e50914; /* Netflix red */
+  --accent-glow: #ff4d4d;
+  --favorite: #d4af37; /* muted gold */
+  --favorite-dark: #b8962f;
+  --favorite-glow: #ffd700;
+
+  --shadow-strong: rgba(0, 0, 0, 0.85);
+  --shadow-soft: rgba(255, 255, 255, 0.12);
+  --shadow-cinematic: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 40px rgba(229, 9, 20, 0.2);
+  --glow-red: 0 0 20px rgba(229, 9, 20, 0.6);
+  --glow-gold: 0 0 20px rgba(212, 175, 55, 0.6);
+}
+
+/* Background + Typography */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Montserrat", sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Page container */
+.page-container {
+  width: 100%;
+  max-width: 100%;
+  padding: 0 20px; /* optional breathing room */
+  margin: 0 auto;
+}
+
