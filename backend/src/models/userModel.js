@@ -23,3 +23,19 @@ export async function findUserById(id) {
   );
   return result.rows[0];
 }
+
+export async function findUserAuthById(id) {
+  const result = await db.query(
+    `SELECT id, password_hash FROM users WHERE id = $1`,
+    [id]
+  );
+  return result.rows[0];
+}
+
+export async function updateUserPasswordHash(id, passwordHash) {
+  const result = await db.query(
+    `UPDATE users SET password_hash = $1 WHERE id = $2 RETURNING id`,
+    [passwordHash, id]
+  );
+  return result.rows[0];
+}
