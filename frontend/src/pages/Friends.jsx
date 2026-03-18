@@ -554,7 +554,10 @@ export default function FriendsPage() {
       ? "default"
       : friendSortBy;
   const availableShelfGenres = Array.from(
-    new Set(activeShelf.items.flatMap((item) => normalizeGenres(item.genres)))
+    new Set([
+      ...Object.values(GENRE_MAP),
+      ...shelfConfig.flatMap((shelf) => shelf.items.flatMap((item) => normalizeGenres(item.genres))),
+    ])
   ).sort((left, right) => left.localeCompare(right));
 
   return (
