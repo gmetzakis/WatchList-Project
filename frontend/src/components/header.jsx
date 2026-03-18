@@ -19,6 +19,9 @@ export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const isFriendsRoute = location.pathname === "/friends";
+  const friendsLinkState = !isFriendsRoute && friendNotifications.total > 0
+    ? { friendNotificationSnapshot: friendNotifications }
+    : null;
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -207,7 +210,7 @@ export default function Header() {
             </button>
 
             <div className="account-dropdown">
-              <Link to="/friends" className="account-dropdown-link" onClick={handleFriendsClick}>
+              <Link to="/friends" state={friendsLinkState} className="account-dropdown-link" onClick={handleFriendsClick}>
                 <FiUsers />
                 <span>Friends</span>
                 {!isFriendsRoute && friendNotifications.total > 0 && (

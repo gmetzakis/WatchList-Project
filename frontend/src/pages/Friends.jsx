@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import api from "../api/axios.js";
 
 export default function FriendsPage() {
@@ -17,6 +18,8 @@ export default function FriendsPage() {
     acceptedUpdates: 0,
     total: 0,
   });
+  const location = useLocation();
+  const routeNotificationSnapshotRef = useRef(location.state?.friendNotificationSnapshot || null);
 
   useEffect(() => {
     loadFriends();
@@ -37,14 +40,27 @@ export default function FriendsPage() {
 
     try {
       const res = await api.get("/friends");
-      setFriends(res.data?.friends || []);
-      setIncomingRequests(res.data?.incomingRequests || []);
-      setOutgoingRequests(res.data?.outgoingRequests || []);
-      setNotifications(res.data?.notifications || {
+      const routeNotificationSnapshot = routeNotificationSnapshotRef.current;
+      const serverNotifications = res.data?.notifications || {
         incomingPending: 0,
         acceptedUpdates: 0,
         total: 0,
-      });
+      };
+      const nextNotifications = serverNotifications.total > 0
+        ? serverNotifications
+        : (routeNotificationSnapshot && Number(routeNotificationSnapshot.total) > 0
+          ? {
+              incomingPending: Number(routeNotificationSnapshot.incomingPending) || 0,
+              acceptedUpdates: Number(routeNotificationSnapshot.acceptedUpdates) || 0,
+              total: Number(routeNotificationSnapshot.total) || 0,
+            }
+          : serverNotifications);
+
+      setFriends(res.data?.friends || []);
+      setIncomingRequests(res.data?.incomingRequests || []);
+      setOutgoingRequests(res.data?.outgoingRequests || []);
+      setNotifications(nextNotifications);
+      routeNotificationSnapshotRef.current = null;
     } catch (err) {
       setError(err.response?.data?.error || "Failed to load friends");
     } finally {
