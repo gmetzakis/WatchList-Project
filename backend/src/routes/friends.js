@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import {
+  cancelOutgoingFriendRequestController,
   createFriendRequestController,
   getFriendNotificationsController,
   listFriendsController,
@@ -16,6 +17,7 @@ router.get("/notifications", authMiddleware, getFriendNotificationsController);
 router.post("/notifications/read", authMiddleware, markFriendNotificationsReadController);
 router.post("/requests", authMiddleware, createFriendRequestController);
 router.post("/requests/:requestId/respond", authMiddleware, respondToFriendRequestController);
+router.delete("/requests/:requestId", authMiddleware, cancelOutgoingFriendRequestController);
 router.delete("/:friendUserId", authMiddleware, removeFriendController);
 
 export default router;

@@ -1,4 +1,5 @@
 import {
+  cancelOutgoingFriendRequest,
   createFriendRequest,
   findFriendRelationship,
   findUserByUsername,
@@ -160,6 +161,25 @@ export async function removeFriendController(req, res) {
     return res.json({ message: "Friend removed" });
   } catch (err) {
     console.error("Remove friend error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function cancelOutgoingFriendRequestController(req, res) {
+  try {
+    const requestId = Number(req.params.requestId);
+    if (!Number.isInteger(requestId)) {
+      return res.status(400).json({ error: "Invalid request id" });
+    }
+
+    const cancelled = await cancelOutgoingFriendRequest(req.user.id, requestId);
+    if (!cancelled) {
+      return res.status(404).json({ error: "Friend request not found or already handled" });
+    }
+
+    return res.json({ message: "Friend request cancelled" });
+  } catch (err) {
+    console.error("Cancel friend request error:", err);
     return res.status(500).json({ error: "Internal server error" });
   }
 }

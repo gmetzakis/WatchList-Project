@@ -212,3 +212,16 @@ export async function removeFriendRelationship(userIdOne, userIdTwo) {
 
   return result.rowCount > 0;
 }
+
+export async function cancelOutgoingFriendRequest(userId, requestId) {
+  const result = await db.query(
+    `DELETE FROM friend_requests
+     WHERE id = $1
+       AND requester_id = $2
+       AND status = 'pending'
+     RETURNING id`,
+    [requestId, userId]
+  );
+
+  return result.rowCount > 0;
+}

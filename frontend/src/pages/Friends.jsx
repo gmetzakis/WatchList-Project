@@ -4,9 +4,11 @@ import api from "../api/axios.js";
 export default function FriendsPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [removingFriend, setRemovingFriend] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [searchUsername, setSearchUsername] = useState("");
+  const [pendingRemoval, setPendingRemoval] = useState(null);
   const [friends, setFriends] = useState([]);
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [outgoingRequests, setOutgoingRequests] = useState([]);
@@ -95,12 +97,44 @@ export default function FriendsPage() {
     setMessage("");
     setError("");
 
+    setPendingRemoval({ friendUserId, username });
+  }
+
+  function handleCloseRemoveModal() {
+    if (removingFriend) return;
+    setPendingRemoval(null);
+  }
+
+  async function handleConfirmRemoveFriend() {
+    if (!pendingRemoval) {
+      return;
+    }
+
+    const { friendUserId, username } = pendingRemoval;
+    setRemovingFriend(true);
+
     try {
       const res = await api.delete(`/friends/${friendUserId}`);
       setMessage(res.data?.message || `${username} removed from friends`);
       setFriends((prev) => prev.filter((friend) => friend.user_id !== friendUserId));
+      setPendingRemoval(null);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to remove friend");
+    } finally {
+      setRemovingFriend(false);
+    }
+  }
+
+  async function handleCancelOutgoingRequest(requestId, username) {
+    setMessage("");
+    setError("");
+
+    try {
+      const res = await api.delete(`/friends/requests/${requestId}`);
+      setMessage(res.data?.message || `Request to ${username} cancelled`);
+      setOutgoingRequests((prev) => prev.filter((request) => request.id !== requestId));
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to cancel request");
     }
   }
 
@@ -181,10 +215,19 @@ export default function FriendsPage() {
         ) : (
           <div className="friends-list">
             {outgoingRequests.map((request) => (
-              <article key={request.id} className="friend-card compact">
+              <article key={request.id} className="friend-card">
                 <div>
                   <h3 className="friend-name">{request.username}</h3>
                   <p className="friend-meta">Waiting for response</p>
+                </div>
+                <div className="friend-actions">
+                  <button
+                    className="friends-secondary-btn"
+                    type="button"
+                    onClick={() => handleCancelOutgoingRequest(request.id, request.username)}
+                  >
+                    Cancel Request
+                  </button>
                 </div>
               </article>
             ))}
@@ -219,6 +262,41 @@ export default function FriendsPage() {
           </div>
         )}
       </section>
+
+      {pendingRemoval && (
+        <div className="friends-modal-overlay" onClick={handleCloseRemoveModal}>
+          <div
+            className="friends-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="remove-friend-modal-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="remove-friend-modal-title" className="friends-modal-title">Remove Friend?</h3>
+            <p className="friends-modal-text">
+              Are you sure you want to remove {pendingRemoval.username} from your friends?
+            </p>
+            <div className="friends-modal-actions">
+              <button
+                className="friends-secondary-btn"
+                type="button"
+                onClick={handleCloseRemoveModal}
+                disabled={removingFriend}
+              >
+                Cancel
+              </button>
+              <button
+                className="friends-danger-btn"
+                type="button"
+                onClick={handleConfirmRemoveFriend}
+                disabled={removingFriend}
+              >
+                {removingFriend ? "Removing..." : "Remove Friend"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

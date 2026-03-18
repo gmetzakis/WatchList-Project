@@ -176,6 +176,45 @@
   color: rgba(255, 255, 255, 0.72);
 }
 
+.friends-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(3px);
+}
+
+.friends-modal {
+  width: min(460px, 100%);
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(228, 87, 87, 0.38);
+  background: linear-gradient(180deg, rgba(26, 15, 15, 0.96), rgba(17, 10, 10, 0.98));
+  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.52);
+}
+
+.friends-modal-title {
+  margin: 0 0 8px;
+  color: #ffd8d8;
+  font-size: 1.16rem;
+}
+
+.friends-modal-text {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.45;
+}
+
+.friends-modal-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 @media (max-width: 760px) {
   .friends-shell {
     padding: 16px;
@@ -196,5 +235,9 @@
   .friends-secondary-btn,
   .friends-danger-btn {
     width: 100%;
+  }
+
+  .friends-modal-actions {
+    flex-direction: column-reverse;
   }
 }
