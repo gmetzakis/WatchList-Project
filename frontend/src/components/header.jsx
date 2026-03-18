@@ -18,6 +18,7 @@ export default function Header() {
   const accountCloseTimeoutRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const isFriendsRoute = location.pathname === "/friends";
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -47,12 +48,26 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
+    if (isFriendsRoute) {
+      setFriendNotifications({ incomingPending: 0, acceptedUpdates: 0, total: 0 });
+      api.post("/friends/notifications/read").catch(() => {
+        // Best-effort call to clear server-side unread counters.
+      });
+    }
+  }, [isFriendsRoute]);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function loadFriendNotifications() {
       try {
         const res = await api.get("/friends/notifications");
         if (!cancelled) {
+          if (isFriendsRoute) {
+            setFriendNotifications({ incomingPending: 0, acceptedUpdates: 0, total: 0 });
+            return;
+          }
+
           setFriendNotifications(res.data?.notifications || {
             incomingPending: 0,
             acceptedUpdates: 0,
@@ -73,7 +88,16 @@ export default function Header() {
       cancelled = true;
       clearInterval(intervalId);
     };
-  }, [location.pathname]);
+  }, [location.pathname, isFriendsRoute]);
+
+  function handleFriendsClick() {
+    setAccountOpen(false);
+    setAccountPinned(false);
+
+    if (isFriendsRoute) {
+      window.dispatchEvent(new Event("friends:refresh"));
+    }
+  }
 
   function handleKeyDown(e) {
     if (e.key === "Enter" && query.trim() !== "") {
@@ -177,19 +201,16 @@ export default function Header() {
               aria-expanded={accountOpen}
             >
               <FiUser />
-              {friendNotifications.total > 0 && (
+              {!isFriendsRoute && friendNotifications.total > 0 && (
                 <span className="account-notification-badge">{friendNotifications.total}</span>
               )}
             </button>
 
             <div className="account-dropdown">
-              <Link to="/friends" className="account-dropdown-link" onClick={() => {
-                setAccountOpen(false);
-                setAccountPinned(false);
-              }}>
+              <Link to="/friends" className="account-dropdown-link" onClick={handleFriendsClick}>
                 <FiUsers />
                 <span>Friends</span>
-                {friendNotifications.total > 0 && (
+                {!isFriendsRoute && friendNotifications.total > 0 && (
                   <span className="menu-notification-dot">{friendNotifications.total}</span>
                 )}
               </Link>

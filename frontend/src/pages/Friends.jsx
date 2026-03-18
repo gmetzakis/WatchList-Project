@@ -22,6 +22,15 @@ export default function FriendsPage() {
     loadFriends();
   }, []);
 
+  useEffect(() => {
+    function handleFriendsRefresh() {
+      loadFriends();
+    }
+
+    window.addEventListener("friends:refresh", handleFriendsRefresh);
+    return () => window.removeEventListener("friends:refresh", handleFriendsRefresh);
+  }, []);
+
   async function loadFriends() {
     setLoading(true);
     setError("");
