@@ -720,22 +720,38 @@ export default function FriendsPage() {
                 </div>
 
                 <div className="friend-stats-grid">
-                  <article className="friend-stat-card">
+                  <button
+                    type="button"
+                    className="friend-stat-card friend-stat-card--link"
+                    onClick={() => { setSelectedShelf("watched"); setFriendTypeFilter("movie"); setFriendGenreFilter("all"); setFriendPage(1); }}
+                  >
                     <span className="friend-stat-value">{selectedFriend.movies_watched || 0}</span>
                     <span className="friend-stat-label">Movies watched</span>
-                  </article>
-                  <article className="friend-stat-card">
+                  </button>
+                  <button
+                    type="button"
+                    className="friend-stat-card friend-stat-card--link"
+                    onClick={() => { setSelectedShelf("watched"); setFriendTypeFilter("series"); setFriendGenreFilter("all"); setFriendPage(1); }}
+                  >
                     <span className="friend-stat-value">{selectedFriend.series_watched || 0}</span>
                     <span className="friend-stat-label">Series watched</span>
-                  </article>
-                  <article className="friend-stat-card">
+                  </button>
+                  <button
+                    type="button"
+                    className="friend-stat-card friend-stat-card--link"
+                    onClick={() => { setSelectedShelf("watchlist"); setFriendTypeFilter("all"); setFriendGenreFilter("all"); setFriendPage(1); }}
+                  >
                     <span className="friend-stat-value">{libraryStats.watchlistCount}</span>
                     <span className="friend-stat-label">In watchlist</span>
-                  </article>
-                  <article className="friend-stat-card">
+                  </button>
+                  <button
+                    type="button"
+                    className="friend-stat-card friend-stat-card--link"
+                    onClick={() => { setSelectedShelf("favorites"); setFriendTypeFilter("all"); setFriendGenreFilter("all"); setFriendPage(1); }}
+                  >
                     <span className="friend-stat-value">{libraryStats.favoritesCount}</span>
                     <span className="friend-stat-label">Favorites</span>
-                  </article>
+                  </button>
                 </div>
 
                 <div className="friend-library-tabs">
@@ -802,8 +818,8 @@ export default function FriendsPage() {
                       <option value="title_desc">Title Z–A</option>
                       {selectedShelf !== "watchlist" && <option value="rating_desc">Rating ↓</option>}
                       {selectedShelf !== "watchlist" && <option value="rating_asc">Rating ↑</option>}
-                      <option value="year_asc">Year old → new</option>
-                      <option value="year_desc">Year ↓</option>
+                      <option value="year_asc">Year ↓</option>
+                      <option value="year_desc">Year ↑</option>
                     </select>
                   </div>
 
