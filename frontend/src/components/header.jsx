@@ -29,6 +29,12 @@ export default function Header() {
     }
   }
 
+  function handleLogout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("auth-storage");
+    navigate("/login", { replace: true });
+  }
+
   return (
     <header className="cinema-header">
       <div className="cinema-header-inner">
@@ -59,6 +65,8 @@ export default function Header() {
           <Link to="/watched">Watched</Link>
           <Link to="/watchlist">Watchlist</Link>
           <Link to="/favorites">Favorites</Link>
+          <Link to="/profile">Profile</Link>
+          <button type="button" className="logout-btn" onClick={handleLogout}>Logout</button>
         </nav>
 
       </div>

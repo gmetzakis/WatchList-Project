@@ -7,17 +7,53 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
+  const [yearOfBirth, setYearOfBirth] = useState("");
+  const [country, setCountry] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
-      await api.post("/auth/register", { email, password });
-      navigate("/login");
+      if (!email || !password || !firstName || !lastName || !username || !yearOfBirth || !country) {
+        setError("All fields are required");
+        setLoading(false);
+        return;
+      }
+
+      const res = await api.post("/auth/register", {
+        email,
+        password,
+        firstName,
+        lastName,
+        username,
+        yearOfBirth: parseInt(yearOfBirth),
+        country
+      });
+
+      if (!res.data?.token) {
+        setError("Registration succeeded but no token was returned");
+        setLoading(false);
+        return;
+      }
+
+      localStorage.setItem("token", res.data.token);
+      navigate("/watched");
     } catch (err) {
-      setError("Registration failed");
+      if (err.response && err.response.data) {
+        const backendError = err.response.data.error || err.response.data.message;
+        setError(backendError || "Something went wrong");
+      } else {
+        setError("Network error!!");
+      }
       console.error("Register error:", err);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -28,6 +64,7 @@ export default function RegisterPage() {
       {error && <p className="auth-error">{error}</p>}
 
       <form className="auth-form" onSubmit={handleSubmit}>
+        {/* EMAIL */}
         <input
           type="email"
           placeholder="Email"
@@ -37,6 +74,7 @@ export default function RegisterPage() {
           required
         />
 
+        {/* PASSWORD */}
         <input
           type="password"
           placeholder="Password"
@@ -46,8 +84,60 @@ export default function RegisterPage() {
           required
         />
 
-        <button className="auth-btn" type="submit">
-          Register
+        {/* FIRST NAME */}
+        <input
+          type="text"
+          placeholder="First Name"
+          className="auth-input"
+          value={firstName}
+          onChange={e => setFirstName(e.target.value)}
+          required
+        />
+
+        {/* LAST NAME */}
+        <input
+          type="text"
+          placeholder="Last Name"
+          className="auth-input"
+          value={lastName}
+          onChange={e => setLastName(e.target.value)}
+          required
+        />
+
+        {/* USERNAME */}
+        <input
+          type="text"
+          placeholder="Username"
+          className="auth-input"
+          value={username}
+          onChange={e => setUsername(e.target.value)}
+          required
+        />
+
+        {/* YEAR OF BIRTH */}
+        <input
+          type="number"
+          placeholder="Year of Birth"
+          className="auth-input"
+          min="1900"
+          max={new Date().getFullYear()}
+          value={yearOfBirth}
+          onChange={e => setYearOfBirth(e.target.value)}
+          required
+        />
+
+        {/* COUNTRY */}
+        <input
+          type="text"
+          placeholder="Country"
+          className="auth-input"
+          value={country}
+          onChange={e => setCountry(e.target.value)}
+          required
+        />
+
+        <button className="auth-btn" type="submit" disabled={loading}>
+          {loading ? "Registering..." : "Register"}
         </button>
       </form>
 
