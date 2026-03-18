@@ -3,6 +3,7 @@ import { authMiddleware } from "../middleware/authMiddleware.js";
 import {
   cancelOutgoingFriendRequestController,
   createFriendRequestController,
+  getFriendLibraryController,
   getFriendNotificationsController,
   listFriendsController,
   markFriendNotificationsReadController,
@@ -14,6 +15,7 @@ const router = Router();
 
 router.get("/", authMiddleware, listFriendsController);
 router.get("/notifications", authMiddleware, getFriendNotificationsController);
+router.get("/:friendUserId/library", authMiddleware, getFriendLibraryController);
 router.post("/notifications/read", authMiddleware, markFriendNotificationsReadController);
 router.post("/requests", authMiddleware, createFriendRequestController);
 router.post("/requests/:requestId/respond", authMiddleware, respondToFriendRequestController);

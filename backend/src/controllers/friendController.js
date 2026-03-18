@@ -1,6 +1,7 @@
 import {
   cancelOutgoingFriendRequest,
   createFriendRequest,
+  getAcceptedFriendProfile,
   findFriendRelationship,
   findUserByUsername,
   getFriendNotificationCounts,
@@ -10,6 +11,8 @@ import {
   removeFriendRelationship,
   updateFriendRequest,
 } from "../models/friendModel.js";
+import { getAvatarByUserId } from "../models/userAvatarModel.js";
+import { getUserFavorites, getUserWatched, getUserWatchlist } from "../models/userMediaModel.js";
 
 export async function listFriendsController(req, res) {
   try {
@@ -137,6 +140,60 @@ export async function markFriendNotificationsReadController(req, res) {
     return res.json({ message: "Notifications marked as read" });
   } catch (err) {
     console.error("Mark friend notifications error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function getFriendLibraryController(req, res) {
+  try {
+    const friendUserId = Number(req.params.friendUserId);
+
+    if (!Number.isInteger(friendUserId)) {
+      return res.status(400).json({ error: "Invalid friend user id" });
+    }
+
+    const friendProfile = await getAcceptedFriendProfile(req.user.id, friendUserId);
+    if (!friendProfile) {
+      return res.status(404).json({ error: "Friend not found" });
+    }
+
+    const [avatar, watchlist, watched, favorites] = await Promise.all([
+      getAvatarByUserId(friendUserId),
+      getUserWatchlist(friendUserId),
+      getUserWatched(friendUserId),
+      getUserFavorites(friendUserId),
+    ]);
+
+    const rated = watched
+      .filter((item) => Number.isInteger(item.rating))
+      .sort((left, right) => {
+        if (right.rating !== left.rating) {
+          return right.rating - left.rating;
+        }
+
+        return new Date(right.watched_at || 0) - new Date(left.watched_at || 0);
+      });
+
+    return res.json({
+      friend: {
+        ...friendProfile,
+        avatarData: avatar?.image_data || null,
+      },
+      library: {
+        watchlist,
+        watched,
+        favorites,
+        rated,
+      },
+      stats: {
+        watchlistCount: watchlist.length,
+        watchedCount: watched.length,
+        favoritesCount: favorites.length,
+        ratedCount: rated.length,
+      },
+    });
+  } catch (err) {
+    console.error("Friend library error:", err);
     return res.status(500).json({ error: "Internal server error" });
   }
 }

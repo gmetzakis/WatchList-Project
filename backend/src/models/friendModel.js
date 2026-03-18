@@ -225,3 +225,30 @@ export async function cancelOutgoingFriendRequest(userId, requestId) {
 
   return result.rowCount > 0;
 }
+
+export async function getAcceptedFriendProfile(viewerUserId, friendUserId) {
+  const result = await db.query(
+    `SELECT
+       up.user_id,
+       up.username,
+       up.first_name,
+       up.last_name,
+       up.country,
+       up.year_of_birth,
+       up.movies_watched,
+       up.series_watched
+     FROM friend_requests fr
+     JOIN user_profiles up
+       ON up.user_id = CASE
+         WHEN fr.requester_id = $1 THEN fr.receiver_id
+         ELSE fr.requester_id
+       END
+     WHERE ((fr.requester_id = $1 AND fr.receiver_id = $2)
+         OR (fr.requester_id = $2 AND fr.receiver_id = $1))
+       AND fr.status = 'accepted'
+     LIMIT 1`,
+    [viewerUserId, friendUserId]
+  );
+
+  return result.rows[0] || null;
+}
