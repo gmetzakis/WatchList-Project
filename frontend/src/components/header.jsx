@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiSearch, FiUser, FiLogOut } from "react-icons/fi";
+import { FiSearch, FiUser, FiLogOut, FiUsers } from "react-icons/fi";
 
 export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -144,6 +144,14 @@ export default function Header() {
             </button>
 
             <div className="account-dropdown">
+              <Link to="/friends" className="account-dropdown-link" onClick={() => {
+                setAccountOpen(false);
+                setAccountPinned(false);
+              }}>
+                <FiUsers />
+                <span>Friends</span>
+              </Link>
+
               <Link to="/profile" className="account-dropdown-link" onClick={() => {
                 setAccountOpen(false);
                 setAccountPinned(false);

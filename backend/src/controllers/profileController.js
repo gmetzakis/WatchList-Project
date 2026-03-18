@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { updateProfile, getProfileByUserId } from "../models/userProfileModel.js";
 import { findUserById, findUserAuthById, updateUserPasswordHash } from "../models/userModel.js";
-import { ensureUserAvatarsTable, getAvatarByUserId, upsertAvatar } from "../models/userAvatarModel.js";
+import { getAvatarByUserId, upsertAvatar } from "../models/userAvatarModel.js";
 import db from "../db/index.js";
 
 export async function updateProfileController(req, res) {
@@ -78,7 +78,6 @@ export async function me(req, res) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    await ensureUserAvatarsTable();
     const profile = await getProfileByUserId(userId);
     const avatar = await getAvatarByUserId(userId);
 
@@ -145,7 +144,6 @@ export async function uploadAvatarController(req, res) {
       return res.status(400).json({ error: "Image is too large. Please use a smaller image." });
     }
 
-    await ensureUserAvatarsTable();
     await upsertAvatar(userId, imageData);
 
     return res.json({ message: "Avatar updated", avatarData: imageData });

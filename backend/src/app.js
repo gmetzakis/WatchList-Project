@@ -3,6 +3,7 @@ import db from "./db/index.js";
 import cors from "cors";
 
 import authRoutes from "./routes/auth.js";
+import friendsRoutes from "./routes/friends.js";
 import profileRoutes from "./routes/profile.js";
 import mediaRoutes from "./routes/media.js";
 import tmdbRoutes from "./routes/tmdbRoutes.js";
@@ -32,6 +33,7 @@ app.get("/health", (req, res) => {
 
 
 app.use("/auth", authRoutes);
+app.use("/friends", friendsRoutes);
 app.use("/profile", profileRoutes);
 app.use("/media", mediaRoutes);
 app.use("/tmdb", tmdbRoutes);
