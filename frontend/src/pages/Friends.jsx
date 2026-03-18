@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import api from "../api/axios.js";
+import { Bookmark, BookmarkCheck, Eye, CheckCheck, Heart } from "lucide-react";
+
+const ITEMS_PER_PAGE = 12;
 
 function getInitials(friend) {
   const source = `${friend?.first_name || ""} ${friend?.last_name || ""}`.trim() || friend?.username || "?";
@@ -25,43 +28,131 @@ function formatDateLabel(value) {
   });
 }
 
-function MediaShelf({ items, emptyText }) {
-  if (!items.length) {
+function MediaShelf({
+  items,
+  emptyText,
+  myMediaStatus,
+  actionPending,
+  onAddWatchlist,
+  onMarkWatched,
+  onToggleFavorite,
+  typeFilter,
+  sortBy,
+  searchQuery,
+  page,
+  setPage,
+}) {
+  let filtered = items;
+
+  if (typeFilter !== "all") filtered = filtered.filter((i) => i.type === typeFilter);
+  if (searchQuery.trim()) {
+    const q = searchQuery.trim().toLowerCase();
+    filtered = filtered.filter((i) => i.title?.toLowerCase().includes(q));
+  }
+
+  if (sortBy === "rating_desc") filtered = [...filtered].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  else if (sortBy === "rating_asc") filtered = [...filtered].sort((a, b) => (a.rating || 0) - (b.rating || 0));
+  else if (sortBy === "title_asc") filtered = [...filtered].sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+  else if (sortBy === "title_desc") filtered = [...filtered].sort((a, b) => (b.title || "").localeCompare(a.title || ""));
+  else if (sortBy === "year_desc") filtered = [...filtered].sort((a, b) => (b.release_year || 0) - (a.release_year || 0));
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const paged = filtered.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
+
+  if (!filtered.length) {
     return <p className="friends-empty friends-library-empty">{emptyText}</p>;
   }
 
   return (
-    <div className="friend-library-grid">
-      {items.map((item) => {
-        const posterUrl = item.poster_path
-          ? `https://image.tmdb.org/t/p/w300${item.poster_path}`
-          : null;
-        const mediaLink = `/media/${item.type}/${item.tmdb_id}`;
-        const watchedLabel = formatDateLabel(item.watched_at);
-        const addedLabel = formatDateLabel(item.added_at);
+    <>
+      <div className="friend-library-grid">
+        {paged.map((item) => {
+          const key = `${item.type}-${item.tmdb_id}`;
+          const myStatus = myMediaStatus[key] || {};
+          const isPending = actionPending.has(key);
+          const posterUrl = item.poster_path ? `https://image.tmdb.org/t/p/w300${item.poster_path}` : null;
+          const mediaLink = `/media/${item.type}/${item.tmdb_id}`;
+          const watchedLabel = formatDateLabel(item.watched_at);
+          const addedLabel = formatDateLabel(item.added_at);
+          const isInWatchlist = myStatus.status === "watchlist";
+          const isWatched = myStatus.status === "watched";
+          const isFavorite = myStatus.isFavorite;
 
-        return (
-          <Link key={`${item.type}-${item.tmdb_id}`} to={mediaLink} className="friend-media-card">
-            <div className="friend-media-poster-wrap">
-              {posterUrl ? (
-                <img className="friend-media-poster" src={posterUrl} alt={item.title} />
-              ) : (
-                <div className="friend-media-fallback">{item.title?.slice(0, 1) || "?"}</div>
-              )}
-              {Number.isInteger(item.rating) && <span className="friend-media-rating">{item.rating}/10</span>}
-            </div>
+          return (
+            <div key={key} className="friend-media-card">
+              <div className="friend-media-poster-wrap">
+                <Link to={mediaLink} className="friend-media-poster-link">
+                  {posterUrl ? (
+                    <img className="friend-media-poster" src={posterUrl} alt={item.title} />
+                  ) : (
+                    <div className="friend-media-fallback">{item.title?.slice(0, 1) || "?"}</div>
+                  )}
+                </Link>
+                {Number.isInteger(item.rating) && <span className="friend-media-rating">{item.rating}/10</span>}
+                <div className="friend-media-overlay">
+                  {!isWatched && !isInWatchlist && (
+                    <button className="friend-overlay-btn" title="Add to Watchlist" disabled={isPending} onClick={() => onAddWatchlist(item)}>
+                      <Bookmark size={18} />
+                    </button>
+                  )}
+                  {isInWatchlist && (
+                    <button className="friend-overlay-btn active" title="In your Watchlist" disabled>
+                      <BookmarkCheck size={18} />
+                    </button>
+                  )}
+                  {!isWatched && (
+                    <button className="friend-overlay-btn" title="Mark as Watched" disabled={isPending} onClick={() => onMarkWatched(item)}>
+                      <Eye size={18} />
+                    </button>
+                  )}
+                  {isWatched && (
+                    <button className="friend-overlay-btn active" title="Already Watched" disabled>
+                      <CheckCheck size={18} />
+                    </button>
+                  )}
+                  {isWatched && (
+                    <button
+                      className={`friend-overlay-btn${isFavorite ? " favorite" : ""}`}
+                      title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+                      disabled={isPending}
+                      onClick={() => onToggleFavorite(item)}
+                    >
+                      <Heart size={18} fill={isFavorite ? "currentColor" : "none"} />
+                    </button>
+                  )}
+                </div>
+              </div>
 
-            <div className="friend-media-copy">
-              <h4 className="friend-media-title">{item.title}</h4>
-              <p className="friend-media-meta">{item.type === "movie" ? "Movie" : "Series"}{item.release_year ? ` • ${item.release_year}` : ""}</p>
-              {watchedLabel && <p className="friend-media-submeta">Watched {watchedLabel}</p>}
-              {!watchedLabel && addedLabel && <p className="friend-media-submeta">Added {addedLabel}</p>}
-              {item.is_favorite && <span className="friend-media-pill">Favorite</span>}
+              <div className="friend-media-copy">
+                <h4 className="friend-media-title">
+                  <Link to={mediaLink} className="friend-media-title-link">{item.title}</Link>
+                </h4>
+                <p className="friend-media-meta">
+                  {item.type === "movie" ? "Movie" : "Series"}
+                  {item.release_year ? ` • ${item.release_year}` : ""}
+                </p>
+                {watchedLabel && <p className="friend-media-submeta">Watched {watchedLabel}</p>}
+                {!watchedLabel && addedLabel && <p className="friend-media-submeta">Added {addedLabel}</p>}
+                {item.is_favorite && <span className="friend-media-pill">Favorite</span>}
+              </div>
             </div>
-          </Link>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+
+      {totalPages > 1 && (
+        <div className="friend-pagination">
+          <button className="friend-page-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage === 1}>
+            ‹ Prev
+          </button>
+          <span className="friend-page-info">{safePage} / {totalPages}</span>
+          <button className="friend-page-btn" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}>
+            Next ›
+          </button>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -87,6 +178,17 @@ export default function FriendsPage() {
     acceptedUpdates: 0,
     total: 0,
   });
+
+  // Filter / sort / pagination for the friend library
+  const [friendTypeFilter, setFriendTypeFilter] = useState("all");
+  const [friendSortBy, setFriendSortBy] = useState("default");
+  const [friendSearchQuery, setFriendSearchQuery] = useState("");
+  const [friendPage, setFriendPage] = useState(1);
+
+  // Current user's own media status (for action buttons)
+  const [myMediaStatus, setMyMediaStatus] = useState({});
+  const [actionPending, setActionPending] = useState(new Set());
+
   const location = useLocation();
   const routeNotificationSnapshotRef = useRef(location.state?.friendNotificationSnapshot || null);
 
@@ -164,10 +266,31 @@ export default function FriendsPage() {
     setFriendDetailError("");
 
     try {
-      const res = await api.get(`/friends/${friendUserId}/library`);
-      setSelectedFriendDetail(res.data || null);
+      const [libraryRes, watchlistRes, watchedRes] = await Promise.all([
+        api.get(`/friends/${friendUserId}/library`),
+        api.get("/media/watchlist"),
+        api.get("/media/watched"),
+      ]);
+
+      setSelectedFriendDetail(libraryRes.data || null);
+
+      // Build a lookup of the current user's own media status
+      const statusMap = {};
+      for (const item of (watchlistRes.data.items || [])) {
+        statusMap[`${item.type}-${item.tmdb_id}`] = { status: "watchlist", isFavorite: false };
+      }
+      for (const item of (watchedRes.data.items || [])) {
+        statusMap[`${item.type}-${item.tmdb_id}`] = { status: "watched", isFavorite: !!item.is_favorite };
+      }
+      setMyMediaStatus(statusMap);
+
+      // Reset filters and pagination when switching to a different friend
+      setFriendTypeFilter("all");
+      setFriendSortBy("default");
+      setFriendSearchQuery("");
+      setFriendPage(1);
     } catch (err) {
-      setFriendDetail(null);
+      setSelectedFriendDetail(null);
       setFriendDetailError(err.response?.data?.error || "Failed to load friend library");
     } finally {
       setFriendDetailLoading(false);
@@ -268,6 +391,59 @@ export default function FriendsPage() {
       setOutgoingRequests((prev) => prev.filter((request) => request.id !== requestId));
     } catch (err) {
       setError(err.response?.data?.error || "Failed to cancel request");
+    }
+  }
+
+  // ---- My own media action handlers (add friend's items to my lists) ----
+
+  async function handleAddToWatchlist(item) {
+    const key = `${item.type}-${item.tmdb_id}`;
+    if (actionPending.has(key)) return;
+    setActionPending((prev) => new Set([...prev, key]));
+    try {
+      await api.post(`/media/${item.tmdb_id}/watchlist`, { type: item.type });
+      setMyMediaStatus((prev) => ({ ...prev, [key]: { status: "watchlist", isFavorite: false } }));
+    } catch {
+      // silent fail
+    } finally {
+      setActionPending((prev) => { const next = new Set(prev); next.delete(key); return next; });
+    }
+  }
+
+  async function handleMarkAsWatched(item) {
+    const key = `${item.type}-${item.tmdb_id}`;
+    if (actionPending.has(key)) return;
+    setActionPending((prev) => new Set([...prev, key]));
+    try {
+      await api.post(`/media/${item.tmdb_id}/watched`, { type: item.type });
+      setMyMediaStatus((prev) => ({
+        ...prev,
+        [key]: { status: "watched", isFavorite: prev[key]?.isFavorite || false },
+      }));
+    } catch {
+      // silent fail
+    } finally {
+      setActionPending((prev) => { const next = new Set(prev); next.delete(key); return next; });
+    }
+  }
+
+  async function handleToggleFavorite(item) {
+    const key = `${item.type}-${item.tmdb_id}`;
+    const currentStatus = myMediaStatus[key];
+    if (actionPending.has(key) || currentStatus?.status !== "watched") return;
+    setActionPending((prev) => new Set([...prev, key]));
+    try {
+      if (currentStatus.isFavorite) {
+        await api.delete(`/media/${item.tmdb_id}/favorite`, { data: { type: item.type } });
+        setMyMediaStatus((prev) => ({ ...prev, [key]: { ...prev[key], isFavorite: false } }));
+      } else {
+        await api.post(`/media/${item.tmdb_id}/favorite`, { type: item.type });
+        setMyMediaStatus((prev) => ({ ...prev, [key]: { ...prev[key], isFavorite: true } }));
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setActionPending((prev) => { const next = new Set(prev); next.delete(key); return next; });
     }
   }
 
@@ -483,7 +659,7 @@ export default function FriendsPage() {
                       key={shelf.key}
                       type="button"
                       className={`friend-library-tab ${selectedShelf === shelf.key ? "active" : ""}`}
-                      onClick={() => setSelectedShelf(shelf.key)}
+                      onClick={() => { setSelectedShelf(shelf.key); setFriendPage(1); }}
                     >
                       {shelf.label}
                       <span>{shelf.items.length}</span>
@@ -500,7 +676,51 @@ export default function FriendsPage() {
                     <span className="friends-count-pill">{activeShelf.items.length}</span>
                   </div>
 
-                  <MediaShelf items={activeShelf.items} emptyText={activeShelf.emptyText} />
+                  <div className="friend-filter-bar">
+                    <input
+                      type="text"
+                      className="friend-filter-search"
+                      placeholder="Search titles…"
+                      value={friendSearchQuery}
+                      onChange={(e) => { setFriendSearchQuery(e.target.value); setFriendPage(1); }}
+                    />
+                    <select
+                      className="friend-filter-select"
+                      value={friendTypeFilter}
+                      onChange={(e) => { setFriendTypeFilter(e.target.value); setFriendPage(1); }}
+                    >
+                      <option value="all">All</option>
+                      <option value="movie">Movies</option>
+                      <option value="series">Series</option>
+                    </select>
+                    <select
+                      className="friend-filter-select"
+                      value={friendSortBy}
+                      onChange={(e) => { setFriendSortBy(e.target.value); setFriendPage(1); }}
+                    >
+                      <option value="default">Default</option>
+                      <option value="title_asc">Title A–Z</option>
+                      <option value="title_desc">Title Z–A</option>
+                      <option value="rating_desc">Rating ↓</option>
+                      <option value="rating_asc">Rating ↑</option>
+                      <option value="year_desc">Year ↓</option>
+                    </select>
+                  </div>
+
+                  <MediaShelf
+                    items={activeShelf.items}
+                    emptyText={activeShelf.emptyText}
+                    myMediaStatus={myMediaStatus}
+                    actionPending={actionPending}
+                    onAddWatchlist={handleAddToWatchlist}
+                    onMarkWatched={handleMarkAsWatched}
+                    onToggleFavorite={handleToggleFavorite}
+                    typeFilter={friendTypeFilter}
+                    sortBy={friendSortBy}
+                    searchQuery={friendSearchQuery}
+                    page={friendPage}
+                    setPage={setFriendPage}
+                  />
                 </div>
               </>
             )}

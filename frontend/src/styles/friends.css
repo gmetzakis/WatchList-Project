@@ -689,3 +689,163 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ==============================
+   FILTER BAR
+   ============================== */
+
+.friend-filter-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.friend-filter-search {
+  flex: 1;
+  min-width: 120px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.friend-filter-search::placeholder {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.friend-filter-search:focus {
+  outline: none;
+  border-color: var(--favorite-glow);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.12);
+}
+
+.friend-filter-select {
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.friend-filter-select:focus {
+  outline: none;
+  border-color: var(--favorite-glow);
+}
+
+/* ==============================
+   PAGINATION
+   ============================== */
+
+.friend-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.friend-page-btn {
+  padding: 8px 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.friend-page-btn:hover:not(:disabled) {
+  background: rgba(212, 175, 55, 0.18);
+  transform: translateY(-1px);
+}
+
+.friend-page-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.friend-page-info {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* ==============================
+   MEDIA CARD — ACTION OVERLAY
+   ============================== */
+
+.friend-media-poster-link {
+  display: block;
+}
+
+.friend-media-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.52);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+.friend-media-poster-wrap:hover .friend-media-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.friend-overlay-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  background: rgba(10, 10, 18, 0.76);
+  color: rgba(255, 255, 255, 0.88);
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.friend-overlay-btn:hover:not(:disabled) {
+  background: rgba(212, 175, 55, 0.28);
+  border-color: var(--favorite-glow);
+  transform: scale(1.12);
+}
+
+.friend-overlay-btn:disabled {
+  cursor: default;
+}
+
+.friend-overlay-btn.active {
+  background: rgba(212, 175, 55, 0.24);
+  border-color: var(--favorite-glow);
+  color: var(--favorite-glow);
+}
+
+.friend-overlay-btn.favorite {
+  background: rgba(200, 60, 60, 0.34);
+  border-color: rgba(255, 130, 130, 0.6);
+  color: #ff9090;
+}
+
+.friend-media-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.friend-media-title-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
