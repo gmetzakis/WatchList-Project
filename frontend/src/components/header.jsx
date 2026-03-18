@@ -1,11 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiSearch } from "react-icons/fi";
+import { FiSearch, FiUser, FiLogOut } from "react-icons/fi";
 
 export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [accountPinned, setAccountPinned] = useState(false);
   const [query, setQuery] = useState("");
   const inputRef = useRef(null);
+  const accountRef = useRef(null);
+  const accountCloseTimeoutRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -13,10 +17,27 @@ export default function Header() {
       if (inputRef.current && !inputRef.current.contains(e.target)) {
         setSearchOpen(false);
       }
+
+      if (accountRef.current && !accountRef.current.contains(e.target)) {
+        setAccountOpen(false);
+        setAccountPinned(false);
+      }
     }
-    if (searchOpen) document.addEventListener("mousedown", handleClickOutside);
+
+    if (searchOpen || accountOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [searchOpen]);
+  }, [searchOpen, accountOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (accountCloseTimeoutRef.current) {
+        clearTimeout(accountCloseTimeoutRef.current);
+      }
+    };
+  }, []);
 
   function handleKeyDown(e) {
     if (e.key === "Enter" && query.trim() !== "") {
@@ -26,12 +47,52 @@ export default function Header() {
     }
     if (e.key === "Escape") {
       setSearchOpen(false);
+      setAccountOpen(false);
+      setAccountPinned(false);
     }
+  }
+
+  function handleAccountMouseEnter() {
+    if (accountCloseTimeoutRef.current) {
+      clearTimeout(accountCloseTimeoutRef.current);
+      accountCloseTimeoutRef.current = null;
+    }
+
+    setAccountOpen(true);
+  }
+
+  function handleAccountMouseLeave() {
+    if (accountPinned) {
+      return;
+    }
+
+    accountCloseTimeoutRef.current = setTimeout(() => {
+      setAccountOpen(false);
+      accountCloseTimeoutRef.current = null;
+    }, 180);
+  }
+
+  function handleAccountToggle() {
+    if (accountCloseTimeoutRef.current) {
+      clearTimeout(accountCloseTimeoutRef.current);
+      accountCloseTimeoutRef.current = null;
+    }
+
+    if (accountPinned) {
+      setAccountPinned(false);
+      setAccountOpen(false);
+      return;
+    }
+
+    setAccountPinned(true);
+    setAccountOpen(true);
   }
 
   function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("auth-storage");
+    setAccountOpen(false);
+    setAccountPinned(false);
     navigate("/login", { replace: true });
   }
 
@@ -65,8 +126,38 @@ export default function Header() {
           <Link to="/watched">Watched</Link>
           <Link to="/watchlist">Watchlist</Link>
           <Link to="/favorites">Favorites</Link>
-          <Link to="/profile">Profile</Link>
-          <button type="button" className="logout-btn" onClick={handleLogout}>Logout</button>
+
+          <div
+            className={`account-menu-wrapper ${accountOpen ? "open" : ""}`}
+            ref={accountRef}
+            onMouseEnter={handleAccountMouseEnter}
+            onMouseLeave={handleAccountMouseLeave}
+          >
+            <button
+              type="button"
+              className="account-toggle-btn"
+              onClick={handleAccountToggle}
+              aria-label="Open account menu"
+              aria-expanded={accountOpen}
+            >
+              <FiUser />
+            </button>
+
+            <div className="account-dropdown">
+              <Link to="/profile" className="account-dropdown-link" onClick={() => {
+                setAccountOpen(false);
+                setAccountPinned(false);
+              }}>
+                <FiUser />
+                <span>Profile</span>
+              </Link>
+
+              <button type="button" className="account-dropdown-action" onClick={handleLogout}>
+                <FiLogOut />
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
         </nav>
 
       </div>

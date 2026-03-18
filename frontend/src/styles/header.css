@@ -79,22 +79,87 @@
   width: 100%;
 }
 
-.logout-btn {
+.account-menu-wrapper {
+  position: relative;
+  padding-bottom: 8px;
+  margin-bottom: -8px;
+}
+
+.account-toggle-btn {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid rgba(212, 175, 55, 0.35);
   background: rgba(0, 0, 0, 0.28);
   color: var(--text);
-  font-size: 0.95rem;
-  font-weight: 600;
-  padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: 999px;
   cursor: pointer;
   transition: all 0.25s ease;
+  font-size: 1.1rem;
 }
 
-.logout-btn:hover {
+.account-toggle-btn:hover,
+.account-menu-wrapper.open .account-toggle-btn {
   color: var(--favorite-glow);
   border-color: var(--favorite-glow);
   box-shadow: 0 0 10px rgba(212, 175, 55, 0.25);
+}
+
+.account-dropdown {
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 0;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: linear-gradient(180deg, rgba(12, 12, 16, 0.98), rgba(20, 20, 28, 0.95));
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 80;
+}
+
+.account-menu-wrapper.open .account-dropdown {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.account-dropdown-link,
+.account-dropdown-action {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.account-dropdown-link::before {
+  display: none;
+}
+
+.account-dropdown-link:hover,
+.account-dropdown-action:hover {
+  background: rgba(212, 175, 55, 0.1);
+  color: var(--favorite-glow);
 }
 
 
