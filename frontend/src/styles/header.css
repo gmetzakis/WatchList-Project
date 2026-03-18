@@ -98,6 +98,7 @@
   cursor: pointer;
   transition: all 0.25s ease;
   font-size: 1.1rem;
+  position: relative;
 }
 
 .account-toggle-btn:hover,
@@ -150,6 +151,39 @@
   text-decoration: none;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
+}
+
+.account-notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #e45757;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.menu-notification-dot {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(228, 87, 87, 0.9);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .account-dropdown-link::before {

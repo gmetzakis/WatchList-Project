@@ -8,11 +8,17 @@ import db from "../db/index.js";
 //       receiver_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 //       requested_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 //       status TEXT NOT NULL CHECK (status IN ('pending', 'accepted', 'declined')) DEFAULT 'pending',
+//       receiver_seen BOOLEAN NOT NULL DEFAULT false,
+//       requester_seen BOOLEAN NOT NULL DEFAULT true,
 //       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 //       responded_at TIMESTAMP,
 //       UNIQUE (requester_id, receiver_id)
 //     )
 //   `);
+
+//   // Make sure older tables also get the notification columns.
+//   await db.query(`ALTER TABLE friend_requests ADD COLUMN IF NOT EXISTS receiver_seen BOOLEAN NOT NULL DEFAULT false`);
+//   await db.query(`ALTER TABLE friend_requests ADD COLUMN IF NOT EXISTS requester_seen BOOLEAN NOT NULL DEFAULT true`);
 // }
 
 export async function findUserByUsername(username) {
@@ -40,8 +46,8 @@ export async function findFriendRelationship(userIdOne, userIdTwo) {
 
 export async function createFriendRequest(requesterId, receiverId) {
   const result = await db.query(
-    `INSERT INTO friend_requests (requester_id, receiver_id, requested_by, status)
-     VALUES ($1, $2, $1, 'pending')
+    `INSERT INTO friend_requests (requester_id, receiver_id, requested_by, status, receiver_seen, requester_seen)
+     VALUES ($1, $2, $1, 'pending', false, true)
      RETURNING *`,
     [requesterId, receiverId]
   );
@@ -135,9 +141,74 @@ export async function listFriendsData(userId) {
     [userId]
   );
 
+  const notifications = await getFriendNotificationCounts(userId);
+
   return {
     friends: friendsResult.rows,
     incomingRequests: incomingResult.rows,
     outgoingRequests: outgoingResult.rows,
+    notifications,
   };
+}
+
+export async function getFriendNotificationCounts(userId) {
+  const incomingResult = await db.query(
+    `SELECT COUNT(*)::int AS count
+     FROM friend_requests
+     WHERE receiver_id = $1
+       AND status = 'pending'
+       AND receiver_seen = false`,
+    [userId]
+  );
+
+  const acceptedResult = await db.query(
+    `SELECT COUNT(*)::int AS count
+     FROM friend_requests
+     WHERE requester_id = $1
+       AND status = 'accepted'
+       AND requester_seen = false`,
+    [userId]
+  );
+
+  const incomingPending = incomingResult.rows[0]?.count || 0;
+  const acceptedUpdates = acceptedResult.rows[0]?.count || 0;
+
+  return {
+    incomingPending,
+    acceptedUpdates,
+    total: incomingPending + acceptedUpdates,
+  };
+}
+
+export async function markFriendNotificationsAsRead(userId) {
+  await db.query(
+    `UPDATE friend_requests
+     SET receiver_seen = true
+     WHERE receiver_id = $1
+       AND status = 'pending'
+       AND receiver_seen = false`,
+    [userId]
+  );
+
+  await db.query(
+    `UPDATE friend_requests
+     SET requester_seen = true
+     WHERE requester_id = $1
+       AND status = 'accepted'
+       AND requester_seen = false`,
+    [userId]
+  );
+}
+
+export async function removeFriendRelationship(userIdOne, userIdTwo) {
+  const result = await db.query(
+    `DELETE FROM friend_requests
+     WHERE status = 'accepted'
+       AND ((requester_id = $1 AND receiver_id = $2)
+         OR (requester_id = $2 AND receiver_id = $1))
+     RETURNING id`,
+    [userIdOne, userIdTwo]
+  );
+
+  return result.rowCount > 0;
 }

@@ -1,16 +1,23 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FiSearch, FiUser, FiLogOut, FiUsers } from "react-icons/fi";
+import api from "../api/axios.js";
 
 export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [accountPinned, setAccountPinned] = useState(false);
   const [query, setQuery] = useState("");
+  const [friendNotifications, setFriendNotifications] = useState({
+    incomingPending: 0,
+    acceptedUpdates: 0,
+    total: 0,
+  });
   const inputRef = useRef(null);
   const accountRef = useRef(null);
   const accountCloseTimeoutRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -38,6 +45,35 @@ export default function Header() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadFriendNotifications() {
+      try {
+        const res = await api.get("/friends/notifications");
+        if (!cancelled) {
+          setFriendNotifications(res.data?.notifications || {
+            incomingPending: 0,
+            acceptedUpdates: 0,
+            total: 0,
+          });
+        }
+      } catch {
+        if (!cancelled) {
+          setFriendNotifications({ incomingPending: 0, acceptedUpdates: 0, total: 0 });
+        }
+      }
+    }
+
+    loadFriendNotifications();
+    const intervalId = setInterval(loadFriendNotifications, 30000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [location.pathname]);
 
   function handleKeyDown(e) {
     if (e.key === "Enter" && query.trim() !== "") {
@@ -141,6 +177,9 @@ export default function Header() {
               aria-expanded={accountOpen}
             >
               <FiUser />
+              {friendNotifications.total > 0 && (
+                <span className="account-notification-badge">{friendNotifications.total}</span>
+              )}
             </button>
 
             <div className="account-dropdown">
@@ -150,6 +189,9 @@ export default function Header() {
               }}>
                 <FiUsers />
                 <span>Friends</span>
+                {friendNotifications.total > 0 && (
+                  <span className="menu-notification-dot">{friendNotifications.total}</span>
+                )}
               </Link>
 
               <Link to="/profile" className="account-dropdown-link" onClick={() => {

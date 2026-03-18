@@ -10,6 +10,11 @@ export default function FriendsPage() {
   const [friends, setFriends] = useState([]);
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [outgoingRequests, setOutgoingRequests] = useState([]);
+  const [notifications, setNotifications] = useState({
+    incomingPending: 0,
+    acceptedUpdates: 0,
+    total: 0,
+  });
 
   useEffect(() => {
     loadFriends();
@@ -24,6 +29,11 @@ export default function FriendsPage() {
       setFriends(res.data?.friends || []);
       setIncomingRequests(res.data?.incomingRequests || []);
       setOutgoingRequests(res.data?.outgoingRequests || []);
+      setNotifications(res.data?.notifications || {
+        incomingPending: 0,
+        acceptedUpdates: 0,
+        total: 0,
+      });
     } catch (err) {
       setError(err.response?.data?.error || "Failed to load friends");
     } finally {
@@ -68,6 +78,32 @@ export default function FriendsPage() {
     }
   }
 
+  useEffect(() => {
+    async function markNotificationsRead() {
+      try {
+        await api.post("/friends/notifications/read");
+        setNotifications({ incomingPending: 0, acceptedUpdates: 0, total: 0 });
+      } catch {
+        // Best-effort call. Failing this should not block the page.
+      }
+    }
+
+    markNotificationsRead();
+  }, []);
+
+  async function handleRemoveFriend(friendUserId, username) {
+    setMessage("");
+    setError("");
+
+    try {
+      const res = await api.delete(`/friends/${friendUserId}`);
+      setMessage(res.data?.message || `${username} removed from friends`);
+      setFriends((prev) => prev.filter((friend) => friend.user_id !== friendUserId));
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to remove friend");
+    }
+  }
+
   if (loading) {
     return <div className="friends-shell">Loading friends...</div>;
   }
@@ -78,6 +114,22 @@ export default function FriendsPage() {
 
       {error && <p className="friends-message error">{error}</p>}
       {message && <p className="friends-message success">{message}</p>}
+
+      {notifications.total > 0 && (
+        <section className="friends-notifications-panel">
+          <h2 className="friends-section-title">New Notifications</h2>
+          {notifications.incomingPending > 0 && (
+            <p className="friends-notification-line">
+              You have {notifications.incomingPending} new friend request{notifications.incomingPending > 1 ? "s" : ""}.
+            </p>
+          )}
+          {notifications.acceptedUpdates > 0 && (
+            <p className="friends-notification-line">
+              {notifications.acceptedUpdates} of your friend request{notifications.acceptedUpdates > 1 ? "s have" : " has"} been accepted.
+            </p>
+          )}
+        </section>
+      )}
 
       <section className="friends-section">
         <h2 className="friends-section-title">Add Friend</h2>
@@ -147,11 +199,20 @@ export default function FriendsPage() {
         ) : (
           <div className="friends-list">
             {friends.map((friend) => (
-              <article key={friend.user_id} className="friend-card compact">
+              <article key={friend.user_id} className="friend-card">
                 <div>
                   <h3 className="friend-name">{friend.username}</h3>
                   <p className="friend-meta">{friend.first_name} {friend.last_name}</p>
                   <p className="friend-meta">{friend.country || "No country set"}</p>
+                </div>
+                <div className="friend-actions">
+                  <button
+                    className="friends-danger-btn"
+                    type="button"
+                    onClick={() => handleRemoveFriend(friend.user_id, friend.username)}
+                  >
+                    Remove Friend
+                  </button>
                 </div>
               </article>
             ))}

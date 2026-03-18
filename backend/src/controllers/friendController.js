@@ -2,8 +2,11 @@ import {
   createFriendRequest,
   findFriendRelationship,
   findUserByUsername,
+  getFriendNotificationCounts,
   getFriendRequestById,
   listFriendsData,
+  markFriendNotificationsAsRead,
+  removeFriendRelationship,
   updateFriendRequest,
 } from "../models/friendModel.js";
 
@@ -56,6 +59,8 @@ export async function createFriendRequestController(req, res) {
         receiver_id: targetUser.user_id,
         requested_by: userId,
         status: "pending",
+        receiver_seen: false,
+        requester_seen: true,
         responded_at: null,
         created_at: new Date(),
       });
@@ -101,6 +106,7 @@ export async function respondToFriendRequestController(req, res) {
 
     const updated = await updateFriendRequest(requestId, {
       status: action === "accept" ? "accepted" : "declined",
+      requester_seen: action === "accept" ? false : true,
       responded_at: new Date(),
     });
 
@@ -110,6 +116,50 @@ export async function respondToFriendRequestController(req, res) {
     });
   } catch (err) {
     console.error("Respond friend request error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function getFriendNotificationsController(req, res) {
+  try {
+    const notifications = await getFriendNotificationCounts(req.user.id);
+    return res.json({ notifications });
+  } catch (err) {
+    console.error("Friend notifications error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function markFriendNotificationsReadController(req, res) {
+  try {
+    await markFriendNotificationsAsRead(req.user.id);
+    return res.json({ message: "Notifications marked as read" });
+  } catch (err) {
+    console.error("Mark friend notifications error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function removeFriendController(req, res) {
+  try {
+
+    const friendUserId = Number(req.params.friendUserId);
+    if (!Number.isInteger(friendUserId)) {
+      return res.status(400).json({ error: "Invalid friend user id" });
+    }
+
+    if (friendUserId === req.user.id) {
+      return res.status(400).json({ error: "You cannot remove yourself" });
+    }
+
+    const removed = await removeFriendRelationship(req.user.id, friendUserId);
+    if (!removed) {
+      return res.status(404).json({ error: "Friend relationship not found" });
+    }
+
+    return res.json({ message: "Friend removed" });
+  } catch (err) {
+    console.error("Remove friend error:", err);
     return res.status(500).json({ error: "Internal server error" });
   }
 }
