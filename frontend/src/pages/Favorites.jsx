@@ -331,6 +331,7 @@ export default function FavoritesPage() {
   );
 
   filteredItems = applySortToItems(filteredItems);
+  const titlesCountLabel = `${filteredItems.length} title${filteredItems.length === 1 ? "" : "s"}`;
 
   filteredItems.forEach(item => {
     if (!item.rating) grouped.unrated.push(item);
@@ -342,8 +343,11 @@ export default function FavoritesPage() {
   const activeOrder = sort === "rating_desc" ? orderDesc : orderAsc;
 
   return (
-    <div className="page-container">
-      <h1>Favorites</h1>
+    <div className="page-container library-page">
+      <div className="library-page-head">
+        <h1 className="library-page-title">Favorites</h1>
+        <span className="library-page-count">{titlesCountLabel}</span>
+      </div>
 
       {/* FILTER BAR */}
       <div className="filter-bar">

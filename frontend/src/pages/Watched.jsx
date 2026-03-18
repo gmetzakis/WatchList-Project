@@ -298,6 +298,7 @@ export default function WatchedPage() {
   );
 
   filteredItems = applySortToItems(filteredItems);
+  const titlesCountLabel = `${filteredItems.length} title${filteredItems.length === 1 ? "" : "s"}`;
 
   filteredItems.forEach(item => {
     if (!item.rating) grouped.unrated.push(item);
@@ -309,8 +310,11 @@ export default function WatchedPage() {
   const activeOrder = sort === "rating_desc" ? orderDesc : orderAsc;
 
   return (
-    <div className="page-container">
-      <h1>Watched</h1>
+    <div className="page-container library-page">
+      <div className="library-page-head">
+        <h1 className="library-page-title">Watched</h1>
+        <span className="library-page-count">{titlesCountLabel}</span>
+      </div>
 
       <div className="filter-bar">
 
@@ -352,6 +356,15 @@ export default function WatchedPage() {
         </div>
 
         <div>
+          <label className="filter-label">Type:</label>
+          <select value={type} onChange={handleTypeChange} className="filter-select">
+            <option value="all">All</option>
+            <option value="movie">Movies</option>
+            <option value="series">Shows</option>
+          </select>
+        </div>
+
+        <div>
           <label className="filter-label">Genre:</label>
           <select
             value={genre}
@@ -362,15 +375,6 @@ export default function WatchedPage() {
             {availableGenres.map(g => (
               <option key={g} value={g}>{g}</option>
             ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="filter-label">Type:</label>
-          <select value={type} onChange={handleTypeChange} className="filter-select">
-            <option value="all">All</option>
-            <option value="movie">Movies</option>
-            <option value="series">Shows</option>
           </select>
         </div>
       </div>

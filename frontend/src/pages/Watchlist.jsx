@@ -274,11 +274,15 @@ export default function WatchlistPage() {
   );
 
   filteredItems = applySortToItems(filteredItems);
+  const titlesCountLabel = `${filteredItems.length} title${filteredItems.length === 1 ? "" : "s"}`;
 
 
   return (
-    <div className="page-container">
-      <h1>Watchlist</h1>
+    <div className="page-container library-page">
+      <div className="library-page-head">
+        <h1 className="library-page-title">Watchlist</h1>
+        <span className="library-page-count">{titlesCountLabel}</span>
+      </div>
 
       {/* TYPE FILTER */}
       <div className="filter-bar">

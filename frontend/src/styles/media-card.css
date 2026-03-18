@@ -390,16 +390,21 @@
 
 .view-toggle-container {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.16);
+  background: linear-gradient(135deg, rgba(13, 13, 20, 0.9), rgba(8, 8, 14, 0.94));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
 .view-toggle-box {
   width: 42px;
   height: 42px;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -409,20 +414,23 @@
     border-color 0.2s ease,
     transform 0.2s ease,
     color 0.2s ease;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,0.62);
 }
 
 .view-toggle-box:hover {
-  transform: scale(1.12);
-  background: rgba(255,255,255,0.15);
+  transform: translateY(-1px) scale(1.06);
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(212, 175, 55, 0.42);
   color: white;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
 }
 
 .view-toggle-box.active {
-  background: rgba(255,255,255,0.25);
-  border-color: rgba(255,255,255,0.5);
-  color: white;
-  transform: scale(1.12);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.28), rgba(185, 134, 47, 0.18));
+  border-color: rgba(255, 215, 0, 0.62);
+  color: #fff;
+  transform: translateY(-1px) scale(1.04);
+  box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.22), 0 8px 18px rgba(0, 0, 0, 0.4);
 }
 
 .rating-section-title .star.active {
