@@ -14,6 +14,12 @@ export default function LoginPage() {
 
     try {
       const res = await api.post("/auth/login", { email, password });
+
+      if (!res.data?.token) {
+        setError("Login succeeded but no token was returned");
+        return;
+      }
+
       localStorage.setItem("token", res.data.token);
       navigate("/watched");
     } catch (err) {

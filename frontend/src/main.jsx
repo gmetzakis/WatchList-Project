@@ -15,9 +15,37 @@ import "./index.css";
 import "./styles/cinema.css";
 
 
+function isTokenValid(token) {
+  if (!token || token === "undefined" || token === "null") {
+    return false;
+  }
+
+  try {
+    const payloadPart = token.split(".")[1];
+    if (!payloadPart) return false;
+
+    const base64 = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
+    const payload = JSON.parse(atob(base64));
+
+    if (!payload?.exp) return true;
+
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    return payload.exp > nowInSeconds;
+  } catch {
+    return false;
+  }
+}
+
+
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
-  if (!token) return <Navigate to="/login" replace />;
+
+  if (!isTokenValid(token)) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("auth-storage");
+    return <Navigate to="/login" replace />;
+  }
+
   return children;
 }
 
