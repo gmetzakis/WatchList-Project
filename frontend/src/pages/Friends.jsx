@@ -5,6 +5,36 @@ import { Bookmark, BookmarkCheck, Eye, CheckCheck, Heart } from "lucide-react";
 
 const ITEMS_PER_PAGE = 12;
 
+const GENRE_MAP = {
+  28: "Action",
+  12: "Adventure",
+  16: "Animation",
+  35: "Comedy",
+  80: "Crime",
+  99: "Documentary",
+  18: "Drama",
+  10751: "Family",
+  14: "Fantasy",
+  36: "History",
+  27: "Horror",
+  10402: "Music",
+  9648: "Mystery",
+  10749: "Romance",
+  878: "Science Fiction",
+  10770: "TV Movie",
+  53: "Thriller",
+  10752: "War",
+  37: "Western",
+  10759: "Action & Adventure",
+  10762: "Kids",
+  10763: "News",
+  10764: "Reality",
+  10765: "Sci-Fi & Fantasy",
+  10766: "Soap",
+  10767: "Talk",
+  10768: "War & Politics",
+};
+
 function getInitials(friend) {
   const source = `${friend?.first_name || ""} ${friend?.last_name || ""}`.trim() || friend?.username || "?";
   return source
@@ -28,6 +58,50 @@ function formatDateLabel(value) {
   });
 }
 
+function normalizeGenres(rawGenres) {
+  function normalizeGenreValue(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return null;
+
+    const numericId = Number(raw);
+    if (Number.isInteger(numericId) && GENRE_MAP[numericId]) {
+      return GENRE_MAP[numericId];
+    }
+
+    return raw;
+  }
+
+  if (Array.isArray(rawGenres)) {
+    return rawGenres
+      .map((genre) => normalizeGenreValue(genre))
+      .filter(Boolean);
+  }
+
+  if (typeof rawGenres === "string") {
+    const trimmed = rawGenres.trim();
+    if (!trimmed) return [];
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((genre) => normalizeGenreValue(genre))
+          .filter(Boolean);
+      }
+    } catch {
+      // Fallback to comma-separated parsing.
+    }
+
+    return trimmed
+      .replace(/[{}\"]/g, "")
+      .split(",")
+      .map((genre) => normalizeGenreValue(genre))
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
 function MediaShelf({
   items,
   emptyText,
@@ -37,6 +111,7 @@ function MediaShelf({
   onMarkWatched,
   onToggleFavorite,
   typeFilter,
+  genreFilter,
   sortBy,
   searchQuery,
   page,
@@ -45,6 +120,9 @@ function MediaShelf({
   let filtered = items;
 
   if (typeFilter !== "all") filtered = filtered.filter((i) => i.type === typeFilter);
+  if (genreFilter !== "all") {
+    filtered = filtered.filter((i) => normalizeGenres(i.genres).includes(genreFilter));
+  }
   if (searchQuery.trim()) {
     const q = searchQuery.trim().toLowerCase();
     filtered = filtered.filter((i) => i.title?.toLowerCase().includes(q));
@@ -55,6 +133,7 @@ function MediaShelf({
   else if (sortBy === "title_asc") filtered = [...filtered].sort((a, b) => (a.title || "").localeCompare(b.title || ""));
   else if (sortBy === "title_desc") filtered = [...filtered].sort((a, b) => (b.title || "").localeCompare(a.title || ""));
   else if (sortBy === "year_desc") filtered = [...filtered].sort((a, b) => (b.release_year || 0) - (a.release_year || 0));
+  else if (sortBy === "year_asc") filtered = [...filtered].sort((a, b) => (a.release_year || 0) - (b.release_year || 0));
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const safePage = Math.min(page, totalPages);
@@ -181,6 +260,7 @@ export default function FriendsPage() {
 
   // Filter / sort / pagination for the friend library
   const [friendTypeFilter, setFriendTypeFilter] = useState("all");
+  const [friendGenreFilter, setFriendGenreFilter] = useState("all");
   const [friendSortBy, setFriendSortBy] = useState("default");
   const [friendSearchQuery, setFriendSearchQuery] = useState("");
   const [friendPage, setFriendPage] = useState(1);
@@ -286,6 +366,7 @@ export default function FriendsPage() {
 
       // Reset filters and pagination when switching to a different friend
       setFriendTypeFilter("all");
+      setFriendGenreFilter("all");
       setFriendSortBy("default");
       setFriendSearchQuery("");
       setFriendPage(1);
@@ -456,21 +537,25 @@ export default function FriendsPage() {
     watchlistCount: 0,
     watchedCount: 0,
     favoritesCount: 0,
-    ratedCount: 0,
   };
   const libraryCollections = selectedFriendDetail?.library || {
     watched: [],
     favorites: [],
     watchlist: [],
-    rated: [],
   };
   const shelfConfig = [
     { key: "watched", label: "Watched", items: libraryCollections.watched, emptyText: "No watched titles yet." },
     { key: "favorites", label: "Favorites", items: libraryCollections.favorites, emptyText: "No favorites yet." },
     { key: "watchlist", label: "Watchlist", items: libraryCollections.watchlist, emptyText: "Watchlist is empty." },
-    { key: "rated", label: "Rated", items: libraryCollections.rated, emptyText: "No rated titles yet." },
   ];
   const activeShelf = shelfConfig.find((shelf) => shelf.key === selectedShelf) || shelfConfig[0];
+  const effectiveSortBy =
+    selectedShelf === "watchlist" && (friendSortBy === "rating_desc" || friendSortBy === "rating_asc")
+      ? "default"
+      : friendSortBy;
+  const availableShelfGenres = Array.from(
+    new Set(activeShelf.items.flatMap((item) => normalizeGenres(item.genres)))
+  ).sort((left, right) => left.localeCompare(right));
 
   return (
     <div className="friends-shell">
@@ -659,7 +744,11 @@ export default function FriendsPage() {
                       key={shelf.key}
                       type="button"
                       className={`friend-library-tab ${selectedShelf === shelf.key ? "active" : ""}`}
-                      onClick={() => { setSelectedShelf(shelf.key); setFriendPage(1); }}
+                      onClick={() => {
+                        setSelectedShelf(shelf.key);
+                        setFriendGenreFilter("all");
+                        setFriendPage(1);
+                      }}
                     >
                       {shelf.label}
                       <span>{shelf.items.length}</span>
@@ -695,14 +784,25 @@ export default function FriendsPage() {
                     </select>
                     <select
                       className="friend-filter-select"
-                      value={friendSortBy}
+                      value={friendGenreFilter}
+                      onChange={(e) => { setFriendGenreFilter(e.target.value); setFriendPage(1); }}
+                    >
+                      <option value="all">All genres</option>
+                      {availableShelfGenres.map((genre) => (
+                        <option key={genre} value={genre}>{genre}</option>
+                      ))}
+                    </select>
+                    <select
+                      className="friend-filter-select"
+                      value={effectiveSortBy}
                       onChange={(e) => { setFriendSortBy(e.target.value); setFriendPage(1); }}
                     >
                       <option value="default">Default</option>
                       <option value="title_asc">Title A–Z</option>
                       <option value="title_desc">Title Z–A</option>
-                      <option value="rating_desc">Rating ↓</option>
-                      <option value="rating_asc">Rating ↑</option>
+                      {selectedShelf !== "watchlist" && <option value="rating_desc">Rating ↓</option>}
+                      {selectedShelf !== "watchlist" && <option value="rating_asc">Rating ↑</option>}
+                      <option value="year_asc">Year old → new</option>
                       <option value="year_desc">Year ↓</option>
                     </select>
                   </div>
@@ -716,7 +816,8 @@ export default function FriendsPage() {
                     onMarkWatched={handleMarkAsWatched}
                     onToggleFavorite={handleToggleFavorite}
                     typeFilter={friendTypeFilter}
-                    sortBy={friendSortBy}
+                    genreFilter={friendGenreFilter}
+                    sortBy={effectiveSortBy}
                     searchQuery={friendSearchQuery}
                     page={friendPage}
                     setPage={setFriendPage}
