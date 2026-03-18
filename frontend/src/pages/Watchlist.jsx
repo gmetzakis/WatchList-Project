@@ -55,7 +55,6 @@ function EmblaCarousel({ items, renderCard }) {
 export default function WatchlistPage() {
   const [items, setItems] = useState([]);
   const [availableGenres, setAvailableGenres] = useState([]);
-  const [selectedGenre, setSelectedGenre] = useState("all");
 
   const [loading, setLoading] = useState(true);
 
@@ -63,10 +62,38 @@ export default function WatchlistPage() {
   const navigate = useNavigate();
 
   const type = searchParams.get("type") || "all";
+  const sort = searchParams.get("sort") || "";
   const genre = searchParams.get("genre") || "all";
 
   const [viewMode, setViewMode] = useState("grid"); 
   // "grid" | "tape"
+  const [searchQuery, setSearchQuery] = useState("");
+
+  function normalizeGenreNames(genres) {
+    if (!Array.isArray(genres)) return [];
+    return genres
+      .map(g => typeof g === "string" ? g : g?.name)
+      .filter(Boolean);
+  }
+
+  async function hydrateItemGenres(sourceItems) {
+    return Promise.all(
+      sourceItems.map(async (item) => {
+        const existingGenres = normalizeGenreNames(item.genres);
+        if (existingGenres.length > 0) {
+          return { ...item, genres: existingGenres };
+        }
+
+        try {
+          const detailsRes = await api.get(`/tmdb/details/${item.type}/${item.tmdb_id}`);
+          const detailedGenres = normalizeGenreNames(detailsRes.data?.genres);
+          return { ...item, genres: detailedGenres };
+        } catch {
+          return { ...item, genres: [] };
+        }
+      })
+    );
+  }
 
   function renderCard(item) {
     return (
@@ -130,18 +157,30 @@ export default function WatchlistPage() {
 
   useEffect(() => {
     load();
-  }, [type, genre]);
+  }, [type]);
 
   async function load() {
     try {
-      const res = await api.get("/media/watchlist", {
+      const [itemsRes, genresRes] = await Promise.all([
+        api.get("/media/watchlist", {
         params: {
           type: type !== "all" ? type : undefined
         }
-      });
+        }),
+        api.get("/media/watchlist")
+      ]);
 
-      setItems(res.data.items);
-      setAvailableGenres(res.data.genres || []);
+      const hydratedItems = await hydrateItemGenres(itemsRes.data.items || []);
+
+      const mergedGenres = Array.from(
+        new Set([
+          ...(genresRes.data.genres || []),
+          ...hydratedItems.flatMap(item => normalizeGenreNames(item.genres))
+        ])
+      ).sort((a, b) => a.localeCompare(b));
+
+      setItems(hydratedItems);
+      setAvailableGenres(mergedGenres);
 
     } catch (err) {
       console.error("Watchlist load error:", err);
@@ -154,12 +193,44 @@ export default function WatchlistPage() {
     const params = new URLSearchParams();
     if (newType !== "all") params.set("type", newType);
     if (newGenre && newGenre !== "all") params.set("genre", newGenre);
+    if (sort) params.set("sort", sort);
     navigate(`/watchlist?${params.toString()}`);
   }
 
+  function updateQueryWithSort(newSort, newType, newGenre) {
+    const params = new URLSearchParams();
+    if (newSort) params.set("sort", newSort);
+    if (newType !== "all") params.set("type", newType);
+    if (newGenre && newGenre !== "all") params.set("genre", newGenre);
+    navigate(`/watchlist?${params.toString()}`);
+  }
+
+  function handleSortChange(e) {
+    updateQueryWithSort(e.target.value, type, genre);
+  }
+
+  function handleTypeChange(e) {
+    updateQueryWithSort(sort, e.target.value, genre);
+  }
+
   function handleGenreChange(e) {
-    setSelectedGenre(e.target.value);
-    updateQuery(sort, favorites, type, e.target.value);
+    updateQueryWithSort(sort, type, e.target.value);
+  }
+
+  function applySortToItems(itemsToSort) {
+    if (sort === "title_asc") {
+      return itemsToSort.slice().sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+    }
+    if (sort === "title_desc") {
+      return itemsToSort.slice().sort((a, b) => (b.title || "").localeCompare(a.title || ""));
+    }
+    if (sort === "year_asc") {
+      return itemsToSort.slice().sort((a, b) => (a.release_year || 0) - (b.release_year || 0));
+    }
+    if (sort === "year_desc") {
+      return itemsToSort.slice().sort((a, b) => (b.release_year || 0) - (a.release_year || 0));
+    }
+    return itemsToSort;
   }
 
   async function handleRemove(item) {
@@ -190,12 +261,19 @@ export default function WatchlistPage() {
     return <div>Loading watchlist...</div>;
   }
 
-  const filteredItems = selectedGenre === "all"
+  let filteredItems = genre === "all"
     ? items
     : items.filter(item =>
         Array.isArray(item.genres) &&
-        item.genres.includes(selectedGenre)
+        item.genres.includes(genre)
       );
+
+  filteredItems = filteredItems.filter(item =>
+    !searchQuery.trim() ||
+    item.title?.toLowerCase().includes(searchQuery.trim().toLowerCase())
+  );
+
+  filteredItems = applySortToItems(filteredItems);
 
 
   return (
@@ -221,11 +299,30 @@ export default function WatchlistPage() {
           </div>
         </div>
 
+        <input
+          type="text"
+          className="filter-search-input"
+          placeholder="Search titles…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+
+        <div>
+          <label className="filter-label">Sort:</label>
+          <select value={sort} onChange={handleSortChange} className="filter-select">
+            <option value="">None</option>
+            <option value="title_asc">Title A–Z</option>
+            <option value="title_desc">Title Z–A</option>
+            <option value="year_asc">Year ↓</option>
+            <option value="year_desc">Year ↑</option>
+          </select>
+        </div>
+
         <div>
           <label className="filter-label">Type:</label>
           <select
             value={type}
-            onChange={(e) => updateQuery(e.target.value)}
+            onChange={handleTypeChange}
             className="filter-select"
           >
             <option value="all">All</option>
@@ -237,7 +334,7 @@ export default function WatchlistPage() {
         <div>
           <label className="filter-label">Genre:</label>
           <select
-            value={selectedGenre}
+            value={genre}
             onChange={handleGenreChange}
             className="filter-select"
           >

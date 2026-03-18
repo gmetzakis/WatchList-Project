@@ -55,7 +55,6 @@ function EmblaCarousel({ items, renderCard }) {
 export default function WatchedPage() {
   const [items, setItems] = useState([]);
   const [availableGenres, setAvailableGenres] = useState([]);
-  const [selectedGenre, setSelectedGenre] = useState("all");
 
   const [loading, setLoading] = useState(true);
 
@@ -68,6 +67,33 @@ export default function WatchedPage() {
   const genre = searchParams.get("genre") || "all";
 
   const [viewMode, setViewMode] = useState("grid");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  function normalizeGenreNames(genres) {
+    if (!Array.isArray(genres)) return [];
+    return genres
+      .map(g => typeof g === "string" ? g : g?.name)
+      .filter(Boolean);
+  }
+
+  async function hydrateItemGenres(sourceItems) {
+    return Promise.all(
+      sourceItems.map(async (item) => {
+        const existingGenres = normalizeGenreNames(item.genres);
+        if (existingGenres.length > 0) {
+          return { ...item, genres: existingGenres };
+        }
+
+        try {
+          const detailsRes = await api.get(`/tmdb/details/${item.type}/${item.tmdb_id}`);
+          const detailedGenres = normalizeGenreNames(detailsRes.data?.genres);
+          return { ...item, genres: detailedGenres };
+        } catch {
+          return { ...item, genres: [] };
+        }
+      })
+    );
+  }
 
   function renderCard(item) {
     return (
@@ -137,19 +163,32 @@ export default function WatchedPage() {
 
   useEffect(() => {
     load();
-  }, [sort, favorites, type, genre]);
+  }, [sort, favorites, type]);
 
   async function load() {
     try {
-      const res = await api.get("/media/watched", {
+      const [itemsRes, genresRes] = await Promise.all([
+        api.get("/media/watched", {
         params: {
           sort: sort || undefined,
           favorites: favorites || undefined,
           type: type !== "all" ? type : undefined
         }
-      });
-      setItems(res.data.items);
-      setAvailableGenres(res.data.genres);
+        }),
+        api.get("/media/watched")
+      ]);
+
+      const hydratedItems = await hydrateItemGenres(itemsRes.data.items || []);
+
+      const mergedGenres = Array.from(
+        new Set([
+          ...(genresRes.data.genres || []),
+          ...hydratedItems.flatMap(item => normalizeGenreNames(item.genres))
+        ])
+      ).sort((a, b) => a.localeCompare(b));
+
+      setItems(hydratedItems);
+      setAvailableGenres(mergedGenres);
 
     } catch (err) {
       console.error("Watched load error:", err);
@@ -168,20 +207,35 @@ export default function WatchedPage() {
   }
 
   function handleSortChange(e) {
-    updateQuery(e.target.value, favorites, type);
+    updateQuery(e.target.value, favorites, type, genre);
   }
 
   function handleFavoritesToggle() {
-    updateQuery(sort, favorites === "true" ? "" : "true", type);
+    updateQuery(sort, favorites === "true" ? "" : "true", type, genre);
   }
 
   function handleTypeChange(e) {
-    updateQuery(sort, favorites, e.target.value);
+    updateQuery(sort, favorites, e.target.value, genre);
   }
 
   function handleGenreChange(e) {
-    setSelectedGenre(e.target.value);
     updateQuery(sort, favorites, type, e.target.value);
+  }
+
+  function applySortToItems(itemsToSort) {
+    if (sort === "title_asc") {
+      return itemsToSort.slice().sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+    }
+    if (sort === "title_desc") {
+      return itemsToSort.slice().sort((a, b) => (b.title || "").localeCompare(a.title || ""));
+    }
+    if (sort === "year_asc") {
+      return itemsToSort.slice().sort((a, b) => (a.release_year || 0) - (b.release_year || 0));
+    }
+    if (sort === "year_desc") {
+      return itemsToSort.slice().sort((a, b) => (b.release_year || 0) - (a.release_year || 0));
+    }
+    return itemsToSort;
   }
 
   async function handleRemove(item) {
@@ -238,12 +292,19 @@ export default function WatchedPage() {
     unrated: []
   };
 
-  const filteredItems = selectedGenre === "all"
+  let filteredItems = genre === "all"
   ? items
   : items.filter(item =>
       Array.isArray(item.genres) &&
-      item.genres.includes(selectedGenre)
+      item.genres.includes(genre)
     );
+
+  filteredItems = filteredItems.filter(item =>
+    !searchQuery.trim() ||
+    item.title?.toLowerCase().includes(searchQuery.trim().toLowerCase())
+  );
+
+  filteredItems = applySortToItems(filteredItems);
 
   filteredItems.forEach(item => {
     if (!item.rating) grouped.unrated.push(item);
@@ -276,12 +337,24 @@ export default function WatchedPage() {
           </div>
         </div>
 
+        <input
+          type="text"
+          className="filter-search-input"
+          placeholder="Search titles…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+
         <div>
           <label className="filter-label">Sort:</label>
           <select value={sort} onChange={handleSortChange} className="filter-select">
             <option value="">None</option>
-            <option value="rating_desc">Rating Desc</option>
-            <option value="rating_asc">Rating Asc</option>
+            <option value="title_asc">Title A–Z</option>
+            <option value="title_desc">Title Z–A</option>
+            <option value="year_asc">Year ↓</option>
+            <option value="year_desc">Year ↑</option>
+            <option value="rating_desc">Rating ↓</option>
+            <option value="rating_asc">Rating ↑</option>
           </select>
         </div>
 
