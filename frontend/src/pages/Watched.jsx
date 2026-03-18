@@ -62,7 +62,6 @@ export default function WatchedPage() {
   const navigate = useNavigate();
 
   const sort = searchParams.get("sort") || "";
-  const favorites = searchParams.get("favorites") || "";
   const type = searchParams.get("type") || "all";
   const genre = searchParams.get("genre") || "all";
 
@@ -163,7 +162,7 @@ export default function WatchedPage() {
 
   useEffect(() => {
     load();
-  }, [sort, favorites, type]);
+  }, [sort, type]);
 
   async function load() {
     try {
@@ -171,7 +170,6 @@ export default function WatchedPage() {
         api.get("/media/watched", {
         params: {
           sort: sort || undefined,
-          favorites: favorites || undefined,
           type: type !== "all" ? type : undefined
         }
         }),
@@ -197,29 +195,24 @@ export default function WatchedPage() {
     }
   }
 
-  function updateQuery(newSort, newFavorites, newType, newGenre) {
+  function updateQuery(newSort, newType, newGenre) {
     const params = new URLSearchParams();
     if (newSort) params.set("sort", newSort);
-    if (newFavorites) params.set("favorites", newFavorites);
     if (newType && newType !== "all") params.set("type", newType);
     if (newGenre && newGenre !== "all") params.set("genre", newGenre);
     navigate(`/watched?${params.toString()}`);
   }
 
   function handleSortChange(e) {
-    updateQuery(e.target.value, favorites, type, genre);
-  }
-
-  function handleFavoritesToggle() {
-    updateQuery(sort, favorites === "true" ? "" : "true", type, genre);
+    updateQuery(e.target.value, type, genre);
   }
 
   function handleTypeChange(e) {
-    updateQuery(sort, favorites, e.target.value, genre);
+    updateQuery(sort, e.target.value, genre);
   }
 
   function handleGenreChange(e) {
-    updateQuery(sort, favorites, type, e.target.value);
+    updateQuery(sort, type, e.target.value);
   }
 
   function applySortToItems(itemsToSort) {
@@ -351,10 +344,10 @@ export default function WatchedPage() {
             <option value="">None</option>
             <option value="title_asc">Title A–Z</option>
             <option value="title_desc">Title Z–A</option>
-            <option value="year_asc">Year ↓</option>
-            <option value="year_desc">Year ↑</option>
-            <option value="rating_desc">Rating ↓</option>
-            <option value="rating_asc">Rating ↑</option>
+            <option value="year_asc">Released: Oldest First</option>
+            <option value="year_desc">Released: Newest First</option>
+            <option value="rating_desc">Rating Descending</option>
+            <option value="rating_asc">Rating Ascending</option>
           </select>
         </div>
 
@@ -371,14 +364,6 @@ export default function WatchedPage() {
             ))}
           </select>
         </div>
-
-
-        <button
-          onClick={handleFavoritesToggle}
-          className={favorites === "true" ? "btn-fav-toggle active" : "btn-fav-toggle"}
-        >
-          {favorites === "true" ? "Showing Favorites" : "Show Favorites Only"}
-        </button>
 
         <div>
           <label className="filter-label">Type:</label>

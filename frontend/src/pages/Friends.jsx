@@ -754,24 +754,6 @@ export default function FriendsPage() {
                   </button>
                 </div>
 
-                <div className="friend-library-tabs">
-                  {shelfConfig.map((shelf) => (
-                    <button
-                      key={shelf.key}
-                      type="button"
-                      className={`friend-library-tab ${selectedShelf === shelf.key ? "active" : ""}`}
-                      onClick={() => {
-                        setSelectedShelf(shelf.key);
-                        setFriendGenreFilter("all");
-                        setFriendPage(1);
-                      }}
-                    >
-                      {shelf.label}
-                      <span>{shelf.items.length}</span>
-                    </button>
-                  ))}
-                </div>
-
                 <div className="friend-library-section">
                   <div className="friend-library-head">
                     <div>
@@ -816,10 +798,10 @@ export default function FriendsPage() {
                       <option value="default">Default</option>
                       <option value="title_asc">Title A–Z</option>
                       <option value="title_desc">Title Z–A</option>
-                      {selectedShelf !== "watchlist" && <option value="rating_desc">Rating ↓</option>}
-                      {selectedShelf !== "watchlist" && <option value="rating_asc">Rating ↑</option>}
-                      <option value="year_asc">Year ↓</option>
-                      <option value="year_desc">Year ↑</option>
+                      {selectedShelf !== "watchlist" && <option value="rating_desc">Rating Descending</option>}
+                      {selectedShelf !== "watchlist" && <option value="rating_asc">Rating Ascending</option>}
+                      <option value="year_asc">Released: Oldest First</option>
+                      <option value="year_desc">Released: Newest First</option>
                     </select>
                   </div>
 

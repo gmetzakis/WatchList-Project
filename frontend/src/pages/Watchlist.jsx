@@ -313,8 +313,8 @@ export default function WatchlistPage() {
             <option value="">None</option>
             <option value="title_asc">Title A–Z</option>
             <option value="title_desc">Title Z–A</option>
-            <option value="year_asc">Year ↓</option>
-            <option value="year_desc">Year ↑</option>
+            <option value="year_asc">Released: Oldest First</option>
+            <option value="year_desc">Released: Newest First</option>
           </select>
         </div>
 
