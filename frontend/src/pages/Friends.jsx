@@ -58,6 +58,20 @@ function formatDateLabel(value) {
   });
 }
 
+function formatAgeLabel(yearOfBirth) {
+  const numericYear = Number(yearOfBirth);
+  if (!Number.isInteger(numericYear) || numericYear <= 0) {
+    return null;
+  }
+
+  const age = new Date().getFullYear() - numericYear;
+  if (age <= 0) {
+    return null;
+  }
+
+  return `${age} years old`;
+}
+
 function normalizeGenres(rawGenres) {
   function normalizeGenreValue(value) {
     const raw = String(value || "").trim();
@@ -553,6 +567,7 @@ export default function FriendsPage() {
     selectedShelf === "watchlist" && (friendSortBy === "rating_desc" || friendSortBy === "rating_asc")
       ? "default"
       : friendSortBy;
+  const selectedFriendAge = formatAgeLabel(selectedFriend?.year_of_birth);
   const availableShelfGenres = Array.from(
     new Set([
       ...Object.values(GENRE_MAP),
@@ -671,7 +686,7 @@ export default function FriendsPage() {
                       <p className="friend-profile-handle">@{selectedFriend.username}</p>
                       <p className="friend-profile-meta">
                         {selectedFriend.country || "No country set"}
-                        {selectedFriend.year_of_birth ? ` • Born ${selectedFriend.year_of_birth}` : ""}
+                        {selectedFriendAge ? ` • ${selectedFriendAge}` : ""}
                       </p>
                     </div>
                   </div>
