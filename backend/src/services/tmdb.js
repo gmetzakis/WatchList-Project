@@ -38,7 +38,7 @@ export async function searchTMDB(query) {
 export async function fetchTMDBDetails(type, tmdbId) {
   const tmdbType = type === "series" ? "tv" : "movie";
 
-  const url = `${TMDB_BASE}/${tmdbType}/${tmdbId}?api_key=${API_KEY}&language=en-US&append_to_response=credits,images,recommendations`;
+  const url = `${TMDB_BASE}/${tmdbType}/${tmdbId}?api_key=${API_KEY}&language=en-US&append_to_response=credits,images,recommendations,videos`;
 
   try {
     const { data } = await fetchWithRetry(url, {
@@ -80,7 +80,8 @@ function normalizeMovie(data) {
     runtime: data.runtime,
     credits: data.credits,
     images: data.images,
-    recommendations: data.recommendations?.results
+    recommendations: data.recommendations?.results,
+    trailer: pickPreferredTrailer(data.videos?.results)
   };
 }
 
@@ -96,6 +97,28 @@ function normalizeTV(data) {
     runtime: data.episode_run_time?.[0],
     credits: data.credits,
     images: data.images,
-    recommendations: data.recommendations?.results
+    recommendations: data.recommendations?.results,
+    trailer: pickPreferredTrailer(data.videos?.results)
+  };
+}
+
+function pickPreferredTrailer(videos = []) {
+  if (!Array.isArray(videos) || videos.length === 0) return null;
+
+  const youtubeVideos = videos.filter((video) => video?.site === "YouTube" && video?.key);
+  if (youtubeVideos.length === 0) return null;
+
+  const officialTrailer = youtubeVideos.find(
+    (video) => video.type === "Trailer" && video.official === true
+  );
+  const trailer = officialTrailer || youtubeVideos.find((video) => video.type === "Trailer") || youtubeVideos[0];
+
+  return {
+    key: trailer.key,
+    name: trailer.name,
+    site: trailer.site,
+    type: trailer.type,
+    official: trailer.official,
+    published_at: trailer.published_at
   };
 }

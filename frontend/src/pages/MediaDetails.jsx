@@ -11,6 +11,8 @@ export default function MediaDetails() {
   const [rating, setRating] = useState(null); // ⭐ NEW
   const [loading, setLoading] = useState(true);
 
+  const trailerKey = media?.trailer?.site === "YouTube" ? media?.trailer?.key : null;
+
   useEffect(() => {
     async function load() {
       try {
@@ -193,6 +195,22 @@ export default function MediaDetails() {
 
         </div>
       </div>
+
+      {trailerKey && (
+        <>
+          <h2 className="details-section-title">Trailer</h2>
+          <div className="details-trailer-wrap">
+            <iframe
+              className="details-trailer-frame"
+              src={`https://www.youtube.com/embed/${trailerKey}`}
+              title={`${media.title} trailer`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          </div>
+        </>
+      )}
 
       <h2 className="details-section-title">Cast</h2>
       <div className="details-cast-grid">
