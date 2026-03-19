@@ -231,6 +231,7 @@ export default function Header() {
             )}
           </div>
 
+          <Link to="/explore">Explore</Link>
           <Link to="/watched">Watched</Link>
           <Link to="/watchlist">Watchlist</Link>
           <Link to="/favorites">Favorites</Link>

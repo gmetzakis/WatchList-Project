@@ -7,6 +7,7 @@ import friendsRoutes from "./routes/friends.js";
 import profileRoutes from "./routes/profile.js";
 import mediaRoutes from "./routes/media.js";
 import tmdbRoutes from "./routes/tmdbRoutes.js";
+import exploreRoutes from "./routes/explore.js";
 
 const app = express();
 
@@ -37,5 +38,6 @@ app.use("/friends", friendsRoutes);
 app.use("/profile", profileRoutes);
 app.use("/media", mediaRoutes);
 app.use("/tmdb", tmdbRoutes);
+app.use("/explore", exploreRoutes);
 
 export default app;
