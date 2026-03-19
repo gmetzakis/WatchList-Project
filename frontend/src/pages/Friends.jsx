@@ -562,53 +562,15 @@ export default function FriendsPage() {
 
   return (
     <div className="friends-shell">
-      <header className="friends-hero">
-        <div>
-          <p className="friends-kicker">Friends</p>
-          <h1 className="friends-title">Your circle, front and center.</h1>
-          <p className="friends-subtitle">
-            Browse your friends first, dive into their libraries, and keep requests tucked away until you need them.
-          </p>
-        </div>
-
-        <div className="friends-summary-grid">
-          <article className="friends-summary-card">
-            <span className="friends-summary-label">Friends</span>
-            <strong className="friends-summary-value">{friends.length}</strong>
-          </article>
-          <article className="friends-summary-card">
-            <span className="friends-summary-label">Incoming</span>
-            <strong className="friends-summary-value">{incomingRequests.length}</strong>
-          </article>
-          <article className="friends-summary-card">
-            <span className="friends-summary-label">Outgoing</span>
-            <strong className="friends-summary-value">{outgoingRequests.length}</strong>
-          </article>
-          <article className="friends-summary-card accent">
-            <span className="friends-summary-label">Unread</span>
-            <strong className="friends-summary-value">{notifications.total}</strong>
-          </article>
+      <header className="friends-command-deck">
+        <div className="friends-command-title">
+          <h1 className="friends-title">Friends</h1>
+          <span className="friends-header-count">{friends.length}</span>
         </div>
       </header>
 
       {error && <p className="friends-message error">{error}</p>}
       {message && <p className="friends-message success">{message}</p>}
-
-      {notifications.total > 0 && (
-        <section className="friends-notifications-panel">
-          <h2 className="friends-section-title">New Notifications</h2>
-          {notifications.incomingPending > 0 && (
-            <p className="friends-notification-line">
-              You have {notifications.incomingPending} new friend request{notifications.incomingPending > 1 ? "s" : ""}.
-            </p>
-          )}
-          {notifications.acceptedUpdates > 0 && (
-            <p className="friends-notification-line">
-              {notifications.acceptedUpdates} of your friend request{notifications.acceptedUpdates > 1 ? "s have" : " has"} been accepted.
-            </p>
-          )}
-        </section>
-      )}
 
       <div className="friends-tabbar">
         <button
@@ -624,6 +586,7 @@ export default function FriendsPage() {
           onClick={() => setActiveTab("manage")}
         >
           Requests & Add
+          {incomingRequests.length > 0 && <span className="friends-tab-badge">{incomingRequests.length}</span>}
         </button>
       </div>
 
@@ -653,6 +616,7 @@ export default function FriendsPage() {
                       key={friend.user_id}
                       type="button"
                       className={`friends-rail-item ${isActive ? "active" : ""}`}
+                      title={`${friend.first_name} ${friend.last_name}`.trim() || friend.username}
                       onClick={() => {
                         setSelectedFriendId(friend.user_id);
                         setSelectedShelf("watched");
@@ -660,9 +624,8 @@ export default function FriendsPage() {
                     >
                       <span className="friends-avatar-badge">{getInitials(friend)}</span>
                       <span className="friends-rail-copy">
-                        <span className="friends-rail-title">{friend.username}</span>
-                        <span className="friends-rail-meta">{friend.first_name} {friend.last_name}</span>
-                        <span className="friends-rail-meta">{friend.country || "No country set"}</span>
+                        <span className="friends-rail-title">@{friend.username}</span>
+                        <span className="friends-rail-meta">ID {friend.user_id}{friend.country ? ` • ${friend.country}` : ""}</span>
                       </span>
                     </button>
                   );
