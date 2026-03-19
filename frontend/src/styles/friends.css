@@ -3,7 +3,8 @@
    =========================== */
 
 .friends-shell {
-  width: min(1320px, 96vw);
+  width: 100%;
+  max-width: 100%;
   margin: 24px auto 48px;
   padding: 24px;
   border-radius: 24px;
