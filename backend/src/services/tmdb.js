@@ -35,6 +35,34 @@ export async function searchTMDB(query) {
   }));
 }
 
+export async function discoverTMDBByGenres(type, genreIds = []) {
+  const endpoint = type === "series" ? "tv" : "movie";
+  const filteredGenreIds = Array.from(
+    new Set(
+      genreIds
+        .map((genreId) => Number(genreId))
+        .filter((genreId) => Number.isInteger(genreId))
+    )
+  );
+
+  if (filteredGenreIds.length === 0) {
+    return [];
+  }
+
+  const url = `${TMDB_BASE}/discover/${endpoint}?api_key=${API_KEY}&language=en-US&include_adult=false&sort_by=popularity.desc&page=1&vote_count.gte=50&with_genres=${filteredGenreIds.join(",")}`;
+  const { data } = await fetchWithRetry(url, { timeout: 5000 });
+
+  return (data.results || []).map((item) => ({
+    id: item.id,
+    type,
+    title: item.title || item.name,
+    poster_path: item.poster_path,
+    release_year: (item.release_date || item.first_air_date)?.slice(0, 4) || null,
+    vote_average: item.vote_average || 0,
+    genre_ids: item.genre_ids || [],
+  }));
+}
+
 export async function searchTMDBByPerson(query) {
   const personSearchUrl = `${TMDB_BASE}/search/person?api_key=${API_KEY}&language=en-US&query=${encodeURIComponent(query)}&page=1`;
   const { data } = await axios.get(personSearchUrl);

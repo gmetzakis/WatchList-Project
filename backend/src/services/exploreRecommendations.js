@@ -1,5 +1,6 @@
 import { getRecommendationSnapshot } from "../models/exploreModel.js";
 import { runNeo4jSession } from "./neo4j.js";
+import { discoverTMDBByGenres, fetchTMDBDetails } from "./tmdb.js";
 
 const GENRE_MAP = {
   28: "Action",
@@ -69,7 +70,46 @@ function normalizeGenreValue(value) {
   return raw;
 }
 
+function extractGenreIds(rawGenres) {
+  if (!rawGenres && rawGenres !== 0) {
+    return [];
+  }
+
+  if (Array.isArray(rawGenres)) {
+    return Array.from(new Set(rawGenres.flatMap((entry) => extractGenreIds(entry))));
+  }
+
+  if (typeof rawGenres === "object") {
+    if (typeof rawGenres.id === "number" && GENRE_MAP[rawGenres.id]) {
+      return [rawGenres.id];
+    }
+
+    if (typeof rawGenres.name === "string") {
+      const matchedEntry = Object.entries(GENRE_MAP).find(([, name]) => name === rawGenres.name.trim());
+      return matchedEntry ? [Number(matchedEntry[0])] : [];
+    }
+
+    return [];
+  }
+
+  const raw = String(rawGenres).trim();
+  if (!raw) {
+    return [];
+  }
+
+  const numericIds = Array.from(raw.matchAll(/\d+/g))
+    .map((match) => Number(match[0]))
+    .filter((genreId) => Number.isInteger(genreId) && GENRE_MAP[genreId]);
+
+  return Array.from(new Set(numericIds));
+}
+
 function normalizeGenres(rawGenres) {
+  const genreIds = extractGenreIds(rawGenres);
+  if (genreIds.length > 0) {
+    return genreIds.map((genreId) => GENRE_MAP[genreId]);
+  }
+
   if (!rawGenres) {
     return [];
   }
@@ -112,6 +152,8 @@ function buildSnapshotPayload(snapshot) {
 
   for (const interaction of snapshot.interactions) {
     const key = `${interaction.type}-${interaction.tmdb_id}`;
+    const nextGenres = normalizeGenres(interaction.media_genres || interaction.user_genres);
+
     if (!titleMap.has(key)) {
       titleMap.set(key, {
         tmdbId: Number(interaction.tmdb_id),
@@ -119,9 +161,19 @@ function buildSnapshotPayload(snapshot) {
         title: interaction.title,
         posterPath: interaction.poster_path,
         releaseYear: interaction.release_year ? Number(interaction.release_year) : null,
-        genres: normalizeGenres(interaction.media_genres || interaction.user_genres),
+        genres: nextGenres,
       });
+      continue;
     }
+
+    const existingTitle = titleMap.get(key);
+    titleMap.set(key, {
+      ...existingTitle,
+      title: existingTitle.title || interaction.title,
+      posterPath: existingTitle.posterPath || interaction.poster_path,
+      releaseYear: existingTitle.releaseYear || (interaction.release_year ? Number(interaction.release_year) : null),
+      genres: Array.from(new Set([...(existingTitle.genres || []), ...nextGenres])),
+    });
   }
 
   return {
@@ -162,6 +214,208 @@ function buildSnapshotPayload(snapshot) {
         tmdbId: Number(interaction.tmdb_id),
         type: interaction.type,
       })),
+  };
+}
+
+function getSeenTitleKeys(payload, userId) {
+  const seenKeys = new Set();
+
+  for (const collection of [payload.watchlisted, payload.watched, payload.favorited]) {
+    for (const item of collection) {
+      if (item.userId === userId) {
+        seenKeys.add(`${item.type}-${item.tmdbId}`);
+      }
+    }
+  }
+
+  return seenKeys;
+}
+
+function getUserInteractions(snapshot, userId, type) {
+  return snapshot.interactions.filter((interaction) => {
+    if (Number(interaction.user_id) !== userId) {
+      return false;
+    }
+
+    if (type !== "all" && interaction.type !== type) {
+      return false;
+    }
+
+    return interaction.status === "watched";
+  });
+}
+
+function getTopSeedTitles(snapshot, userId, type) {
+  const interactions = getUserInteractions(snapshot, userId, type);
+
+  return interactions
+    .map((interaction) => {
+      const rating = Number.isFinite(Number(interaction.rating)) ? Number(interaction.rating) : 0;
+      const recencyTimestamp = interaction.watched_at || interaction.created_at || null;
+      const recencyWeight = recencyTimestamp ? new Date(recencyTimestamp).getTime() / 1e13 : 0;
+
+      return {
+        tmdbId: Number(interaction.tmdb_id),
+        type: interaction.type,
+        title: interaction.title,
+        score: (interaction.is_favorite ? 6 : 0) + rating + recencyWeight,
+      };
+    })
+    .sort((left, right) => right.score - left.score)
+    .filter((seed, index, seeds) => index === seeds.findIndex((entry) => entry.tmdbId === seed.tmdbId && entry.type === seed.type))
+    .slice(0, 5);
+}
+
+function getTopGenres(snapshot, userId, type) {
+  const genreWeights = new Map();
+
+  for (const interaction of getUserInteractions(snapshot, userId, type)) {
+    const genreIds = extractGenreIds(interaction.media_genres || interaction.user_genres);
+    const rating = Number.isFinite(Number(interaction.rating)) ? Number(interaction.rating) : 0;
+    const weight = (interaction.is_favorite ? 4 : 1) + Math.max(rating - 6, 0);
+
+    for (const genreId of genreIds) {
+      genreWeights.set(genreId, (genreWeights.get(genreId) || 0) + weight);
+    }
+  }
+
+  return Array.from(genreWeights.entries())
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, 3)
+    .map(([genreId, weight]) => ({
+      genreId,
+      name: GENRE_MAP[genreId],
+      weight,
+    }));
+}
+
+function mapTmdbCandidate(candidate, score, reasonContext) {
+  return {
+    tmdb_id: candidate.id,
+    type: candidate.type,
+    title: candidate.title,
+    poster_path: candidate.poster_path,
+    release_year: candidate.release_year || null,
+    score,
+    reason_context: reasonContext,
+  };
+}
+
+function dedupeSectionItems(sections) {
+  const seenKeys = new Set();
+
+  return sections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => {
+        const key = `${item.type}-${item.tmdb_id}`;
+        if (seenKeys.has(key)) {
+          return false;
+        }
+
+        seenKeys.add(key);
+        return true;
+      }),
+    }))
+    .filter((section) => section.items.length > 0);
+}
+
+async function buildFavoriteSeedSection(snapshot, payload, userId, type) {
+  const seenKeys = getSeenTitleKeys(payload, userId);
+  const candidateMap = new Map();
+  const seeds = getTopSeedTitles(snapshot, userId, type).filter((seed) => seed.score >= 8);
+
+  for (const seed of seeds) {
+    try {
+      const details = await fetchTMDBDetails(seed.type, seed.tmdbId);
+      const recommendations = Array.isArray(details.recommendations) ? details.recommendations : [];
+
+      recommendations.slice(0, 12).forEach((candidate, index) => {
+        const candidateType = seed.type;
+        const candidateKey = `${candidateType}-${candidate.id}`;
+
+        if (seenKeys.has(candidateKey)) {
+          return;
+        }
+
+        if (type !== "all" && candidateType !== type) {
+          return;
+        }
+
+        const existing = candidateMap.get(candidateKey) || {
+          candidate: {
+            id: candidate.id,
+            type: candidateType,
+            title: candidate.title || candidate.name,
+            poster_path: candidate.poster_path,
+            release_year: (candidate.release_date || candidate.first_air_date || "").slice(0, 4) || null,
+          },
+          score: 0,
+          reasonContext: new Set(),
+        };
+
+        existing.score += seed.score + Math.max(12 - index, 1);
+        existing.reasonContext.add(seed.title);
+        candidateMap.set(candidateKey, existing);
+      });
+    } catch (error) {
+      console.error("Explore favorite-seed fallback error:", error.message);
+    }
+  }
+
+  return {
+    key: "fromYourFavorites",
+    title: "Because You Loved These",
+    description: "TMDB recommendations expanded from your favorite and highest-rated picks.",
+    items: Array.from(candidateMap.values())
+      .sort((left, right) => right.score - left.score)
+      .slice(0, 12)
+      .map((entry) => mapTmdbCandidate(entry.candidate, entry.score, Array.from(entry.reasonContext).slice(0, 3))),
+  };
+}
+
+async function buildGenreDiscoverSection(snapshot, payload, userId, type) {
+  const seenKeys = getSeenTitleKeys(payload, userId);
+  const candidateMap = new Map();
+  const topGenres = getTopGenres(snapshot, userId, type);
+
+  for (const genre of topGenres) {
+    const discoverTypes = type === "all" ? ["movie", "series"] : [type];
+
+    for (const discoverType of discoverTypes) {
+      try {
+        const candidates = await discoverTMDBByGenres(discoverType, [genre.genreId]);
+
+        candidates.slice(0, 12).forEach((candidate, index) => {
+          const candidateKey = `${candidate.type}-${candidate.id}`;
+          if (seenKeys.has(candidateKey)) {
+            return;
+          }
+
+          const existing = candidateMap.get(candidateKey) || {
+            candidate,
+            score: 0,
+            reasonContext: new Set(),
+          };
+
+          existing.score += genre.weight + Math.max(10 - index, 1) + (candidate.vote_average || 0) / 2;
+          existing.reasonContext.add(genre.name);
+          candidateMap.set(candidateKey, existing);
+        });
+      } catch (error) {
+        console.error("Explore genre-discover fallback error:", error.message);
+      }
+    }
+  }
+
+  return {
+    key: "genreSignals",
+    title: "Built From Your Top Genres",
+    description: "Fresh titles from TMDB based on the genres you keep rating and favoriting the most.",
+    items: Array.from(candidateMap.values())
+      .sort((left, right) => right.score - left.score)
+      .slice(0, 12)
+      .map((entry) => mapTmdbCandidate(entry.candidate, entry.score, Array.from(entry.reasonContext).slice(0, 3))),
   };
 }
 
@@ -274,45 +528,25 @@ export async function getExploreRecommendations(userId, type = "all") {
 
   await syncGraph(payload);
 
+  const personalSections = await Promise.all([
+    buildFavoriteSeedSection(snapshot, payload, userId, type),
+    buildGenreDiscoverSection(snapshot, payload, userId, type),
+  ]);
+
   return runNeo4jSession("read", async (session) => {
-    const sections = await Promise.all([
-      querySection(
-        session,
-        `MATCH (me:User {id: $userId})-[:WATCHED|FAVORITED]->(seed:Title)<-[:WATCHED|FAVORITED]-(peer:User)
-         WHERE peer.id <> $userId
-         WITH me, peer, count(DISTINCT seed) AS sharedTaste
-         MATCH (peer)-[peerRel:WATCHED|FAVORITED]->(candidate:Title)
-         WHERE NOT (me)-[:WATCHED|WATCHLISTED|FAVORITED]->(candidate)
-           AND ($type = 'all' OR candidate.type = $type)
-         WITH candidate,
-              collect(DISTINCT peer.username)[0..3] AS reasonContext,
-              max(sharedTaste) AS overlap,
-              sum(sharedTaste + CASE type(peerRel) WHEN 'FAVORITED' THEN 2 ELSE 1 END + coalesce(peerRel.rating, 0) / 5.0) AS score
-         RETURN candidate.tmdbId AS tmdbId,
-                candidate.type AS type,
-                candidate.title AS title,
-                candidate.posterPath AS posterPath,
-                candidate.releaseYear AS releaseYear,
-                reasonContext,
-                score
-         ORDER BY score DESC, releaseYear DESC
-         LIMIT 12`,
-        { userId, type },
-        {
-          key: "tasteMatches",
-          title: "Built From Similar Taste",
-          description: "Titles other users liked after overlapping with your watched and favorited picks.",
-        }
-      ),
-      querySection(
+    const sections = [...personalSections];
+
+    sections.push(
+      await querySection(
         session,
         `MATCH (me:User {id: $userId})-[:FRIENDS_WITH]-(friend:User)-[rel:FAVORITED|WATCHED]->(candidate:Title)
          WHERE NOT (me)-[:WATCHED|WATCHLISTED|FAVORITED]->(candidate)
            AND ($type = 'all' OR candidate.type = $type)
          WITH candidate,
               collect(DISTINCT friend.username)[0..3] AS reasonContext,
+              count(DISTINCT CASE WHEN type(rel) = 'FAVORITED' THEN friend.id ELSE NULL END) AS favoriteCount,
               count(DISTINCT friend) AS friendCount,
-              sum(CASE type(rel) WHEN 'FAVORITED' THEN 3 ELSE 1 END + coalesce(rel.rating, 0) / 5.0) AS score
+              sum(CASE type(rel) WHEN 'FAVORITED' THEN 5.0 ELSE 1.0 END + coalesce(rel.rating, 0) / 2.0) AS score
          WHERE friendCount > 0
          RETURN candidate.tmdbId AS tmdbId,
                 candidate.type AS type,
@@ -320,43 +554,17 @@ export async function getExploreRecommendations(userId, type = "all") {
                 candidate.posterPath AS posterPath,
                 candidate.releaseYear AS releaseYear,
                 reasonContext,
-                (score + friendCount) AS score
+                (score + favoriteCount * 2.0) AS score
          ORDER BY score DESC, releaseYear DESC
          LIMIT 12`,
         { userId, type },
         {
-          key: "friendSignals",
+          key: "friendTrending",
           title: "Trending With Friends",
-          description: "Unseen titles that your accepted friends have watched or favorited.",
+          description: "Unseen titles that your friends have watched or favorited.",
         }
-      ),
-      querySection(
-        session,
-        `MATCH (me:User {id: $userId})-[rel:WATCHED|FAVORITED]->(:Title)-[:IN_GENRE]->(genre:Genre)<-[:IN_GENRE]-(candidate:Title)
-         WHERE NOT (me)-[:WATCHED|WATCHLISTED|FAVORITED]->(candidate)
-           AND ($type = 'all' OR candidate.type = $type)
-         WITH candidate,
-              collect(DISTINCT genre.name)[0..3] AS reasonContext,
-              count(DISTINCT genre) AS genreOverlap,
-              sum(CASE type(rel) WHEN 'FAVORITED' THEN 3 ELSE 1 END + coalesce(rel.rating, 0) / 5.0) AS score
-         WHERE genreOverlap > 0
-         RETURN candidate.tmdbId AS tmdbId,
-                candidate.type AS type,
-                candidate.title AS title,
-                candidate.posterPath AS posterPath,
-                candidate.releaseYear AS releaseYear,
-                reasonContext,
-                (score + genreOverlap) AS score
-         ORDER BY score DESC, releaseYear DESC
-         LIMIT 12`,
-        { userId, type },
-        {
-          key: "genreSignals",
-          title: "Pulled From Your Genres",
-          description: "Recommendations based on the genres that show up repeatedly in your watched and favorite history.",
-        }
-      ),
-    ]);
+      )
+    );
 
     return {
       generatedAt: new Date().toISOString(),
@@ -366,7 +574,7 @@ export async function getExploreRecommendations(userId, type = "all") {
         titles: payload.titles.length,
         interactions: payload.watchlisted.length + payload.watched.length + payload.favorited.length,
       },
-      sections: sections.filter((section) => section.items.length > 0),
+      sections: dedupeSectionItems(sections),
     };
   });
 }
