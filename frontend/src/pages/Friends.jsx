@@ -624,7 +624,7 @@ export default function FriendsPage() {
                     >
                       <span className="friends-avatar-badge">{getInitials(friend)}</span>
                       <span className="friends-rail-copy">
-                        <span className="friends-rail-title">@{friend.username}</span>
+                        <span className="friends-rail-title">{friend.first_name} {friend.last_name}</span>
                         <span className="friends-rail-meta">ID {friend.user_id}{friend.country ? ` • ${friend.country}` : ""}</span>
                       </span>
                     </button>

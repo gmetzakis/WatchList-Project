@@ -8,10 +8,10 @@
   margin: 12px auto 34px;
   padding: 12px;
   border-radius: 16px;
-  border: 1px solid rgba(92, 152, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   background:
-    radial-gradient(circle at 20% -40%, rgba(88, 176, 255, 0.24), transparent 42%),
-    linear-gradient(160deg, rgba(11, 16, 28, 0.98), rgba(8, 10, 18, 0.98));
+    radial-gradient(circle at 20% -40%, rgba(255, 255, 255, 0.08), transparent 42%),
+    linear-gradient(160deg, rgba(10, 10, 10, 0.98), rgba(5, 5, 5, 0.98));
   box-shadow: 0 22px 54px rgba(0, 0, 0, 0.45);
 }
 
@@ -22,8 +22,8 @@
   gap: 12px;
   padding: 6px 8px;
   border-radius: 12px;
-  border: 1px solid rgba(116, 190, 255, 0.28);
-  background: rgba(7, 15, 30, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(12, 12, 12, 0.66);
 }
 
 .friends-command-title {
@@ -41,9 +41,9 @@
   height: 28px;
   padding: 0 8px;
   border-radius: 999px;
-  background: rgba(126, 188, 255, 0.18);
-  border: 1px solid rgba(126, 188, 255, 0.4);
-  color: #e8f2ff;
+  background: rgba(212, 175, 55, 0.2);
+  border: 1px solid rgba(212, 175, 55, 0.42);
+  color: #f9e7b2;
   font-size: 0.82rem;
   font-weight: 800;
 }
@@ -51,7 +51,7 @@
 .friends-kicker,
 .friends-panel-kicker {
   margin: 0 0 4px;
-  color: rgba(153, 206, 255, 0.92);
+  color: rgba(196, 196, 196, 0.92);
   text-transform: uppercase;
   letter-spacing: 0.18em;
   font-size: 0.64rem;
@@ -60,7 +60,7 @@
 
 .friends-title {
   margin: 0;
-  color: #e8f2ff;
+  color: #f4f4f4;
   font-size: clamp(1.02rem, 1.45vw, 1.28rem);
   line-height: 1.05;
   text-transform: uppercase;
@@ -89,8 +89,8 @@
 }
 
 .friend-stat-card--link:hover {
-  border-color: rgba(212, 175, 55, 0.4);
-  background: rgba(212, 175, 55, 0.1);
+  border-color: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
 }
 
@@ -105,8 +105,8 @@
 }
 
 .friends-summary-card.accent {
-  border-color: rgba(212, 175, 55, 0.32);
-  background: rgba(212, 175, 55, 0.08);
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .friends-summary-label,
@@ -161,7 +161,7 @@
   margin: 2px 0 12px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(133, 190, 255, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .friends-top-tab {
@@ -174,7 +174,7 @@
   padding: 9px 12px;
   border-radius: 8px;
   background: transparent;
-  color: rgba(219, 232, 255, 0.78);
+  color: rgba(240, 214, 146, 0.82);
   font-size: 0.83rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -182,8 +182,8 @@
 }
 
 .friends-top-tab.active {
-  background: linear-gradient(90deg, #4c8fff 0%, #7ec2ff 100%);
-  color: #081126;
+  background: linear-gradient(90deg, #8a6a24 0%, #b79034 100%);
+  color: #16120a;
 }
 
 .friends-tab-badge {
@@ -195,9 +195,9 @@
   margin-left: 8px;
   padding: 0 5px;
   border-radius: 999px;
-  background: rgba(255, 154, 107, 0.26);
-  border: 1px solid rgba(255, 154, 107, 0.52);
-  color: #ffd6c1;
+  background: rgba(212, 175, 55, 0.26);
+  border: 1px solid rgba(212, 175, 55, 0.58);
+  color: #ffe9ae;
   font-size: 0.68rem;
   font-weight: 800;
   line-height: 1;
@@ -213,15 +213,15 @@
 .friends-detail-panel,
 .friends-manage-card {
   border-radius: 14px;
-  border: 1px solid rgba(126, 188, 255, 0.2);
-  background: rgba(13, 18, 30, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(12, 12, 12, 0.74);
 }
 
 .friends-rail {
   order: 1;
   padding: 8px;
   border-style: dashed;
-  background: rgba(9, 14, 24, 0.72);
+  background: rgba(8, 8, 8, 0.78);
 }
 
 .friends-detail-panel {
@@ -257,8 +257,8 @@
   height: 34px;
   padding: 0 10px;
   border-radius: 999px;
-  background: rgba(212, 175, 55, 0.14);
-  color: var(--favorite-glow);
+  background: rgba(212, 175, 55, 0.18);
+  color: #f6dda0;
   font-size: 0.86rem;
   font-weight: 800;
 }
@@ -300,20 +300,21 @@
   min-width: 138px;
   max-width: 170px;
   padding: 6px 8px;
-  border: 1px solid rgba(140, 199, 255, 0.28);
-  border-radius: 999px;
-  background: rgba(13, 24, 42, 0.78);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(20, 20, 20, 0.62);
   color: inherit;
   text-align: left;
   cursor: pointer;
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .friends-rail-item:hover,
 .friends-rail-item.active {
   transform: translateY(-1px);
-  border-color: rgba(127, 196, 255, 0.78);
-  background: rgba(70, 141, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(36, 36, 36, 0.82);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
 }
 
 .friends-avatar-badge,
@@ -332,8 +333,8 @@
   height: 22px;
   flex: 0 0 22px;
   font-size: 0.58rem;
-  border-radius: 6px;
-  background: linear-gradient(135deg, #6caeff, #9fdaff);
+  border-radius: 4px;
+  background: linear-gradient(135deg, #2f2f2f, #575757);
 }
 
 .friends-rail-item .friends-rail-title {
@@ -382,9 +383,9 @@
 .friend-profile-hero {
   border-radius: 12px;
   background:
-    radial-gradient(circle at top left, rgba(127, 196, 255, 0.2), transparent 33%),
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.1), transparent 33%),
     rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(127, 196, 255, 0.26);
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .friends-detail-panel {
@@ -415,7 +416,7 @@
   height: 84px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(212, 175, 55, 0.28);
+  border: 2px solid rgba(255, 255, 255, 0.22);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
 }
 
@@ -468,7 +469,7 @@
 
 .friend-media-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(212, 175, 55, 0.28);
+  border-color: rgba(255, 255, 255, 0.28);
   background: rgba(255, 255, 255, 0.035);
 }
 
@@ -491,7 +492,7 @@
 .friend-media-fallback {
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.16), rgba(255, 255, 255, 0.04));
+  background: linear-gradient(135deg, rgba(70, 70, 70, 0.35), rgba(255, 255, 255, 0.04));
   color: #fff;
   font-size: 2rem;
   font-weight: 800;
@@ -504,7 +505,7 @@
   padding: 6px 8px;
   border-radius: 999px;
   background: rgba(9, 9, 14, 0.82);
-  color: #ffd46e;
+  color: #e6e6e6;
   font-size: 0.78rem;
   font-weight: 800;
 }
@@ -529,8 +530,8 @@
   margin-top: 4px;
   padding: 5px 9px;
   border-radius: 999px;
-  background: rgba(212, 175, 55, 0.16);
-  color: #ffd46e;
+  background: rgba(212, 175, 55, 0.22);
+  color: #f8e2a8;
   font-size: 0.74rem;
   font-weight: 800;
 }
@@ -557,7 +558,7 @@
 
 .friends-search-input {
   flex: 1;
-  border: 1px solid rgba(212, 175, 55, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 14px;
   background: rgba(0, 0, 0, 0.35);
   color: #fff;
@@ -567,8 +568,8 @@
 
 .friends-search-input:focus {
   outline: none;
-  border-color: var(--favorite-glow);
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+  border-color: rgba(212, 175, 55, 0.72);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
 }
 
 .friends-list {
@@ -586,7 +587,7 @@
   align-items: center;
   gap: 14px;
   padding: 14px;
-  border: 1px solid rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.025);
 }
@@ -619,14 +620,14 @@
 }
 
 .friends-primary-btn {
-  background: linear-gradient(90deg, #b48a2f 0%, #e5be67 50%, #c6973f 100%);
-  color: #1a1200;
+  background: linear-gradient(90deg, #8a6a24 0%, #c59d3b 50%, #9e7a2b 100%);
+  color: #16120a;
 }
 
 .friends-secondary-btn {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(212, 175, 55, 0.12);
+  color: #f8e9c0;
+  border: 1px solid rgba(212, 175, 55, 0.42);
 }
 
 .friends-danger-btn {
@@ -785,7 +786,7 @@
   min-width: 120px;
   padding: 9px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(212, 175, 55, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.24);
   background: rgba(0, 0, 0, 0.3);
   color: #fff;
   font-size: 0.9rem;
@@ -797,8 +798,8 @@
 
 .friend-filter-search:focus {
   outline: none;
-  border-color: var(--favorite-glow);
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.12);
+  border-color: rgba(212, 175, 55, 0.72);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.18);
 }
 
 .friend-filter-select {
@@ -815,7 +816,7 @@
 
 .friend-filter-select:focus {
   outline: none;
-  border-color: var(--favorite-glow);
+  border-color: rgba(212, 175, 55, 0.72);
 }
 
 /* ==============================
@@ -843,7 +844,7 @@
 }
 
 .friend-page-btn:hover:not(:disabled) {
-  background: rgba(212, 175, 55, 0.18);
+  background: rgba(212, 175, 55, 0.24);
   transform: translateY(-1px);
 }
 
