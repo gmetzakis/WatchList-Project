@@ -8,7 +8,13 @@ if (process.env.PC_RUNNING === "army_internet_room") {
 
 
 import express from "express";
-import { searchTMDB, fetchTMDBMedia, fetchTMDBDetails } from "../services/tmdb.js";
+import {
+  searchTMDB,
+  fetchTMDBMedia,
+  fetchTMDBDetails,
+  searchTMDBByPerson,
+  fetchTMDBPersonDetails,
+} from "../services/tmdb.js";
 
 const router = express.Router();
 
@@ -28,6 +34,22 @@ router.get("/search", async (req, res) => {
   }
 });
 
+router.get("/search/people", async (req, res) => {
+  const query = req.query.query;
+
+  if (!query) {
+    return res.status(400).json({ error: "Query parameter is required" });
+  }
+
+  try {
+    const results = await searchTMDBByPerson(query);
+    res.json({ results });
+  } catch (err) {
+    console.error("TMDB People Search Error:", err.message);
+    res.status(500).json({ error: "Failed to fetch TMDB people search results" });
+  }
+});
+
 router.get("/details/:type/:tmdb_id", async (req, res) => {
   try {
     const { type, tmdb_id } = req.params;
@@ -42,6 +64,17 @@ router.get("/details/:type/:tmdb_id", async (req, res) => {
   } catch (err) {
     console.error("TMDB Details Error:", err.message);
     res.status(404).json({ error: "Media not found" });
+  }
+});
+
+router.get("/person/:person_id", async (req, res) => {
+  try {
+    const { person_id } = req.params;
+    const person = await fetchTMDBPersonDetails(person_id);
+    res.json(person);
+  } catch (err) {
+    console.error("TMDB Person Details Error:", err.message);
+    res.status(404).json({ error: "Person not found" });
   }
 });
 

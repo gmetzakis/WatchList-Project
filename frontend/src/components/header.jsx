@@ -5,6 +5,7 @@ import api from "../api/axios.js";
 
 export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchMode, setSearchMode] = useState("titles");
   const [accountOpen, setAccountOpen] = useState(false);
   const [accountPinned, setAccountPinned] = useState(false);
   const [query, setQuery] = useState("");
@@ -27,6 +28,7 @@ export default function Header() {
     function handleClickOutside(e) {
       if (inputRef.current && !inputRef.current.contains(e.target)) {
         setSearchOpen(false);
+        setQuery("");
       }
 
       if (accountRef.current && !accountRef.current.contains(e.target)) {
@@ -102,14 +104,30 @@ export default function Header() {
     }
   }
 
-  function handleKeyDown(e) {
-    if (e.key === "Enter" && query.trim() !== "") {
-      navigate(`/search?q=${query}`);
-      setSearchOpen(false);
+  function runHeaderSearch() {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return;
+
+    navigate(`/search?q=${encodeURIComponent(trimmedQuery)}&mode=${searchMode}`);
+    setSearchOpen(false);
+    setQuery("");
+  }
+
+  function toggleSearch() {
+    setSearchOpen((prev) => {
+      const next = !prev;
       setQuery("");
+      return next;
+    });
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === "Enter") {
+      runHeaderSearch();
     }
     if (e.key === "Escape") {
       setSearchOpen(false);
+      setQuery("");
       setAccountOpen(false);
       setAccountPinned(false);
     }
@@ -170,19 +188,46 @@ export default function Header() {
           <div className={`search-wrapper ${searchOpen ? "open" : ""}`} ref={inputRef}>
             <FiSearch
               className="search-icon"
-              onClick={() => setSearchOpen(prev => !prev)}
+              onClick={toggleSearch}
             />
 
             {searchOpen && (
-              <input
-                autoFocus
-                type="text"
-                className="search-input"
-                placeholder="Search..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
+              <div className="header-search-panel">
+                <input
+                  autoFocus
+                  type="text"
+                  className="search-input"
+                  placeholder={searchMode === "people" ? "Search actor or director..." : "Search movies or series..."}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                />
+
+                <div className="header-search-mode-switch" role="tablist" aria-label="Header search mode">
+                  <button
+                    type="button"
+                    className={`header-search-mode-btn ${searchMode === "titles" ? "active" : ""}`}
+                    onClick={() => setSearchMode("titles")}
+                  >
+                    Titles
+                  </button>
+                  <button
+                    type="button"
+                    className={`header-search-mode-btn ${searchMode === "people" ? "active" : ""}`}
+                    onClick={() => setSearchMode("people")}
+                  >
+                    Actor / Director
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  className="header-search-submit"
+                  onClick={runHeaderSearch}
+                >
+                  Search
+                </button>
+              </div>
             )}
           </div>
 

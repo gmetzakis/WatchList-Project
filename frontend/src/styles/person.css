@@ -1,0 +1,91 @@
+/* ===========================
+   PERSON DETAILS PAGE
+   =========================== */
+
+.person-details-container {
+  width: 100%;
+  padding: 24px 0 40px;
+}
+
+.person-hero {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.person-profile-img {
+  width: 100%;
+  border-radius: 14px;
+  box-shadow: var(--shadow-cinematic);
+}
+
+.person-bio {
+  min-width: 0;
+}
+
+.person-biography-text {
+  margin-top: 14px;
+}
+
+.person-credit-card {
+  text-decoration: none;
+  color: inherit;
+}
+
+.person-credit-img {
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.person-credit-card:hover .person-credit-img {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-cinematic);
+}
+
+.person-credit-title {
+  margin: 10px 0 4px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.person-credit-meta {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+
+.person-credits-section {
+  margin-top: 8px;
+}
+
+.person-load-more-btn {
+  margin-top: 16px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(184, 150, 47, 0.24));
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.person-load-more-btn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212, 175, 55, 0.6);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+@media (max-width: 900px) {
+  .person-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .person-profile-img {
+    max-width: 320px;
+  }
+}

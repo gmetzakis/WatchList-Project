@@ -88,6 +88,16 @@
   font-size: 0.95rem;
 }
 
+.details-person-link {
+  color: var(--favorite-glow);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.35);
+}
+
+.details-person-link:hover {
+  color: #fff;
+}
+
 .details-actions {
   margin-top: 24px;
   display: flex;
@@ -152,6 +162,10 @@
   font-weight: 600;
   color: var(--text);
   transition: color 0.3s ease;
+}
+
+.details-cast-link {
+  text-decoration: none;
 }
 
 .details-recommend-grid {

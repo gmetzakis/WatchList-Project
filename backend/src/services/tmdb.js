@@ -35,6 +35,105 @@ export async function searchTMDB(query) {
   }));
 }
 
+export async function searchTMDBByPerson(query) {
+  const personSearchUrl = `${TMDB_BASE}/search/person?api_key=${API_KEY}&language=en-US&query=${encodeURIComponent(query)}&page=1`;
+  const { data } = await axios.get(personSearchUrl);
+
+  return (data.results || [])
+    .filter((person) => person.profile_path)
+    .map((person) => ({
+      id: person.id,
+      type: "person",
+      name: person.name,
+      profile_path: person.profile_path,
+      known_for_department: person.known_for_department || null,
+      known_for: (person.known_for || [])
+        .filter((item) => item.media_type === "movie" || item.media_type === "tv")
+        .slice(0, 3)
+        .map((item) => item.title || item.name)
+    }))
+    .slice(0, 30);
+}
+
+export async function fetchTMDBPersonDetails(personId) {
+  const url = `${TMDB_BASE}/person/${personId}?api_key=${API_KEY}&language=en-US&append_to_response=combined_credits,images`;
+  const { data } = await fetchWithRetry(url, { timeout: 5000 });
+
+  const actingCreditsRaw = (data.combined_credits?.cast || [])
+    .filter((item) => (item.media_type === "movie" || item.media_type === "tv") && item.poster_path)
+    .map((item) => ({
+      id: item.id,
+      type: item.media_type,
+      title: item.title || item.name,
+      poster_path: item.poster_path,
+      character: item.character || null,
+      release_year: (item.release_date || item.first_air_date || "").slice(0, 4),
+      release_date: item.release_date || item.first_air_date || ""
+    }));
+
+  const directingCreditsRaw = (data.combined_credits?.crew || [])
+    .filter((item) => (item.media_type === "movie" || item.media_type === "tv") && item.poster_path)
+    .filter((item) => item.job === "Director")
+    .map((item) => ({
+      id: item.id,
+      type: item.media_type,
+      title: item.title || item.name,
+      poster_path: item.poster_path,
+      job: item.job || null,
+      release_year: (item.release_date || item.first_air_date || "").slice(0, 4),
+      release_date: item.release_date || item.first_air_date || ""
+    }));
+
+  const actingByMedia = new Map();
+  for (const credit of actingCreditsRaw) {
+    const key = `${credit.type}-${credit.id}`;
+    const existing = actingByMedia.get(key);
+    if (!existing) {
+      actingByMedia.set(key, credit);
+      continue;
+    }
+
+    const existingDate = existing.release_date || "";
+    const currentDate = credit.release_date || "";
+    if (currentDate > existingDate) {
+      actingByMedia.set(key, credit);
+    }
+  }
+
+  const directingByMedia = new Map();
+  for (const credit of directingCreditsRaw) {
+    const key = `${credit.type}-${credit.id}`;
+    const existing = directingByMedia.get(key);
+    if (!existing) {
+      directingByMedia.set(key, credit);
+      continue;
+    }
+
+    const existingDate = existing.release_date || "";
+    const currentDate = credit.release_date || "";
+    if (currentDate > existingDate) {
+      directingByMedia.set(key, credit);
+    }
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    biography: data.biography,
+    profile_path: data.profile_path,
+    birthday: data.birthday,
+    deathday: data.deathday,
+    known_for_department: data.known_for_department,
+    place_of_birth: data.place_of_birth,
+    acting_credits: Array.from(actingByMedia.values())
+      .sort((a, b) => (b.release_date || "").localeCompare(a.release_date || ""))
+      .map(({ release_date, ...rest }) => rest),
+    directing_credits: Array.from(directingByMedia.values())
+      .sort((a, b) => (b.release_date || "").localeCompare(a.release_date || ""))
+      .map(({ release_date, ...rest }) => rest)
+  };
+}
+
 export async function fetchTMDBDetails(type, tmdbId) {
   const tmdbType = type === "series" ? "tv" : "movie";
 

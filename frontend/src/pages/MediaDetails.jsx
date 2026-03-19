@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { Heart, Eye, EyeOff, BookmarkPlus, BookmarkMinus } from "lucide-react";
 import api from "../api/axios";
 
 export default function MediaDetails() {
@@ -10,8 +11,13 @@ export default function MediaDetails() {
   const [status, setStatus] = useState(null);
   const [rating, setRating] = useState(null); // ⭐ NEW
   const [loading, setLoading] = useState(true);
+  const [recommendationStatus, setRecommendationStatus] = useState({});
 
   const trailerKey = media?.trailer?.site === "YouTube" ? media?.trailer?.key : null;
+  const director = media?.credits?.crew?.find((member) => {
+    if (!member?.job) return false;
+    return member.job.toLowerCase().includes("director");
+  });
 
   useEffect(() => {
     async function load() {
@@ -30,7 +36,118 @@ export default function MediaDetails() {
     }
 
     load();
-  }, [tmdbId]);
+  }, [tmdbId, type]);
+
+  useEffect(() => {
+    async function hydrateRecommendationStatus() {
+      const recommendations = media?.recommendations?.filter((rec) => rec.poster_path) || [];
+      if (recommendations.length === 0) {
+        setRecommendationStatus({});
+        return;
+      }
+
+      const normalizedType = media?.type === "series" ? "series" : "movie";
+
+      const pairs = await Promise.all(
+        recommendations.map(async (rec) => {
+          try {
+            const res = await api.get(`/media/${normalizedType}/${rec.id}/status`);
+            return [
+              `${normalizedType}-${rec.id}`,
+              {
+                status: res.data.status,
+                rating: res.data.rating || null,
+                is_favorite: res.data.favorite || false,
+              },
+            ];
+          } catch {
+            return [
+              `${normalizedType}-${rec.id}`,
+              {
+                status: null,
+                rating: null,
+                is_favorite: false,
+              },
+            ];
+          }
+        })
+      );
+
+      setRecommendationStatus(Object.fromEntries(pairs));
+    }
+
+    hydrateRecommendationStatus();
+  }, [media]);
+
+  function recommendationKey(recId) {
+    const normalizedType = media?.type === "series" ? "series" : "movie";
+    return `${normalizedType}-${recId}`;
+  }
+
+  function updateRecommendationState(recId, updates) {
+    const key = recommendationKey(recId);
+    setRecommendationStatus((prev) => ({
+      ...prev,
+      [key]: { ...(prev[key] || { status: null, rating: null, is_favorite: false }), ...updates },
+    }));
+  }
+
+  function stopCardNavigation(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  async function addRecommendationToWatchlist(recId) {
+    const normalizedType = media?.type === "series" ? "series" : "movie";
+    const recDetails = await api.get(`/tmdb/details/${normalizedType}/${recId}`);
+    const ids = new Set((recDetails.data?.genres || []).map((g) => String(g.id)));
+    await api.post(`/media/${recId}/watchlist`, { type: normalizedType, genres: [...ids] });
+    updateRecommendationState(recId, { status: "watchlist" });
+  }
+
+  async function removeRecommendationFromWatchlist(recId) {
+    const normalizedType = media?.type === "series" ? "series" : "movie";
+    await api.delete(`/media/${recId}/watchlist`, { data: { type: normalizedType } });
+    updateRecommendationState(recId, { status: null });
+  }
+
+  async function markRecommendationAsWatched(recId) {
+    const normalizedType = media?.type === "series" ? "series" : "movie";
+    const recDetails = await api.get(`/tmdb/details/${normalizedType}/${recId}`);
+    const ids = new Set((recDetails.data?.genres || []).map((g) => String(g.id)));
+    await api.post(`/media/${recId}/watched`, { type: normalizedType, genres: [...ids] });
+    updateRecommendationState(recId, { status: "watched" });
+  }
+
+  async function removeRecommendationFromWatched(recId) {
+    const normalizedType = media?.type === "series" ? "series" : "movie";
+    await api.delete(`/media/${recId}/watched`, { data: { type: normalizedType } });
+    updateRecommendationState(recId, { status: null, rating: null });
+  }
+
+  async function moveRecommendationToWatched(recId) {
+    const normalizedType = media?.type === "series" ? "series" : "movie";
+    await api.post(`/media/${recId}/watchlist-to-watched`, { type: normalizedType });
+    updateRecommendationState(recId, { status: "watched" });
+  }
+
+  async function favoriteRecommendation(recId) {
+    const normalizedType = media?.type === "series" ? "series" : "movie";
+    await api.post(`/media/${recId}/favorite`, { type: normalizedType });
+    updateRecommendationState(recId, { is_favorite: true });
+  }
+
+  async function unfavoriteRecommendation(recId) {
+    const normalizedType = media?.type === "series" ? "series" : "movie";
+    await api.delete(`/media/${recId}/favorite`, { data: { type: normalizedType } });
+    updateRecommendationState(recId, { is_favorite: false });
+  }
+
+  async function rateRecommendation(recId, value) {
+    const normalizedType = media?.type === "series" ? "series" : "movie";
+    await api.post(`/media/${recId}/rating`, { type: normalizedType, rating: value });
+    updateRecommendationState(recId, { rating: value });
+  }
 
   async function addToWatchlist() {
     const ids = new Set(media.genres.map(g => String(g.id)));
@@ -124,6 +241,11 @@ export default function MediaDetails() {
           </p>
 
           <p className="details-meta">Runtime: {media.runtime} min</p>
+          {director && (
+            <p className="details-meta">
+              Director: <Link to={`/person/${director.id}`} className="details-person-link">{director.name}</Link>
+            </p>
+          )}
 
           <div className="details-actions">
 
@@ -214,27 +336,143 @@ export default function MediaDetails() {
 
       <h2 className="details-section-title">Cast</h2>
       <div className="details-cast-grid">
-        {media.credits?.cast?.slice(0, 12).map(actor => (
-          <div key={actor.id} className="details-cast-item">
+        {media.credits?.cast?.filter((actor) => actor.profile_path).slice(0, 12).map(actor => (
+          <Link to={`/person/${actor.id}`} key={actor.id} className="details-cast-item details-cast-link">
             <img
               src={`https://image.tmdb.org/t/p/w300${actor.profile_path}`}
               className="details-cast-img"
+              alt={actor.name}
             />
             <p className="details-cast-name">{actor.name}</p>
-          </div>
+          </Link>
         ))}
       </div>
 
       <h2 className="details-section-title">Recommendations</h2>
-      <div className="details-recommend-grid">
-        {media.recommendations?.map(rec => (
-          <a key={rec.id} href={`/media/${media.type}/${rec.id}`} className="details-recommend-item">
-            <img
-              src={`https://image.tmdb.org/t/p/w500${rec.poster_path}`}
-              className="details-recommend-img"
-            />
-            <p className="details-recommend-title">{rec.title || rec.name}</p>
-          </a>
+      <div className="media-grid">
+        {media.recommendations?.filter((rec) => rec.poster_path).map((rec) => (
+          <div key={rec.id} className="media-card">
+            <Link
+              to={`/media/${media.type}/${rec.id}`}
+              className="media-image-wrapper"
+            >
+              <img
+                src={`https://image.tmdb.org/t/p/w300${rec.poster_path}`}
+                alt={rec.title || rec.name}
+                className="media-card-img"
+              />
+
+              <div className="hover-controls">
+                <div className="hover-title">
+                  <span className="hover-title-text">{rec.title || rec.name}</span>
+                  <span className="hover-year-text">
+                    {(rec.release_date || rec.first_air_date || "").slice(0, 4)}
+                  </span>
+
+                  {recommendationStatus[recommendationKey(rec.id)]?.status === "watched" && (
+                    <div className="rating-inline">
+                      {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+                        <span
+                          key={n}
+                          className={recommendationStatus[recommendationKey(rec.id)]?.rating >= n ? "star active" : "star"}
+                          onClick={(e) => {
+                            stopCardNavigation(e);
+                            rateRecommendation(rec.id, n);
+                          }}
+                        >
+                          ★
+                        </span>
+                      ))}
+                      {recommendationStatus[recommendationKey(rec.id)]?.rating && (
+                        <span className="rating-label">{recommendationStatus[recommendationKey(rec.id)]?.rating}/10</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="control-icons">
+                  {recommendationStatus[recommendationKey(rec.id)]?.status === null && (
+                    <>
+                      <span
+                        className="watched-icon"
+                        onClick={(e) => {
+                          stopCardNavigation(e);
+                          addRecommendationToWatchlist(rec.id);
+                        }}
+                        title="Add to Watchlist"
+                      >
+                        <BookmarkPlus size={32} />
+                      </span>
+                      <span
+                        className="watched-icon"
+                        onClick={(e) => {
+                          stopCardNavigation(e);
+                          markRecommendationAsWatched(rec.id);
+                        }}
+                        title="Mark as Watched"
+                      >
+                        <Eye size={32} />
+                      </span>
+                    </>
+                  )}
+
+                  {recommendationStatus[recommendationKey(rec.id)]?.status === "watchlist" && (
+                    <>
+                      <span
+                        className="watched-icon"
+                        onClick={(e) => {
+                          stopCardNavigation(e);
+                          removeRecommendationFromWatchlist(rec.id);
+                        }}
+                        title="Remove from Watchlist"
+                      >
+                        <BookmarkMinus size={32} />
+                      </span>
+                      <span
+                        className="watched-icon"
+                        onClick={(e) => {
+                          stopCardNavigation(e);
+                          moveRecommendationToWatched(rec.id);
+                        }}
+                        title="Move to Watched"
+                      >
+                        <Eye size={32} />
+                      </span>
+                    </>
+                  )}
+
+                  {recommendationStatus[recommendationKey(rec.id)]?.status === "watched" && (
+                    <>
+                      <span
+                        className={`favorite-icon ${recommendationStatus[recommendationKey(rec.id)]?.is_favorite ? "active" : ""}`}
+                        onClick={(e) => {
+                          stopCardNavigation(e);
+                          if (recommendationStatus[recommendationKey(rec.id)]?.is_favorite) {
+                            unfavoriteRecommendation(rec.id);
+                          } else {
+                            favoriteRecommendation(rec.id);
+                          }
+                        }}
+                        title="Favorite"
+                      >
+                        <Heart size={32} />
+                      </span>
+                      <span
+                        className="watched-icon active"
+                        onClick={(e) => {
+                          stopCardNavigation(e);
+                          removeRecommendationFromWatched(rec.id);
+                        }}
+                        title="Remove from Watched"
+                      >
+                        <EyeOff size={32} />
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </Link>
+          </div>
         ))}
       </div>
 
