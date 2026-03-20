@@ -181,7 +181,7 @@ export default function Header() {
     <header className="cinema-header">
       <div className="cinema-header-inner">
 
-        <div className="cinema-logo">MyScreenbook</div>
+        <Link to="/" className="cinema-logo">MyScreenbook</Link>
 
         <nav className="cinema-nav">
 

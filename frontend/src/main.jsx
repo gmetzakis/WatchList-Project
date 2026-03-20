@@ -9,6 +9,7 @@ import FavoritesPage from "./pages/Favorites.jsx";
 import LoginPage from "./pages/Login.jsx";
 import RegisterPage from "./pages/Register.jsx";
 import SearchPage from "./pages/Search.jsx";
+import HomePage from "./pages/Home.jsx";
 import MediaDetails from "./pages/MediaDetails.jsx";
 import FriendsPage from "./pages/Friends.jsx";
 import ProfilePage from "./pages/Profile.jsx";
@@ -67,6 +68,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <App />
           </ProtectedRoute>
         }>
+        <Route index element={<HomePage />} />
         <Route path="media/:type/:tmdbId" element={<MediaDetails />} />
         <Route path="person/:personId" element={<PersonDetailsPage />} />
         <Route path="search" element={<SearchPage />} />
