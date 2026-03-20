@@ -160,8 +160,8 @@
 }
 
 .star.active {
-  color: rgba(244, 246, 248, 0.96);
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+  color: #ffd700;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
 }
 
 .star:hover {
@@ -204,14 +204,14 @@
 }
 
 .rating-inline .star.active {
-  color: rgba(244, 246, 248, 0.96);
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.18));
+  color: #ffd700;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.5));
 }
 
 .rating-inline .star:hover {
   transform: scale(1.2) rotate(15deg);
   color: #fff;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+  filter: drop-shadow(var(--glow-gold));
 }
 
 .rating-inline .rating-label {
