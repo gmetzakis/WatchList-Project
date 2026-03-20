@@ -61,6 +61,10 @@ function EmblaCarousel({ items, renderCard }) {
 export default function WatchlistPage() {
   const [items, setItems] = useState([]);
   const [availableGenres, setAvailableGenres] = useState([]);
+  const [isMobileView, setIsMobileView] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 760px)").matches;
+  });
 
   const [loading, setLoading] = useState(true);
 
@@ -74,6 +78,26 @@ export default function WatchlistPage() {
   const [viewMode, setViewMode] = useState("grid"); 
   // "grid" | "tape"
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const handleViewportChange = (event) => {
+      setIsMobileView(event.matches);
+    };
+
+    setIsMobileView(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleViewportChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isMobileView && viewMode !== "tape") {
+      setViewMode("tape");
+    }
+  }, [isMobileView, viewMode]);
 
   function normalizeGenreNames(genres) {
     if (!Array.isArray(genres)) return [];
@@ -319,21 +343,23 @@ export default function WatchlistPage() {
         {/* TYPE FILTER */}
         <div className="filter-bar library-filter-bar">
         
-        <div className="view-toggle-container">
-          <div
-            className={`view-toggle-box ${viewMode === "grid" ? "active" : ""}`}
-            onClick={() => setViewMode("grid")}
-          >
-            <LayoutGrid size={22} />
-          </div>
+        {!isMobileView && (
+          <div className="view-toggle-container">
+            <div
+              className={`view-toggle-box ${viewMode === "grid" ? "active" : ""}`}
+              onClick={() => setViewMode("grid")}
+            >
+              <LayoutGrid size={22} />
+            </div>
 
-          <div
-            className={`view-toggle-box ${viewMode === "tape" ? "active" : ""}`}
-            onClick={() => setViewMode("tape")}
-          >
-            <GalleryVertical size={22} />
+            <div
+              className={`view-toggle-box ${viewMode === "tape" ? "active" : ""}`}
+              onClick={() => setViewMode("tape")}
+            >
+              <GalleryVertical size={22} />
+            </div>
           </div>
-        </div>
+        )}
 
         <input
           type="text"
@@ -376,14 +402,14 @@ export default function WatchlistPage() {
         )}
 
         {/* GRID VIEW */}
-        {viewMode === "grid" && (
+        {viewMode === "grid" && !isMobileView && (
           <div className="media-grid">
             {filteredItems.map(item => renderCard(item))}
           </div>
         )}
 
         {/* TAPE VIEW */}
-        {viewMode === "tape" && (
+        {(viewMode === "tape" || isMobileView) && (
           <EmblaCarousel items={filteredItems} renderCard={renderCard} />
         )}
       </section>

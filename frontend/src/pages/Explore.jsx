@@ -86,6 +86,10 @@ function EmblaCarousel({ items, renderCard }) {
 export default function ExplorePage() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [viewMode, setViewMode] = useState("tape");
+  const [isMobileView, setIsMobileView] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 760px)").matches;
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [details, setDetails] = useState("");
@@ -103,6 +107,26 @@ export default function ExplorePage() {
     e.preventDefault();
     e.stopPropagation();
   }
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const handleViewportChange = (event) => {
+      setIsMobileView(event.matches);
+    };
+
+    setIsMobileView(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleViewportChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isMobileView && viewMode !== "tape") {
+      setViewMode("tape");
+    }
+  }, [isMobileView, viewMode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -586,21 +610,23 @@ export default function ExplorePage() {
               ))}
             </div>
 
-            <div className="view-toggle-container">
-              <div
-                className={`view-toggle-box ${viewMode === "grid" ? "active" : ""}`}
-                onClick={() => setViewMode("grid")}
-              >
-                <LayoutGrid size={22} />
-              </div>
+            {!isMobileView && (
+              <div className="view-toggle-container">
+                <div
+                  className={`view-toggle-box ${viewMode === "grid" ? "active" : ""}`}
+                  onClick={() => setViewMode("grid")}
+                >
+                  <LayoutGrid size={22} />
+                </div>
 
-              <div
-                className={`view-toggle-box ${viewMode === "tape" ? "active" : ""}`}
-                onClick={() => setViewMode("tape")}
-              >
-                <GalleryVertical size={22} />
+                <div
+                  className={`view-toggle-box ${viewMode === "tape" ? "active" : ""}`}
+                  onClick={() => setViewMode("tape")}
+                >
+                  <GalleryVertical size={22} />
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
@@ -639,13 +665,13 @@ export default function ExplorePage() {
                 </div>
               </div>
 
-              {viewMode === "grid" && (
+              {viewMode === "grid" && !isMobileView && (
                 <div className="explore-grid">
                   {section.items.map((item) => renderCard(item, section.key, "grid"))}
                 </div>
               )}
 
-              {viewMode === "tape" && (
+              {(viewMode === "tape" || isMobileView) && (
                 <EmblaCarousel items={section.items} renderCard={(item) => renderCard(item, section.key, "tape")} />
               )}
             </section>

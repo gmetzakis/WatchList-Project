@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FiSearch, FiUser, FiLogOut, FiUsers } from "react-icons/fi";
+import { FiSearch, FiUser, FiLogOut, FiUsers, FiMenu, FiX } from "react-icons/fi";
 import api from "../api/axios.js";
 
 export default function Header() {
@@ -8,6 +8,7 @@ export default function Header() {
   const [searchMode, setSearchMode] = useState("titles");
   const [accountOpen, setAccountOpen] = useState(false);
   const [accountPinned, setAccountPinned] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [friendNotifications, setFriendNotifications] = useState({
     incomingPending: 0,
@@ -16,6 +17,8 @@ export default function Header() {
   });
   const inputRef = useRef(null);
   const accountRef = useRef(null);
+  const navRef = useRef(null);
+  const menuToggleRef = useRef(null);
   const accountCloseTimeoutRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,14 +38,32 @@ export default function Header() {
         setAccountOpen(false);
         setAccountPinned(false);
       }
+
+      if (
+        mobileMenuOpen &&
+        navRef.current &&
+        !navRef.current.contains(e.target) &&
+        menuToggleRef.current &&
+        !menuToggleRef.current.contains(e.target)
+      ) {
+        setMobileMenuOpen(false);
+      }
     }
 
-    if (searchOpen || accountOpen) {
+    if (searchOpen || accountOpen || mobileMenuOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [searchOpen, accountOpen]);
+  }, [searchOpen, accountOpen, mobileMenuOpen]);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setSearchOpen(false);
+    setQuery("");
+    setAccountOpen(false);
+    setAccountPinned(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     return () => {
@@ -98,6 +119,7 @@ export default function Header() {
   function handleFriendsClick() {
     setAccountOpen(false);
     setAccountPinned(false);
+    setMobileMenuOpen(false);
 
     if (isFriendsRoute) {
       window.dispatchEvent(new Event("friends:refresh"));
@@ -110,6 +132,7 @@ export default function Header() {
 
     navigate(`/search?q=${encodeURIComponent(trimmedQuery)}&mode=${searchMode}`);
     setSearchOpen(false);
+    setMobileMenuOpen(false);
     setQuery("");
   }
 
@@ -174,6 +197,7 @@ export default function Header() {
     localStorage.removeItem("auth-storage");
     setAccountOpen(false);
     setAccountPinned(false);
+    setMobileMenuOpen(false);
     navigate("/login", { replace: true });
   }
 
@@ -183,7 +207,18 @@ export default function Header() {
 
         <Link to="/" className="cinema-logo">MyScreenbook</Link>
 
-        <nav className="cinema-nav">
+        <button
+          ref={menuToggleRef}
+          type="button"
+          className={`header-menu-toggle ${mobileMenuOpen ? "open" : ""}`}
+          aria-label={mobileMenuOpen ? "Close navigation" : "Open navigation"}
+          aria-expanded={mobileMenuOpen}
+          onClick={() => setMobileMenuOpen((prev) => !prev)}
+        >
+          {mobileMenuOpen ? <FiX /> : <FiMenu />}
+        </button>
+
+        <nav ref={navRef} className={`cinema-nav ${mobileMenuOpen ? "open" : ""}`}>
 
           <div className={`search-wrapper ${searchOpen ? "open" : ""}`} ref={inputRef}>
             <FiSearch
@@ -233,10 +268,10 @@ export default function Header() {
             )}
           </div>
 
-          <Link to="/explore">Explore</Link>
-          <Link to="/watched">Watched</Link>
-          <Link to="/watchlist">Watchlist</Link>
-          <Link to="/favorites">Favorites</Link>
+          <Link to="/explore" onClick={() => setMobileMenuOpen(false)}>Explore</Link>
+          <Link to="/watched" onClick={() => setMobileMenuOpen(false)}>Watched</Link>
+          <Link to="/watchlist" onClick={() => setMobileMenuOpen(false)}>Watchlist</Link>
+          <Link to="/favorites" onClick={() => setMobileMenuOpen(false)}>Favorites</Link>
 
           <div
             className={`account-menu-wrapper ${accountOpen ? "open" : ""}`}
@@ -269,6 +304,7 @@ export default function Header() {
               <Link to="/profile" className="account-dropdown-link" onClick={() => {
                 setAccountOpen(false);
                 setAccountPinned(false);
+                setMobileMenuOpen(false);
               }}>
                 <FiUser />
                 <span>Profile</span>

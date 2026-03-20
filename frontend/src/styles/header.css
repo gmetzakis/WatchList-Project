@@ -48,6 +48,28 @@
   align-items: center;
 }
 
+.header-menu-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--panel-border-strong);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.15rem;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.header-menu-toggle:hover,
+.header-menu-toggle.open {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--panel-border-strong);
+  color: #fff;
+}
+
 .cinema-nav a {
   color: var(--text);
   text-decoration: none;
@@ -349,5 +371,96 @@
 
 .header-search-submit-floating:hover {
   transform: translateY(-50%) translateY(-1px);
+}
+
+@media (max-width: 980px) {
+  .cinema-header {
+    padding: 14px 0;
+  }
+
+  .cinema-header-inner {
+    padding: 0 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+    position: relative;
+  }
+
+  .cinema-logo {
+    font-size: 1.35rem;
+    letter-spacing: 1px;
+  }
+
+  .header-menu-toggle {
+    display: inline-flex;
+    margin-left: auto;
+  }
+
+  .cinema-nav {
+    width: 100%;
+    order: 3;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-bg-strong);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  .cinema-nav.open {
+    display: flex;
+  }
+
+  .cinema-nav a {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+  }
+
+  .search-wrapper,
+  .account-menu-wrapper {
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  .header-search-panel {
+    position: static;
+    right: auto;
+    top: auto;
+    width: 100%;
+    transform-origin: center;
+    animation: none;
+    margin-top: 8px;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .header-search-actions-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .header-search-mode-switch {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .header-search-mode-btn {
+    flex: 1 1 0;
+  }
+
+  .header-search-submit {
+    width: 100%;
+  }
+
+  .account-dropdown {
+    right: auto;
+    left: 0;
+    min-width: min(220px, 86vw);
+  }
 }
 
