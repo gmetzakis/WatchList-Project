@@ -13,11 +13,28 @@ const TYPE_FILTERS = [
 
 // Extracted EmblaCarousel component
 function EmblaCarousel({ items, renderCard }) {
-  // Using useMemo ensures the plugin is instantiated exactly once per carousel instance
-  // This prevents shared-plugin crashes, and prevents infinite initialization loops.
-  const plugins = useMemo(() => [
-    Autoplay({ delay: 4000, stopOnInteraction: true, stopOnMouseEnter: true })
-  ], []);
+  const [autoplayEnabled, setAutoplayEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return !window.matchMedia("(max-width: 760px)").matches;
+  });
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const handleViewportChange = (event) => {
+      setAutoplayEnabled(!event.matches);
+    };
+
+    setAutoplayEnabled(!mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleViewportChange);
+    };
+  }, []);
+
+  const plugins = useMemo(() => autoplayEnabled
+    ? [Autoplay({ delay: 4000, stopOnInteraction: true, stopOnMouseEnter: true })]
+    : [], [autoplayEnabled]);
 
   const [emblaRef, emblaApi] = useEmblaCarousel(
     {

@@ -40,9 +40,32 @@ function normalizeGenreNames(genres) {
 }
 
 function EmblaCarousel({ items, renderCard }) {
-  const plugins = useMemo(() => [
-    Autoplay({ delay: 4000, stopOnInteraction: true, stopOnMouseEnter: true })
-  ], []);
+  const [autoplayEnabled, setAutoplayEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return !window.matchMedia("(max-width: 760px)").matches;
+  });
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const handleViewportChange = (event) => {
+      setAutoplayEnabled(!event.matches);
+    };
+
+    setAutoplayEnabled(!mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleViewportChange);
+    };
+  }, []);
+
+  const plugins = useMemo(() => {
+    if (!autoplayEnabled) {
+      return [];
+    }
+
+    return [Autoplay({ delay: 4000, stopOnInteraction: true, stopOnMouseEnter: true })];
+  }, [autoplayEnabled]);
 
   const [emblaRef, emblaApi] = useEmblaCarousel(
     {
