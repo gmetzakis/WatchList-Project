@@ -1,7 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { LayoutGrid, GalleryVertical, Heart, Eye, EyeOff, BookmarkPlus, BookmarkMinus } from "lucide-react";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 import api from "../api/axios.js";
 import "../styles/explore.css";
+import "../styles/media-card.css";
 
 const FILTERS = [
   { key: "all", label: "All titles" },
@@ -17,14 +21,346 @@ function formatSectionReason(item) {
   return item.reason_context.join(" • ");
 }
 
+function formatGenres(item) {
+  if (!Array.isArray(item.genres) || item.genres.length === 0) {
+    return "";
+  }
+
+  return item.genres.slice(0, 3).join(" • ");
+}
+
+function normalizeGenreNames(genres) {
+  if (!Array.isArray(genres)) {
+    return [];
+  }
+
+  return genres
+    .map((genre) => (typeof genre === "string" ? genre : genre?.name))
+    .filter(Boolean);
+}
+
+function EmblaCarousel({ items, renderCard }) {
+  const plugins = useMemo(() => [
+    Autoplay({ delay: 4000, stopOnInteraction: true, stopOnMouseEnter: true })
+  ], []);
+
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: false,
+      align: 'start',
+      slidesToScroll: 3,
+      breakpoints: {
+        '(min-width: 768px)': { slidesToScroll: 4 },
+        '(min-width: 1024px)': { slidesToScroll: 5 }
+      }
+    },
+    plugins
+  );
+
+  const scrollPrev = () => {
+    if (emblaApi) emblaApi.scrollPrev();
+  };
+  const scrollNext = () => {
+    if (emblaApi) emblaApi.scrollNext();
+  };
+
+  return (
+    <div className="embla-carousel">
+      <button className="embla-arrow left" onClick={scrollPrev}>‹</button>
+
+      <div className="embla-viewport" ref={emblaRef}>
+        <div className="embla-container">
+          {items.map((item) => (
+            <div key={`${item.type}-${item.tmdb_id}`} className="embla-slide">
+              {renderCard(item)}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button className="embla-arrow right" onClick={scrollNext}>›</button>
+    </div>
+  );
+}
+
 export default function ExplorePage() {
   const [typeFilter, setTypeFilter] = useState("all");
+  const [viewMode, setViewMode] = useState("tape");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [details, setDetails] = useState("");
+  const [myMediaStatus, setMyMediaStatus] = useState({});
+  const [actionPending, setActionPending] = useState(new Set());
   const [payload, setPayload] = useState({
     sections: [],
   });
+
+  function mediaKey(item) {
+    return `${item.type}-${item.tmdb_id}`;
+  }
+
+  function stop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadMyMediaStatus() {
+      try {
+        const [watchlistRes, watchedRes] = await Promise.all([
+          api.get("/media/watchlist"),
+          api.get("/media/watched"),
+        ]);
+
+        if (cancelled) {
+          return;
+        }
+
+        const nextStatus = {};
+
+        (watchlistRes.data?.items || []).forEach((item) => {
+          nextStatus[`${item.type}-${item.tmdb_id}`] = {
+            status: "watchlist",
+            rating: null,
+            is_favorite: false,
+          };
+        });
+
+        (watchedRes.data?.items || []).forEach((item) => {
+          nextStatus[`${item.type}-${item.tmdb_id}`] = {
+            status: "watched",
+            rating: item.rating || null,
+            is_favorite: Boolean(item.is_favorite),
+          };
+        });
+
+        setMyMediaStatus(nextStatus);
+      } catch {
+        // Keep Explore usable even if status hydration fails.
+      }
+    }
+
+    loadMyMediaStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleAddToWatchlist(item) {
+    const key = mediaKey(item);
+    if (actionPending.has(key)) {
+      return;
+    }
+
+    setActionPending((prev) => new Set([...prev, key]));
+    try {
+      await api.post(`/media/${item.tmdb_id}/watchlist`, { type: item.type });
+      setMyMediaStatus((prev) => ({
+        ...prev,
+        [key]: { status: "watchlist", rating: null, is_favorite: false },
+      }));
+    } catch {
+      // Silent fail to keep the feed snappy.
+    } finally {
+      setActionPending((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
+  }
+
+  async function handleMarkAsWatched(item) {
+    const key = mediaKey(item);
+    if (actionPending.has(key)) {
+      return;
+    }
+
+    setActionPending((prev) => new Set([...prev, key]));
+    try {
+      await api.post(`/media/${item.tmdb_id}/watched`, { type: item.type });
+      setMyMediaStatus((prev) => ({
+        ...prev,
+        [key]: {
+          status: "watched",
+          rating: prev[key]?.rating || null,
+          is_favorite: prev[key]?.is_favorite || false,
+        },
+      }));
+    } catch {
+      // Silent fail to keep the feed snappy.
+    } finally {
+      setActionPending((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
+  }
+
+  async function handleRemoveFromWatchlist(item) {
+    const key = mediaKey(item);
+
+    if (actionPending.has(key)) {
+      return;
+    }
+
+    setActionPending((prev) => new Set([...prev, key]));
+    try {
+      await api.delete(`/media/${item.tmdb_id}/watchlist`, { data: { type: item.type } });
+      setMyMediaStatus((prev) => ({
+        ...prev,
+        [key]: { status: null, rating: null, is_favorite: false },
+      }));
+    } catch {
+      // Silent fail to keep the feed snappy.
+    } finally {
+      setActionPending((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
+  }
+
+  async function handleMoveToWatched(item) {
+    const key = mediaKey(item);
+
+    if (actionPending.has(key)) {
+      return;
+    }
+
+    setActionPending((prev) => new Set([...prev, key]));
+    try {
+      await api.post(`/media/${item.tmdb_id}/watchlist-to-watched`, { type: item.type });
+      setMyMediaStatus((prev) => ({
+        ...prev,
+        [key]: {
+          status: "watched",
+          rating: prev[key]?.rating || null,
+          is_favorite: prev[key]?.is_favorite || false,
+        },
+      }));
+    } catch {
+      // Silent fail to keep the feed snappy.
+    } finally {
+      setActionPending((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
+  }
+
+  async function handleRemoveFromWatched(item) {
+    const key = mediaKey(item);
+
+    if (actionPending.has(key)) {
+      return;
+    }
+
+    setActionPending((prev) => new Set([...prev, key]));
+    try {
+      await api.delete(`/media/${item.tmdb_id}/watched`, { data: { type: item.type } });
+      setMyMediaStatus((prev) => ({
+        ...prev,
+        [key]: { status: null, rating: null, is_favorite: false },
+      }));
+    } catch {
+      // Silent fail to keep the feed snappy.
+    } finally {
+      setActionPending((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
+  }
+
+  async function handleRate(item, rating) {
+    const key = mediaKey(item);
+
+    if (actionPending.has(key)) {
+      return;
+    }
+
+    setActionPending((prev) => new Set([...prev, key]));
+    try {
+      await api.post(`/media/${item.tmdb_id}/rating`, { type: item.type, rating });
+      setMyMediaStatus((prev) => ({
+        ...prev,
+        [key]: {
+          ...(prev[key] || {}),
+          status: "watched",
+          rating,
+          is_favorite: prev[key]?.is_favorite || false,
+        },
+      }));
+    } catch {
+      // Silent fail to keep the feed snappy.
+    } finally {
+      setActionPending((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
+  }
+
+  async function handleFavorite(item) {
+    const key = mediaKey(item);
+    const currentStatus = myMediaStatus[key];
+
+    if (actionPending.has(key) || currentStatus?.status !== "watched") {
+      return;
+    }
+
+    setActionPending((prev) => new Set([...prev, key]));
+    try {
+      await api.post(`/media/${item.tmdb_id}/favorite`, { type: item.type });
+      setMyMediaStatus((prev) => ({
+        ...prev,
+        [key]: { ...prev[key], is_favorite: true },
+      }));
+    } catch {
+      // Silent fail to keep the feed snappy.
+    } finally {
+      setActionPending((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
+  }
+
+  async function handleUnfavorite(item) {
+    const key = mediaKey(item);
+    const currentStatus = myMediaStatus[key];
+
+    if (actionPending.has(key) || currentStatus?.status !== "watched") {
+      return;
+    }
+
+    setActionPending((prev) => new Set([...prev, key]));
+    try {
+      await api.delete(`/media/${item.tmdb_id}/favorite`, { data: { type: item.type } });
+      setMyMediaStatus((prev) => ({
+        ...prev,
+        [key]: { ...prev[key], is_favorite: false },
+      }));
+    } catch {
+      // Silent fail to keep the feed snappy.
+    } finally {
+      setActionPending((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -39,9 +375,34 @@ export default function ExplorePage() {
           params: { type: typeFilter },
         });
 
+        const sections = Array.isArray(res.data?.sections) ? res.data.sections : [];
+
+        const hydratedSections = await Promise.all(
+          sections.map(async (section) => {
+            const hydratedItems = await Promise.all(
+              (Array.isArray(section.items) ? section.items : []).map(async (item) => {
+                const existingGenres = normalizeGenreNames(item.genres);
+                if (existingGenres.length > 0) {
+                  return { ...item, genres: existingGenres };
+                }
+
+                try {
+                  const detailsRes = await api.get(`/tmdb/details/${item.type}/${item.tmdb_id}`);
+                  const fallbackGenres = normalizeGenreNames(detailsRes.data?.genres);
+                  return { ...item, genres: fallbackGenres };
+                } catch {
+                  return { ...item, genres: [] };
+                }
+              })
+            );
+
+            return { ...section, items: hydratedItems };
+          })
+        );
+
         if (!cancelled) {
           setPayload({
-            sections: Array.isArray(res.data?.sections) ? res.data.sections : [],
+            sections: hydratedSections,
           });
         }
       } catch (err) {
@@ -63,6 +424,141 @@ export default function ExplorePage() {
       cancelled = true;
     };
   }, [typeFilter]);
+
+  function renderCard(item, sectionKey, mode = "grid") {
+    const mediaLink = `/media/${item.type}/${item.tmdb_id}`;
+    const posterUrl = item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : null;
+    const key = mediaKey(item);
+    const currentStatus = myMediaStatus[key] || { status: null, rating: null, is_favorite: false };
+    const isPending = actionPending.has(key);
+    const genresLabel = formatGenres(item);
+    const isFavoriteSeedSection = sectionKey === "fromYourFavorites";
+    const isGenreSection = sectionKey === "genreSignals";
+    const isFriendSection = sectionKey === "friendTrending";
+    const friendLabel = Array.isArray(item.reason_context) && item.reason_context.length > 0 ? item.reason_context[0] : "Friend pick";
+
+    return (
+      <article key={key} className={`media-card explore-media-card ${mode === "tape" ? "carousel-card" : ""}`}>
+        <Link to={mediaLink} className="media-image-wrapper">
+          {posterUrl ? (
+            <img className="media-card-img" src={posterUrl} alt={item.title} />
+          ) : (
+            <div className="explore-card-fallback">{item.title?.slice(0, 1) || "?"}</div>
+          )}
+
+          <div className="hover-controls">
+            <div className="hover-title">
+              <span className="hover-title-text">{item.title}</span>
+              <span className="hover-year-text">{item.release_year || "Unknown year"}</span>
+              {genresLabel && <span className="explore-hover-genres">{genresLabel}</span>}
+              {currentStatus.status === "watched" && (
+                <div className="rating-inline">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                    <span
+                      key={n}
+                      className={currentStatus.rating >= n ? "star active" : "star"}
+                      onClick={(e) => {
+                        stop(e);
+                        handleRate(item, n);
+                      }}
+                    >
+                      ★
+                    </span>
+                  ))}
+
+                  {currentStatus.rating && <span className="rating-label">{currentStatus.rating}/10</span>}
+                </div>
+              )}
+              {!isFavoriteSeedSection && !isGenreSection && !isFriendSection && (
+                <span className="explore-hover-reason">{formatSectionReason(item)}</span>
+              )}
+              {isFriendSection && <span className="explore-hover-score">{friendLabel}</span>}
+            </div>
+
+            <div className="control-icons explore-control-icons">
+              {currentStatus.status === null && (
+                <>
+                  <span
+                    className={`watched-icon ${isPending ? "disabled" : ""}`}
+                    onClick={(e) => {
+                      stop(e);
+                      handleAddToWatchlist(item);
+                    }}
+                    title="Add to Watchlist"
+                  >
+                    <BookmarkPlus size={34} />
+                  </span>
+
+                  <span
+                    className={`watched-icon ${isPending ? "disabled" : ""}`}
+                    onClick={(e) => {
+                      stop(e);
+                      handleMarkAsWatched(item);
+                    }}
+                    title="Mark as Watched"
+                  >
+                    <Eye size={34} />
+                  </span>
+                </>
+              )}
+
+              {currentStatus.status === "watchlist" && (
+                <>
+                  <span
+                    className={`watched-icon ${isPending ? "disabled" : ""}`}
+                    onClick={(e) => {
+                      stop(e);
+                      handleRemoveFromWatchlist(item);
+                    }}
+                    title="Remove from Watchlist"
+                  >
+                    <BookmarkMinus size={34} />
+                  </span>
+
+                  <span
+                    className={`watched-icon ${isPending ? "disabled" : ""}`}
+                    onClick={(e) => {
+                      stop(e);
+                      handleMoveToWatched(item);
+                    }}
+                    title="Move to Watched"
+                  >
+                    <Eye size={34} />
+                  </span>
+                </>
+              )}
+
+              {currentStatus.status === "watched" && (
+                <>
+                  <span
+                    className={`favorite-icon ${currentStatus.is_favorite ? "active" : ""} ${isPending ? "disabled" : ""}`}
+                    onClick={(e) => {
+                      stop(e);
+                      currentStatus.is_favorite ? handleUnfavorite(item) : handleFavorite(item);
+                    }}
+                    title="Favorite"
+                  >
+                    <Heart size={34} />
+                  </span>
+
+                  <span
+                    className={`watched-icon active ${isPending ? "disabled" : ""}`}
+                    onClick={(e) => {
+                      stop(e);
+                      handleRemoveFromWatched(item);
+                    }}
+                    title="Remove from Watched"
+                  >
+                    <EyeOff size={34} />
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        </Link>
+      </article>
+    );
+  }
 
   return (
     <div className="explore-shell">
@@ -88,6 +584,22 @@ export default function ExplorePage() {
                   {filter.label}
                 </button>
               ))}
+            </div>
+
+            <div className="view-toggle-container">
+              <div
+                className={`view-toggle-box ${viewMode === "grid" ? "active" : ""}`}
+                onClick={() => setViewMode("grid")}
+              >
+                <LayoutGrid size={22} />
+              </div>
+
+              <div
+                className={`view-toggle-box ${viewMode === "tape" ? "active" : ""}`}
+                onClick={() => setViewMode("tape")}
+              >
+                <GalleryVertical size={22} />
+              </div>
             </div>
           </div>
         </div>
@@ -128,36 +640,15 @@ export default function ExplorePage() {
                 <span className="explore-section-count">{section.items.length}</span>
               </div>
 
-              <div className="explore-grid">
-                {section.items.map((item) => {
-                  const mediaLink = `/media/${item.type}/${item.tmdb_id}`;
-                  const posterUrl = item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : null;
+              {viewMode === "grid" && (
+                <div className="explore-grid">
+                  {section.items.map((item) => renderCard(item, section.key, "grid"))}
+                </div>
+              )}
 
-                  return (
-                    <article key={`${section.key}-${item.type}-${item.tmdb_id}`} className="explore-card">
-                      <Link to={mediaLink} className="explore-card-poster-link">
-                        {posterUrl ? (
-                          <img className="explore-card-poster" src={posterUrl} alt={item.title} />
-                        ) : (
-                          <div className="explore-card-fallback">{item.title?.slice(0, 1) || "?"}</div>
-                        )}
-                      </Link>
-
-                      <div className="explore-card-body">
-                        <div className="explore-card-topline">
-                          <span className="explore-card-type">{item.type === "movie" ? "Movie" : "Series"}</span>
-                          <span className="explore-card-score">{item.score.toFixed(1)}</span>
-                        </div>
-                        <h3 className="explore-card-title">
-                          <Link to={mediaLink} className="explore-card-title-link">{item.title}</Link>
-                        </h3>
-                        <p className="explore-card-meta">{item.release_year || "Unknown year"}</p>
-                        <p className="explore-card-reason">{formatSectionReason(item)}</p>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
+              {viewMode === "tape" && (
+                <EmblaCarousel items={section.items} renderCard={(item) => renderCard(item, section.key, "tape")} />
+              )}
             </section>
           ))}
         </div>

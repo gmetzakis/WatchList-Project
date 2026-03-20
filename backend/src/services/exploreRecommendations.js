@@ -297,6 +297,7 @@ function mapTmdbCandidate(candidate, score, reasonContext) {
     poster_path: candidate.poster_path,
     release_year: candidate.release_year || null,
     score,
+    genres: normalizeGenres(candidate.genres || candidate.genre_ids),
     reason_context: reasonContext,
   };
 }
@@ -507,6 +508,7 @@ function mapRecommendationRecord(record) {
     poster_path: record.get("posterPath"),
     release_year: record.get("releaseYear") ? String(record.get("releaseYear")) : null,
     score: Number(record.get("score") || 0),
+    genres: normalizeGenres(record.get("genres")),
     reason_context: record.get("reasonContext") || [],
   };
 }
@@ -553,6 +555,7 @@ export async function getExploreRecommendations(userId, type = "all") {
                 candidate.title AS title,
                 candidate.posterPath AS posterPath,
                 candidate.releaseYear AS releaseYear,
+            candidate.genres AS genres,
                 reasonContext,
                 (score + favoriteCount * 2.0) AS score
          ORDER BY score DESC, releaseYear DESC
