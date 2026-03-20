@@ -15,7 +15,7 @@
   height: 36px;
   margin: 2px;
   border-radius: 6px;
-  border: 2px solid rgba(212, 175, 55, 0.2);
+  border: 1px solid var(--panel-border);
   cursor: pointer;
   background: linear-gradient(135deg, #333, #444);
   color: var(--text);
@@ -25,17 +25,17 @@
 }
 
 .btn-rating:hover {
-  border-color: var(--favorite-glow);
+  border-color: var(--panel-border-strong);
   background: linear-gradient(135deg, #444, #555);
   transform: scale(1.1);
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
 }
 
 .btn-rating.active {
-  background: linear-gradient(135deg, var(--favorite), var(--favorite-dark));
-  color: black;
-  border-color: var(--favorite-glow);
-  box-shadow: 0 0 15px var(--glow-gold);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: var(--panel-border-strong);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
   font-weight: 700;
   transform: scale(1.15);
 }

@@ -66,8 +66,8 @@
   margin-top: 16px;
   padding: 10px 16px;
   border-radius: 10px;
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(184, 150, 47, 0.24));
+  border: 1px solid var(--panel-border-strong);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--text);
   font-weight: 700;
   cursor: pointer;
@@ -76,7 +76,7 @@
 
 .person-load-more-btn:hover {
   transform: translateY(-2px);
-  border-color: rgba(212, 175, 55, 0.6);
+  border-color: rgba(255, 255, 255, 0.16);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 

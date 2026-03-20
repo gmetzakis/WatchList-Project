@@ -6,30 +6,41 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap');
 
 :root {
-  --bg: #0a0a0a;
-  --bg-alt: #0f0f0f;
-  --card-bg: #141414;
-  --card-bg-hover: #1a1a1a;
+  --bg: #08090b;
+  --bg-alt: #0d0e11;
+  --card-bg: #111215;
+  --card-bg-hover: #17191d;
 
-  --text: #f2f2f2;
-  --text-muted: #999;
+  --text: #eceef2;
+  --text-muted: #8f959f;
+  --text-soft: rgba(236, 238, 242, 0.72);
 
   --accent: #e50914; /* Netflix red */
   --accent-glow: #ff4d4d;
-  --favorite: #d4af37; /* muted gold */
-  --favorite-dark: #b8962f;
-  --favorite-glow: #ffd700;
+  --favorite: #9ca3af;
+  --favorite-dark: #6b7280;
+  --favorite-glow: #f3f4f6;
+
+  --panel-bg: linear-gradient(180deg, rgba(17, 18, 22, 0.82), rgba(10, 11, 14, 0.9));
+  --panel-bg-soft: linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0.012));
+  --panel-bg-strong: linear-gradient(180deg, rgba(19, 20, 24, 0.92), rgba(10, 11, 14, 0.96));
+  --panel-border: rgba(255, 255, 255, 0.06);
+  --panel-border-strong: rgba(255, 255, 255, 0.1);
+  --panel-hover: rgba(255, 255, 255, 0.05);
+  --panel-highlight: rgba(255, 255, 255, 0.08);
 
   --shadow-strong: rgba(0, 0, 0, 0.85);
-  --shadow-soft: rgba(255, 255, 255, 0.12);
-  --shadow-cinematic: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 40px rgba(229, 9, 20, 0.2);
+  --shadow-soft: rgba(255, 255, 255, 0.06);
+  --shadow-cinematic: 0 20px 60px rgba(0, 0, 0, 0.55);
   --glow-red: 0 0 20px rgba(229, 9, 20, 0.6);
-  --glow-gold: 0 0 20px rgba(212, 175, 55, 0.6);
+  --glow-gold: 0 0 18px rgba(255, 255, 255, 0.18);
 }
 
 /* Background + Typography */
 body {
-  background: var(--bg);
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.04), transparent 28%),
+    linear-gradient(180deg, #090a0c 0%, #060709 100%);
   color: var(--text);
   font-family: "Montserrat", sans-serif;
   margin: 0;

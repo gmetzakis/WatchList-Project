@@ -5,8 +5,8 @@
 .profile-shell {
   width: min(860px, 95vw);
   margin: 24px auto 48px;
-  background: linear-gradient(180deg, rgba(19, 19, 24, 0.92), rgba(14, 14, 20, 0.94));
-  border: 1px solid rgba(212, 175, 55, 0.18);
+  background: var(--panel-bg-strong);
+  border: 1px solid var(--panel-border);
   border-radius: 14px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
   padding: 24px;
@@ -14,7 +14,7 @@
 
 .profile-title {
   margin: 0 0 16px;
-  color: var(--favorite-glow);
+  color: rgba(244, 246, 248, 0.96);
   font-size: clamp(1.6rem, 2.5vw, 2.1rem);
   letter-spacing: 0.5px;
 }
@@ -59,7 +59,7 @@
   height: 84px;
   border-radius: 50%;
   overflow: hidden;
-  border: 1px solid rgba(212, 175, 55, 0.35);
+  border: 1px solid var(--panel-border-strong);
   background: rgba(0, 0, 0, 0.4);
   flex-shrink: 0;
 }
@@ -82,7 +82,7 @@
 
 .avatar-upload-btn {
   position: relative;
-  border: 1px solid rgba(212, 175, 55, 0.35);
+  border: 1px solid var(--panel-border-strong);
   border-radius: 8px;
   padding: 10px 12px;
   cursor: pointer;
@@ -93,8 +93,8 @@
 }
 
 .avatar-upload-btn:hover {
-  border-color: var(--favorite-glow);
-  color: var(--favorite-glow);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
 }
 
 .avatar-upload-btn input {
@@ -114,7 +114,7 @@
 .password-form {
   margin-top: 18px;
   padding-top: 14px;
-  border-top: 1px solid rgba(212, 175, 55, 0.2);
+  border-top: 1px solid var(--panel-border);
 }
 
 .profile-grid {
@@ -136,7 +136,7 @@
 }
 
 .profile-field input {
-  border: 1px solid rgba(212, 175, 55, 0.22);
+  border: 1px solid var(--panel-border);
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.35);
   color: #fff;
@@ -146,8 +146,8 @@
 
 .profile-field input:focus {
   outline: none;
-  border-color: var(--favorite-glow);
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+  border-color: var(--panel-border-strong);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
 }
 
 .profile-field input:disabled {
@@ -167,8 +167,8 @@
   min-width: 170px;
   border: 0;
   border-radius: 10px;
-  background: linear-gradient(90deg, #b48a2f 0%, #e5be67 50%, #c6973f 100%);
-  color: #1a1200;
+  background: linear-gradient(90deg, #d5d9df 0%, #9ca3af 50%, #6b7280 100%);
+  color: #0f1114;
   font-size: 0.95rem;
   font-weight: 700;
   padding: 11px 18px;
