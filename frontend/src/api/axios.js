@@ -8,6 +8,10 @@ else {
   baseURLs = "http://localhost:5000"
 }
 
+if (import.meta.env.VITE_MOBILE === "yes") {
+  baseURLs = "http://192.168.1.11:5000/"
+}
+
 const api = axios.create({
     baseURL: baseURLs,
   });
