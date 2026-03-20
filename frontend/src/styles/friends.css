@@ -5,26 +5,26 @@
 :root {
   --friends-gold: #d4af37;
   --friends-gold-soft: #f3d57a;
-  --friends-gold-bright: #ffe7a6;
+  --friends-gold-bright: #ffefbf;
   --friends-ink: #120d03;
   --friends-panel-border: rgba(212, 175, 55, 0.22);
   --friends-panel-border-strong: rgba(212, 175, 55, 0.42);
-  --friends-panel-bg: rgba(28, 21, 8, 0.52);
-  --friends-text-main: #f7e9be;
-  --friends-text-muted: rgba(241, 220, 163, 0.78);
+  --friends-panel-bg: rgba(25, 18, 7, 0.94);
+  --friends-text-main: #ffefbf;
+  --friends-text-muted: rgba(245, 226, 177, 0.78);
 }
 
 .friends-shell {
   width: 100%;
   max-width: 100%;
-  margin: 12px auto 34px;
-  padding: 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  margin: 8px auto 34px;
+  padding: 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(212, 175, 55, 0.18);
   background:
-    radial-gradient(circle at 20% -40%, rgba(255, 255, 255, 0.08), transparent 42%),
-    linear-gradient(160deg, rgba(10, 10, 10, 0.98), rgba(5, 5, 5, 0.98));
-  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.45);
+    radial-gradient(circle at top left, rgba(255, 220, 120, 0.12), transparent 32%),
+    linear-gradient(180deg, rgba(25, 18, 7, 0.94), rgba(9, 8, 5, 0.96));
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.34);
 }
 
 .friends-command-deck {
@@ -33,9 +33,9 @@
   align-items: center;
   gap: 12px;
   padding: 6px 8px;
-  border-radius: 12px;
+  border-radius: 20px;
   border: 1px solid var(--friends-panel-border);
-  background: linear-gradient(180deg, rgba(34, 25, 9, 0.78), rgba(17, 13, 6, 0.82));
+  background: linear-gradient(180deg, rgba(23, 17, 7, 0.88), rgba(11, 8, 4, 0.9));
 }
 
 .friends-command-title {
@@ -173,7 +173,7 @@
   padding: 6px;
   margin: 2px 0 12px;
   border-radius: 12px;
-  background: rgba(39, 29, 10, 0.28);
+  background: rgba(52, 39, 13, 0.22);
   border: 1px solid var(--friends-panel-border);
 }
 
@@ -225,16 +225,17 @@
 .friends-rail,
 .friends-detail-panel,
 .friends-manage-card {
-  border-radius: 14px;
+  border-radius: 20px;
   border: 1px solid var(--friends-panel-border);
-  background: linear-gradient(180deg, rgba(23, 17, 7, 0.82), rgba(11, 8, 4, 0.86));
+  background:
+    radial-gradient(circle at top left, rgba(255, 220, 120, 0.09), transparent 35%),
+    linear-gradient(180deg, rgba(23, 17, 7, 0.84), rgba(11, 8, 4, 0.88));
 }
 
 .friends-rail {
   order: 1;
   padding: 8px;
-  border-style: dashed;
-  background: linear-gradient(180deg, rgba(22, 16, 6, 0.88), rgba(10, 8, 4, 0.92));
+  border-style: solid;
 }
 
 .friends-detail-panel {
@@ -460,7 +461,7 @@
   padding: 16px;
   border-radius: 20px;
   border: 1px solid rgba(212, 175, 55, 0.12);
-  background: rgba(56, 41, 11, 0.14);
+  background: rgba(52, 39, 13, 0.14);
 }
 
 .friend-library-grid {
@@ -475,8 +476,8 @@
   gap: 10px;
   padding: 12px;
   border-radius: 18px;
-  border: 1px solid rgba(212, 175, 55, 0.14);
-  background: linear-gradient(180deg, rgba(44, 32, 10, 0.3), rgba(18, 13, 5, 0.28));
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  background: linear-gradient(180deg, rgba(44, 32, 10, 0.28), rgba(18, 13, 5, 0.36));
   text-decoration: none;
   transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
@@ -601,9 +602,9 @@
   align-items: center;
   gap: 14px;
   padding: 14px;
-  border: 1px solid rgba(212, 175, 55, 0.16);
+  border: 1px solid rgba(212, 175, 55, 0.2);
   border-radius: 18px;
-  background: linear-gradient(180deg, rgba(45, 33, 10, 0.28), rgba(18, 13, 5, 0.26));
+  background: linear-gradient(180deg, rgba(45, 33, 10, 0.26), rgba(18, 13, 5, 0.34));
 }
 
 .friend-name {
@@ -732,8 +733,9 @@
 
 @media (max-width: 760px) {
   .friends-shell {
-    padding: 10px;
+    padding: 14px;
     margin-top: 14px;
+    border-radius: 20px;
   }
 
   .friends-tabbar {
@@ -800,8 +802,8 @@
   min-width: 120px;
   padding: 9px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(212, 175, 55, 0.22);
-  background: rgba(29, 21, 8, 0.5);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  background: linear-gradient(135deg, rgba(16, 16, 24, 0.95), rgba(10, 10, 16, 0.98));
   color: var(--friends-text-main);
   font-size: 0.9rem;
 }
@@ -821,8 +823,8 @@
   flex-shrink: 0;
   padding: 9px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(212, 175, 55, 0.18);
-  background: rgba(29, 21, 8, 0.54);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  background: linear-gradient(135deg, rgba(16, 16, 24, 0.95), rgba(10, 10, 16, 0.98));
   color: var(--friends-text-main);
   font-size: 0.9rem;
   cursor: pointer;
