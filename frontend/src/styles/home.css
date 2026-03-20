@@ -58,7 +58,7 @@
 .home-section-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
   margin-bottom: 10px;
 }
@@ -67,21 +67,6 @@
   margin: 0;
   color: #ffefbf;
   font-size: 1.35rem;
-}
-
-.home-section-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 42px;
-  height: 34px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: rgba(212, 175, 55, 0.18);
-  border: 1px solid rgba(212, 175, 55, 0.38);
-  color: #f3dc9b;
-  font-size: 0.84rem;
-  font-weight: 700;
 }
 
 .home-empty {

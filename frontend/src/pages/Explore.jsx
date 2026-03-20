@@ -637,7 +637,6 @@ export default function ExplorePage() {
                 <div>
                   <h2 className="explore-section-title">{section.title}</h2>
                 </div>
-                <span className="explore-section-count">{section.items.length}</span>
               </div>
 
               {viewMode === "grid" && (
