@@ -278,14 +278,18 @@ export default function WatchlistPage() {
 
 
   return (
-    <div className="page-container library-page">
-      <div className="library-page-head">
-        <h1 className="library-page-title">Watchlist</h1>
-        <span className="library-page-count">{titlesCountLabel}</span>
-      </div>
+    <div className="page-container library-page library-explore-page">
+      <section className="library-hero-shell">
+        <div className="library-page-head">
+          <div>
+            <p className="library-hero-kicker">Library</p>
+            <h1 className="library-page-title">Watchlist</h1>
+          </div>
+          <span className="library-page-count">{titlesCountLabel}</span>
+        </div>
 
-      {/* TYPE FILTER */}
-      <div className="filter-bar">
+        {/* TYPE FILTER */}
+        <div className="filter-bar library-filter-bar">
         
         <div className="view-toggle-container">
           <div
@@ -348,23 +352,26 @@ export default function WatchlistPage() {
             ))}
           </select>
         </div>
-      </div>
-
-      {items.length === 0 && (
-        <p>Your watchlist is empty.</p>
-      )}
-
-      {/* GRID VIEW */}
-      {viewMode === "grid" && (
-        <div className="media-grid">
-          {filteredItems.map(item => renderCard(item))}
         </div>
-      )}
+      </section>
 
-      {/* TAPE VIEW */}
-      {viewMode === "tape" && (
-        <EmblaCarousel items={filteredItems} renderCard={renderCard} />
-      )}
+      <section className="library-content-shell">
+        {items.length === 0 && (
+          <p>Your watchlist is empty.</p>
+        )}
+
+        {/* GRID VIEW */}
+        {viewMode === "grid" && (
+          <div className="media-grid">
+            {filteredItems.map(item => renderCard(item))}
+          </div>
+        )}
+
+        {/* TAPE VIEW */}
+        {viewMode === "tape" && (
+          <EmblaCarousel items={filteredItems} renderCard={renderCard} />
+        )}
+      </section>
     </div>
   );
 }

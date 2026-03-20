@@ -310,83 +310,89 @@ export default function WatchedPage() {
   const activeOrder = sort === "rating_desc" ? orderDesc : orderAsc;
 
   return (
-    <div className="page-container library-page">
-      <div className="library-page-head">
-        <h1 className="library-page-title">Watched</h1>
-        <span className="library-page-count">{titlesCountLabel}</span>
-      </div>
+    <div className="page-container library-page watched-explore-page">
+      <section className="watched-hero-shell">
+        <div className="library-page-head">
+          <div>
+            <p className="watched-hero-kicker">Library</p>
+            <h1 className="library-page-title">Watched</h1>
+          </div>
+          <span className="library-page-count">{titlesCountLabel}</span>
+        </div>
 
-      <div className="filter-bar">
+        <div className="filter-bar watched-filter-bar">
 
-        <div className="view-toggle-container">
-          <div
-            className={`view-toggle-box ${viewMode === "grid" ? "active" : ""}`}
-            onClick={() => setViewMode("grid")}
-          >
-            <LayoutGrid size={22} />
+          <div className="view-toggle-container">
+            <div
+              className={`view-toggle-box ${viewMode === "grid" ? "active" : ""}`}
+              onClick={() => setViewMode("grid")}
+            >
+              <LayoutGrid size={22} />
+            </div>
+
+            <div
+              className={`view-toggle-box ${viewMode === "tape" ? "active" : ""}`}
+              onClick={() => setViewMode("tape")}
+            >
+              <GalleryVertical size={22} />
+            </div>
           </div>
 
-          <div
-            className={`view-toggle-box ${viewMode === "tape" ? "active" : ""}`}
-            onClick={() => setViewMode("tape")}
-          >
-            <GalleryVertical size={22} />
+          <input
+            type="text"
+            className="filter-search-input"
+            placeholder="Search titles…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+
+          <div>
+            <label className="filter-label">Sort:</label>
+            <select value={sort} onChange={handleSortChange} className="filter-select">
+              <option value="">None</option>
+              <option value="title_asc">Title A–Z</option>
+              <option value="title_desc">Title Z–A</option>
+              <option value="year_asc">Released: Oldest First</option>
+              <option value="year_desc">Released: Newest First</option>
+              <option value="rating_desc">Rating Descending</option>
+              <option value="rating_asc">Rating Ascending</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="filter-label">Type:</label>
+            <select value={type} onChange={handleTypeChange} className="filter-select">
+              <option value="all">All</option>
+              <option value="movie">Movies</option>
+              <option value="series">Shows</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="filter-label">Genre:</label>
+            <select
+              value={genre}
+              onChange={handleGenreChange}
+              className="filter-select"
+            >
+              <option value="all">All</option>
+              {availableGenres.map(g => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
           </div>
         </div>
+      </section>
 
-        <input
-          type="text"
-          className="filter-search-input"
-          placeholder="Search titles…"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+      <section className="watched-content-shell">
+        {items.length === 0 && <p>You haven't watched anything yet.</p>}
 
-        <div>
-          <label className="filter-label">Sort:</label>
-          <select value={sort} onChange={handleSortChange} className="filter-select">
-            <option value="">None</option>
-            <option value="title_asc">Title A–Z</option>
-            <option value="title_desc">Title Z–A</option>
-            <option value="year_asc">Released: Oldest First</option>
-            <option value="year_desc">Released: Newest First</option>
-            <option value="rating_desc">Rating Descending</option>
-            <option value="rating_asc">Rating Ascending</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="filter-label">Type:</label>
-          <select value={type} onChange={handleTypeChange} className="filter-select">
-            <option value="all">All</option>
-            <option value="movie">Movies</option>
-            <option value="series">Shows</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="filter-label">Genre:</label>
-          <select
-            value={genre}
-            onChange={handleGenreChange}
-            className="filter-select"
-          >
-            <option value="all">All</option>
-            {availableGenres.map(g => (
-              <option key={g} value={g}>{g}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {items.length === 0 && <p>You haven't watched anything yet.</p>}
-
-      {/* GROUPED MODE */}
-      {isRatingSort && (
-        <div className="rating-groups">
-          {activeOrder.map(key => {
-            const bucket = grouped[key];
-            if (!bucket || bucket.length === 0) return null;
+        {/* GROUPED MODE */}
+        {isRatingSort && (
+          <div className="rating-groups">
+            {activeOrder.map(key => {
+              const bucket = grouped[key];
+              if (!bucket || bucket.length === 0) return null;
 
             const title = key === "unrated"
               ? "Unrated"
@@ -395,9 +401,9 @@ export default function WatchedPage() {
                     {key}/10 <span className="star active">★</span>
                   </>
                 );
-            return (
-              <div key={key} className="rating-section">
-                <h2 className="rating-section-title">{title}</h2>
+              return (
+                <div key={key} className="rating-section">
+                  <h2 className="rating-section-title">{title}</h2>
 
                 {viewMode === "grid" ? (
                   <div className="media-grid">
@@ -406,26 +412,27 @@ export default function WatchedPage() {
                 ) : (
                   <EmblaCarousel items={bucket} renderCard={renderCard} />
                 )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* NON-GROUPED MODE */}
+        {!isRatingSort && (
+          <>
+            {viewMode === "grid" && (
+              <div className="media-grid">
+                {filteredItems.map(item => renderCard(item))}
               </div>
-            );
-          })}
-        </div>
-      )}
+            )}
 
-      {/* NON-GROUPED MODE */}
-      {!isRatingSort && (
-        <>
-          {viewMode === "grid" && (
-            <div className="media-grid">
-              {filteredItems.map(item => renderCard(item))}
-            </div>
-          )}
-
-          {viewMode === "tape" && (
-            <EmblaCarousel items={filteredItems} renderCard={renderCard} />
-          )}
-        </>
-      )}
+            {viewMode === "tape" && (
+              <EmblaCarousel items={filteredItems} renderCard={renderCard} />
+            )}
+          </>
+        )}
+      </section>
     </div>
   );
 }

@@ -343,14 +343,18 @@ export default function FavoritesPage() {
   const activeOrder = sort === "rating_desc" ? orderDesc : orderAsc;
 
   return (
-    <div className="page-container library-page">
-      <div className="library-page-head">
-        <h1 className="library-page-title">Favorites</h1>
-        <span className="library-page-count">{titlesCountLabel}</span>
-      </div>
+    <div className="page-container library-page library-explore-page">
+      <section className="library-hero-shell">
+        <div className="library-page-head">
+          <div>
+            <p className="library-hero-kicker">Library</p>
+            <h1 className="library-page-title">Favorites</h1>
+          </div>
+          <span className="library-page-count">{titlesCountLabel}</span>
+        </div>
 
-      {/* FILTER BAR */}
-      <div className="filter-bar">
+        {/* FILTER BAR */}
+        <div className="filter-bar library-filter-bar">
 
         <div className="view-toggle-container">
           <div
@@ -420,18 +424,20 @@ export default function FavoritesPage() {
           </select>
         </div>
 
-      </div>
+        </div>
+      </section>
 
-      {items.length === 0 && (
-        <p>You have no favorite movies or series yet.</p>
-      )}
+      <section className="library-content-shell">
+        {items.length === 0 && (
+          <p>You have no favorite movies or series yet.</p>
+        )}
 
-      {/* GROUPED MODE */}
-      {isRatingSort && (
-        <div className="rating-groups">
-          {activeOrder.map(key => {
-            const bucket = grouped[key];
-            if (!bucket || bucket.length === 0) return null;
+        {/* GROUPED MODE */}
+        {isRatingSort && (
+          <div className="rating-groups">
+            {activeOrder.map(key => {
+              const bucket = grouped[key];
+              if (!bucket || bucket.length === 0) return null;
 
             const title = key === "unrated"
               ? "Unrated"
@@ -440,9 +446,9 @@ export default function FavoritesPage() {
                     {key}/10 <span className="star active">★</span>
                   </>
                 );
-            return (
-              <div key={key} className="rating-section">
-                <h2 className="rating-section-title">{title}</h2>
+              return (
+                <div key={key} className="rating-section">
+                  <h2 className="rating-section-title">{title}</h2>
 
                 {viewMode === "grid" ? (
                   <div className="media-grid">
@@ -451,26 +457,27 @@ export default function FavoritesPage() {
                 ) : (
                   <EmblaCarousel items={bucket} renderCard={renderCard} />
                 )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* NON-GROUPED MODE */}
+        {!isRatingSort && (
+          <>
+            {viewMode === "grid" && (
+              <div className="media-grid">
+                {filteredItems.map(item => renderCard(item))}
               </div>
-            );
-          })}
-        </div>
-      )}
+            )}
 
-      {/* NON-GROUPED MODE */}
-      {!isRatingSort && (
-        <>
-          {viewMode === "grid" && (
-            <div className="media-grid">
-              {filteredItems.map(item => renderCard(item))}
-            </div>
-          )}
-
-          {viewMode === "tape" && (
-             <EmblaCarousel items={filteredItems} renderCard={renderCard} />
-          )}
-        </>
-      )}
+            {viewMode === "tape" && (
+               <EmblaCarousel items={filteredItems} renderCard={renderCard} />
+            )}
+          </>
+        )}
+      </section>
     </div>
   );
 }
