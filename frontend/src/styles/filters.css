@@ -193,6 +193,7 @@
 .library-content-shell,
 .watched-hero-shell,
 .watched-content-shell {
+  min-width: 0;
   border: 1px solid rgba(212, 175, 55, 0.18);
   background:
     radial-gradient(circle at top left, rgba(255, 220, 120, 0.12), transparent 32%),

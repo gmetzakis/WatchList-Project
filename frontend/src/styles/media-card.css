@@ -83,6 +83,14 @@
   line-height: 1.2;
 }
 
+.hover-genres-text {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: rgba(245, 226, 177, 0.8);
+  line-height: 1.35;
+}
+
 
 /* ===========================
    ICONS — TOP RIGHT
@@ -378,6 +386,7 @@
 
 .rating-section {
   width: 100%;
+  min-width: 0;
 }
 
 .rating-section-title {

@@ -16,10 +16,10 @@ function EmblaCarousel({ items, renderCard }) {
     {
       loop: false,
       align: 'start',
-      slidesToScroll: 3,
+      slidesToScroll: 2,
       breakpoints: {
-        '(min-width: 768px)': { slidesToScroll: 4 },
-        '(min-width: 1024px)': { slidesToScroll: 5 }
+        '(min-width: 768px)': { slidesToScroll: 3 },
+        '(min-width: 1024px)': { slidesToScroll: 4 }
       }
     },
     plugins
@@ -75,6 +75,11 @@ export default function FavoritesPage() {
       .filter(Boolean);
   }
 
+  function formatGenres(genres) {
+    const names = normalizeGenreNames(genres);
+    return names.length ? names.slice(0, 3).join(" • ") : "";
+  }
+
   async function hydrateItemGenres(sourceItems) {
     return Promise.all(
       sourceItems.map(async (item) => {
@@ -114,6 +119,9 @@ export default function FavoritesPage() {
             <div className="hover-title">
               <span className="hover-title-text">{item.title}</span>
               <span className="hover-year-text">{item.release_year}</span>
+              {formatGenres(item.genres) && (
+                <span className="hover-genres-text">{formatGenres(item.genres)}</span>
+              )}
 
               {/* INLINE RATING */}
               <div className="rating-inline">

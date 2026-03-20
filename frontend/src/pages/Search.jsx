@@ -112,6 +112,16 @@ export default function SearchPage() {
     );
   }
 
+  function formatGenres(genres) {
+    if (!Array.isArray(genres)) return "";
+
+    const names = genres
+      .map((genre) => typeof genre === "string" ? genre : genre?.name)
+      .filter(Boolean);
+
+    return names.length ? names.slice(0, 3).join(" • ") : "";
+  }
+
   // ---------------------------
   // ACTIONS (corrected)
   // ---------------------------
@@ -246,6 +256,9 @@ export default function SearchPage() {
                     <span className="hover-year-text">
                       {item.release_year || (item.release_date || item.first_air_date || "").slice(0, 4)}
                     </span>
+                    {formatGenres(item.genres) && (
+                      <span className="hover-genres-text">{formatGenres(item.genres)}</span>
+                    )}
 
                     {/* RATING (only if watched) */}
                     {item.status === "watched" && (

@@ -48,10 +48,10 @@ function EmblaCarousel({ items, renderCard }) {
     {
       loop: false,
       align: 'start',
-      slidesToScroll: 3,
+      slidesToScroll: 2,
       breakpoints: {
-        '(min-width: 768px)': { slidesToScroll: 4 },
-        '(min-width: 1024px)': { slidesToScroll: 5 }
+        '(min-width: 768px)': { slidesToScroll: 3 },
+        '(min-width: 1024px)': { slidesToScroll: 4 }
       }
     },
     plugins
