@@ -203,30 +203,32 @@ export default function Header() {
                   onKeyDown={handleKeyDown}
                 />
 
-                <div className="header-search-mode-switch" role="tablist" aria-label="Header search mode">
+                <div className="header-search-actions-row">
+                  <div className="header-search-mode-switch" role="tablist" aria-label="Header search mode">
+                    <button
+                      type="button"
+                      className={`header-search-mode-btn ${searchMode === "titles" ? "active" : ""}`}
+                      onClick={() => setSearchMode("titles")}
+                    >
+                      Titles
+                    </button>
+                    <button
+                      type="button"
+                      className={`header-search-mode-btn ${searchMode === "people" ? "active" : ""}`}
+                      onClick={() => setSearchMode("people")}
+                    >
+                      Actor / Director
+                    </button>
+                  </div>
+
                   <button
                     type="button"
-                    className={`header-search-mode-btn ${searchMode === "titles" ? "active" : ""}`}
-                    onClick={() => setSearchMode("titles")}
+                    className="header-search-submit"
+                    onClick={runHeaderSearch}
                   >
-                    Titles
-                  </button>
-                  <button
-                    type="button"
-                    className={`header-search-mode-btn ${searchMode === "people" ? "active" : ""}`}
-                    onClick={() => setSearchMode("people")}
-                  >
-                    Actor / Director
+                    Search
                   </button>
                 </div>
-
-                <button
-                  type="button"
-                  className="header-search-submit"
-                  onClick={runHeaderSearch}
-                >
-                  Search
-                </button>
               </div>
             )}
           </div>
