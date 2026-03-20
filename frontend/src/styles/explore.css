@@ -34,13 +34,16 @@
 
 .explore-hero-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
   gap: 20px;
-  align-items: center;
+  align-items: start;
 }
 
 .explore-hero-text {
   min-width: 0;
+  grid-column: 1;
+  grid-row: 1 / span 2;
 }
 
 .explore-kicker,
@@ -72,11 +75,14 @@
 
 .explore-filter-row {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 12px;
   width: fit-content;
-  justify-content: center;
-  align-items: flex-start;
+  justify-content: flex-end;
+  align-items: center;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
 }
 
 .explore-filter-chip {
@@ -86,13 +92,20 @@
   border-radius: 24px;
   padding: 10px 16px;
   flex: 0 0 auto;
-  width: 100%;
+  width: auto;
   text-align: center;
   font-size: 0.88rem;
   font-weight: 700;
   text-align: center;
   cursor: pointer;
   transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.view-toggle-container {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  align-self: end;
 }
 
 .explore-filter-chip:hover,
@@ -271,21 +284,30 @@
 
 @media (max-width: 980px) {
   .explore-hero-layout {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
     align-items: start;
     gap: 12px;
+  }
+
+  .explore-hero-text {
+    grid-column: 1;
+    grid-row: 1;
   }
 
   .explore-filter-row {
     flex-direction: row;
     flex-wrap: wrap;
     height: auto;
-    order: 3;
-    grid-column: 1 / -1;
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
   }
 
   .view-toggle-container {
-    order: 2;
+    grid-column: 1;
+    grid-row: 3;
+    justify-self: start;
   }
 
   .explore-filter-chip {
