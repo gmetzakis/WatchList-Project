@@ -5,6 +5,12 @@ import { Trash, Eye, LayoutGrid, GalleryVertical } from "lucide-react";
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 
+const TYPE_FILTERS = [
+  { key: "all", label: "All titles" },
+  { key: "movie", label: "Movies" },
+  { key: "series", label: "Series" },
+];
+
 // Extracted EmblaCarousel component
 function EmblaCarousel({ items, renderCard }) {
   // Using useMemo ensures the plugin is instantiated exactly once per carousel instance
@@ -293,7 +299,21 @@ export default function WatchlistPage() {
             <p className="library-hero-kicker">Library</p>
             <h1 className="library-page-title">Watchlist</h1>
           </div>
-          <span className="library-page-count">{titlesCountLabel}</span>
+          <div className="library-page-head-actions">
+            <div className="library-type-filter-row" role="tablist" aria-label="Watchlist type filter">
+              {TYPE_FILTERS.map((filter) => (
+                <button
+                  key={filter.key}
+                  type="button"
+                  className={`library-type-filter-chip ${type === filter.key ? "active" : ""}`}
+                  onClick={() => handleTypeChange({ target: { value: filter.key } })}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+            <span className="library-page-count">{titlesCountLabel}</span>
+          </div>
         </div>
 
         {/* TYPE FILTER */}
@@ -331,19 +351,6 @@ export default function WatchlistPage() {
             <option value="title_desc">Title Z–A</option>
             <option value="year_asc">Released: Oldest First</option>
             <option value="year_desc">Released: Newest First</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="filter-label">Type:</label>
-          <select
-            value={type}
-            onChange={handleTypeChange}
-            className="filter-select"
-          >
-            <option value="all">All</option>
-            <option value="movie">Movies</option>
-            <option value="series">Shows</option>
           </select>
         </div>
 
