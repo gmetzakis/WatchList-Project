@@ -9,24 +9,6 @@ const FILTERS = [
   { key: "series", label: "Series" },
 ];
 
-function formatGeneratedAt(value) {
-  if (!value) {
-    return null;
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return date.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function formatSectionReason(item) {
   if (!Array.isArray(item.reason_context) || item.reason_context.length === 0) {
     return "Recommended from your activity graph";
@@ -41,8 +23,6 @@ export default function ExplorePage() {
   const [error, setError] = useState("");
   const [details, setDetails] = useState("");
   const [payload, setPayload] = useState({
-    generatedAt: null,
-    syncSummary: null,
     sections: [],
   });
 
@@ -61,14 +41,12 @@ export default function ExplorePage() {
 
         if (!cancelled) {
           setPayload({
-            generatedAt: res.data?.generatedAt || null,
-            syncSummary: res.data?.syncSummary || null,
             sections: Array.isArray(res.data?.sections) ? res.data.sections : [],
           });
         }
       } catch (err) {
         if (!cancelled) {
-          setPayload({ generatedAt: null, syncSummary: null, sections: [] });
+          setPayload({ sections: [] });
           setError(err.response?.data?.error || "Failed to load Explore recommendations");
           setDetails(err.response?.data?.details || "");
         }
@@ -86,45 +64,30 @@ export default function ExplorePage() {
     };
   }, [typeFilter]);
 
-  const generatedAtLabel = formatGeneratedAt(payload.generatedAt);
-
   return (
     <div className="explore-shell">
       <section className="explore-hero">
         <div className="explore-hero-copy">
-          <p className="explore-kicker">Explore</p>
-          <h1 className="explore-title">Graph-powered recommendations</h1>
-          <p className="explore-subtitle">
-            Explore blends your watch history, favorites, genres, and accepted friendships into a separate recommendation layer powered by Neo4j.
-          </p>
-        </div>
-
-        <div className="explore-summary-panel">
-          <div className="explore-filter-row" role="tablist" aria-label="Explore recommendation type filter">
-            {FILTERS.map((filter) => (
-              <button
-                key={filter.key}
-                type="button"
-                className={`explore-filter-chip ${typeFilter === filter.key ? "active" : ""}`}
-                onClick={() => setTypeFilter(filter.key)}
-              >
-                {filter.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="explore-summary-grid">
-            <div className="explore-summary-card">
-              <span className="explore-summary-label">Generated</span>
-              <strong className="explore-summary-value">{generatedAtLabel || "Pending"}</strong>
+          <div className="explore-hero-layout">
+            <div className="explore-hero-text">
+              <p className="explore-kicker">Explore</p>
+              <h1 className="explore-title">Explore New Movies and Series</h1>
+              <p className="explore-subtitle">
+                A personalized page built for you, bringing together fresh picks based on your taste, favorites, and activity.
+              </p>
             </div>
-            <div className="explore-summary-card">
-              <span className="explore-summary-label">Sections</span>
-              <strong className="explore-summary-value">{payload.sections.length}</strong>
-            </div>
-            <div className="explore-summary-card">
-              <span className="explore-summary-label">Graph sync</span>
-              <strong className="explore-summary-value">{payload.syncSummary?.interactions || 0} signals</strong>
+
+            <div className="explore-filter-row" role="tablist" aria-label="Explore recommendation type filter">
+              {FILTERS.map((filter) => (
+                <button
+                  key={filter.key}
+                  type="button"
+                  className={`explore-filter-chip ${typeFilter === filter.key ? "active" : ""}`}
+                  onClick={() => setTypeFilter(filter.key)}
+                >
+                  {filter.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -132,8 +95,8 @@ export default function ExplorePage() {
 
       {loading && (
         <section className="explore-state-card">
-          <h2 className="explore-state-title">Building your graph...</h2>
-          <p className="explore-state-copy">Syncing Postgres watch data into Neo4j and ranking recommendation candidates.</p>
+          <h2 className="explore-state-title">Finding picks for you...</h2>
+          <p className="explore-state-copy">Hang tight, we're looking through your activity to find titles you'll actually enjoy.</p>
         </section>
       )}
 
