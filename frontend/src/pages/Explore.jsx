@@ -123,9 +123,7 @@ export default function ExplorePage() {
             <section key={section.key} className="explore-section">
               <div className="explore-section-head">
                 <div>
-                  <p className="explore-section-kicker">Recommendation rail</p>
                   <h2 className="explore-section-title">{section.title}</h2>
-                  <p className="explore-section-copy">{section.description}</p>
                 </div>
                 <span className="explore-section-count">{section.items.length}</span>
               </div>

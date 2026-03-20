@@ -560,8 +560,8 @@ export async function getExploreRecommendations(userId, type = "all") {
         { userId, type },
         {
           key: "friendTrending",
-          title: "Trending With Friends",
-          description: "Unseen titles that your friends have watched or favorited.",
+          title: "Friends' Favorites",
+          description: "Titles your friends have been watching and favoriting.",
         }
       )
     );
