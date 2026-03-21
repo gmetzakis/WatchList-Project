@@ -52,6 +52,10 @@
   transition: opacity 0.25s ease;
 }
 
+.mobile-card-close {
+  display: none;
+}
+
 .media-card:hover .hover-controls {
   opacity: 1;
   pointer-events: auto;

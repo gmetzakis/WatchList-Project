@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import api from "../api/axios.js";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Trash, Eye, LayoutGrid, GalleryVertical } from "lucide-react";
+import { Trash, Eye, LayoutGrid, GalleryVertical, X } from "lucide-react";
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 
@@ -97,6 +97,7 @@ export default function WatchlistPage() {
   // "grid" | "tape"
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [expandedCardKey, setExpandedCardKey] = useState(null);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 760px)");
@@ -117,6 +118,12 @@ export default function WatchlistPage() {
       setViewMode("tape");
     }
   }, [isMobileView, viewMode]);
+
+  useEffect(() => {
+    if (!isMobileView) {
+      setExpandedCardKey(null);
+    }
+  }, [isMobileView]);
 
   function normalizeGenreNames(genres) {
     if (!Array.isArray(genres)) return [];
@@ -150,12 +157,20 @@ export default function WatchlistPage() {
   }
 
   function renderCard(item) {
+    const itemKey = `${item.type}-${item.tmdb_id}`;
+    const isExpanded = isMobileView && expandedCardKey === itemKey;
     return (
-      <div key={item.tmdb_id} className="media-card">
+      <div key={item.tmdb_id} className={`media-card ${isExpanded ? "mobile-card-expanded" : ""}`}>
 
         <Link
           to={`/media/${item.type}/${item.tmdb_id}`}
           className="media-image-wrapper"
+          onClick={(e) => {
+            if (isMobileView && !isExpanded) {
+              e.preventDefault();
+              setExpandedCardKey(itemKey);
+            }
+          }}
         >
           <img
             src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
@@ -164,6 +179,18 @@ export default function WatchlistPage() {
 
           {/* HOVER OVERLAY */}
           <div className="hover-controls">
+            <button
+              type="button"
+              className="mobile-card-close"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setExpandedCardKey(null);
+              }}
+              aria-label="Close expanded card"
+            >
+              <X size={18} />
+            </button>
 
             {/* TITLE + YEAR — TOP LEFT */}
             <div className="hover-title">
@@ -335,7 +362,14 @@ export default function WatchlistPage() {
 
 
   return (
-    <div className="page-container library-page library-explore-page">
+    <div
+      className="page-container library-page library-explore-page"
+      onClick={(e) => {
+        if (isMobileView && expandedCardKey && e.target === e.currentTarget) {
+          setExpandedCardKey(null);
+        }
+      }}
+    >
       <section className="library-hero-shell">
         <div className="library-page-head">
           <div>
@@ -446,6 +480,13 @@ export default function WatchlistPage() {
           <EmblaCarousel items={filteredItems} renderCard={renderCard} />
         )}
       </section>
+
+      {isMobileView && expandedCardKey && (
+        <div
+          className="mobile-card-backdrop"
+          onClick={() => setExpandedCardKey(null)}
+        />
+      )}
     </div>
   );
 }

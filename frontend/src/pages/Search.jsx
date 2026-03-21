@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../api/axios";
 import { Link, useSearchParams } from "react-router-dom";
-import { Heart, Eye, EyeOff, Bookmark, BookmarkMinus, BookmarkPlus } from "lucide-react";
+import { Heart, Eye, EyeOff, Bookmark, BookmarkMinus, BookmarkPlus, X } from "lucide-react";
 
 const TMDB_GENRE_MAP = {
   28: "Action",
@@ -42,6 +42,28 @@ export default function SearchPage() {
   const [searchMode, setSearchMode] = useState(initialMode);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 760px)").matches;
+  });
+  const [expandedCardKey, setExpandedCardKey] = useState(null);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const handleViewportChange = (event) => {
+      setIsMobileView(event.matches);
+      if (!event.matches) {
+        setExpandedCardKey(null);
+      }
+    };
+
+    setIsMobileView(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleViewportChange);
+    };
+  }, []);
 
   // ---------------------------
   // FETCH STATUS FOR EACH ITEM
@@ -212,7 +234,14 @@ export default function SearchPage() {
   // RENDER
   // ---------------------------
   return (
-    <div className="page-container">
+    <div
+      className="page-container"
+      onClick={(e) => {
+        if (isMobileView && expandedCardKey && e.target === e.currentTarget) {
+          setExpandedCardKey(null);
+        }
+      }}
+    >
 
       <form className="search-bar" onSubmit={handleSearch}>
         <input
@@ -269,11 +298,17 @@ export default function SearchPage() {
       ) : (
         <div className="media-grid">
           {results.map((item) => (
-            <div key={item._key} className="media-card">
+            <div key={item._key} className={`media-card ${isMobileView && expandedCardKey === item._key ? "mobile-card-expanded" : ""}`}>
 
               <Link
                 to={`/media/${item.type === "tv" ? "series" : item.type}/${item.id}`}
                 className="media-image-wrapper"
+                onClick={(e) => {
+                  if (isMobileView && expandedCardKey !== item._key) {
+                    e.preventDefault();
+                    setExpandedCardKey(item._key);
+                  }
+                }}
               >
                 <img
                   src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
@@ -282,6 +317,17 @@ export default function SearchPage() {
                 />
 
                 <div className="hover-controls">
+                  <button
+                    type="button"
+                    className="mobile-card-close"
+                    onClick={(e) => {
+                      stop(e);
+                      setExpandedCardKey(null);
+                    }}
+                    aria-label="Close expanded card"
+                  >
+                    <X size={18} />
+                  </button>
 
                   {/* TITLE + YEAR */}
                   <div className="hover-title">
@@ -395,6 +441,12 @@ export default function SearchPage() {
         </div>
       )}
 
+      {isMobileView && expandedCardKey && (
+        <div
+          className="mobile-card-backdrop"
+          onClick={() => setExpandedCardKey(null)}
+        />
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/axios.js";
-import { Heart, EyeOff, LayoutGrid, GalleryVertical } from "lucide-react";
+import { Heart, EyeOff, LayoutGrid, GalleryVertical, X } from "lucide-react";
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 
@@ -95,6 +95,7 @@ export default function WatchedPage() {
   const [viewMode, setViewMode] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [expandedCardKey, setExpandedCardKey] = useState(null);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 760px)");
@@ -115,6 +116,12 @@ export default function WatchedPage() {
       setViewMode("tape");
     }
   }, [isMobileView, viewMode]);
+
+  useEffect(() => {
+    if (!isMobileView) {
+      setExpandedCardKey(null);
+    }
+  }, [isMobileView]);
 
   function normalizeGenreNames(genres) {
     if (!Array.isArray(genres)) return [];
@@ -148,11 +155,19 @@ export default function WatchedPage() {
   }
 
   function renderCard(item) {
+    const itemKey = `${item.type}-${item.tmdb_id}`;
+    const isExpanded = isMobileView && expandedCardKey === itemKey;
     return (
-      <div key={item.tmdb_id} className="media-card">
+      <div key={item.tmdb_id} className={`media-card ${isExpanded ? "mobile-card-expanded" : ""}`}>
         <Link
           to={`/media/${item.type}/${item.tmdb_id}`}
           className="media-image-wrapper"
+          onClick={(e) => {
+            if (isMobileView && !isExpanded) {
+              e.preventDefault();
+              setExpandedCardKey(itemKey);
+            }
+          }}
         >
           <img
             src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
@@ -160,6 +175,19 @@ export default function WatchedPage() {
           />
 
           <div className="hover-controls">
+            <button
+              type="button"
+              className="mobile-card-close"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setExpandedCardKey(null);
+              }}
+              aria-label="Close expanded card"
+            >
+              <X size={18} />
+            </button>
+
             <div className="hover-title">
               <span className="hover-title-text">{item.title}</span>
               <span className="hover-year-text">{item.release_year}</span>
@@ -366,7 +394,14 @@ export default function WatchedPage() {
   const activeOrder = sort === "rating_desc" ? orderDesc : orderAsc;
 
   return (
-    <div className="page-container library-page watched-explore-page">
+    <div
+      className="page-container library-page watched-explore-page"
+      onClick={(e) => {
+        if (isMobileView && expandedCardKey && e.target === e.currentTarget) {
+          setExpandedCardKey(null);
+        }
+      }}
+    >
       <section className="watched-hero-shell">
         <div className="library-page-head">
           <div>
@@ -510,6 +545,13 @@ export default function WatchedPage() {
           </>
         )}
       </section>
+
+      {isMobileView && expandedCardKey && (
+        <div
+          className="mobile-card-backdrop"
+          onClick={() => setExpandedCardKey(null)}
+        />
+      )}
     </div>
   );
 }

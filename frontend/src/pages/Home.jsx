@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
-import { BookmarkMinus, BookmarkPlus, Eye, EyeOff, Heart, Trash } from "lucide-react";
+import { BookmarkMinus, BookmarkPlus, Eye, EyeOff, Heart, Trash, X } from "lucide-react";
 import api from "../api/axios.js";
 import "../styles/home.css";
 import "../styles/media-card.css";
@@ -139,6 +139,28 @@ export default function HomePage() {
   const [myMediaStatus, setMyMediaStatus] = useState({});
   const [actionPending, setActionPending] = useState(new Set());
   const [firstName, setFirstName] = useState("");
+  const [isMobileView, setIsMobileView] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 760px)").matches;
+  });
+  const [expandedCardKey, setExpandedCardKey] = useState(null);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const handleViewportChange = (event) => {
+      setIsMobileView(event.matches);
+      if (!event.matches) {
+        setExpandedCardKey(null);
+      }
+    };
+
+    setIsMobileView(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleViewportChange);
+    };
+  }, []);
 
   const sections = useMemo(
     () => [
@@ -300,6 +322,8 @@ export default function HomePage() {
 
   function renderCard(item, sectionKey) {
     const itemKey = mediaKey(item);
+    const cardIdentifier = `${sectionKey}-${itemKey}`;
+    const isExpanded = isMobileView && expandedCardKey === cardIdentifier;
     const currentStatus =
       sectionKey === "watched"
         ? { status: "watched", rating: item.rating || null, is_favorite: !!item.is_favorite }
@@ -309,10 +333,20 @@ export default function HomePage() {
         ? { status: "watched", rating: item.rating || null, is_favorite: true }
         : myMediaStatus[itemKey] || { status: null, rating: null, is_favorite: false };
     const isPending = actionPending.has(itemKey);
+    const detailsPath = `/media/${item.type}/${item.tmdb_id}`;
 
     return (
-      <article className="media-card home-media-card" key={itemKey}>
-        <Link to={`/media/${item.type}/${item.tmdb_id}`} className="media-image-wrapper">
+      <article className={`media-card home-media-card ${isExpanded ? "mobile-card-expanded" : ""}`} key={itemKey}>
+        <Link
+          to={detailsPath}
+          className="media-image-wrapper"
+          onClick={(e) => {
+            if (isMobileView && !isExpanded) {
+              e.preventDefault();
+              setExpandedCardKey(cardIdentifier);
+            }
+          }}
+        >
           {item.poster_path ? (
             <img src={`https://image.tmdb.org/t/p/w300${item.poster_path}`} alt={item.title} className="media-card-img" />
           ) : (
@@ -320,6 +354,18 @@ export default function HomePage() {
           )}
 
           <div className="hover-controls">
+            <button
+              type="button"
+              className="mobile-card-close"
+              onClick={(e) => {
+                stop(e);
+                setExpandedCardKey(null);
+              }}
+              aria-label="Close expanded card"
+            >
+              <X size={18} />
+            </button>
+
             <div className="hover-title">
               <span className="hover-title-text">{item.title}</span>
               <span className="hover-year-text">{item.release_year || "—"}</span>
@@ -596,7 +642,14 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="home-shell">
+    <div
+      className="home-shell"
+      onClick={(e) => {
+        if (isMobileView && expandedCardKey && e.target === e.currentTarget) {
+          setExpandedCardKey(null);
+        }
+      }}
+    >
       <section className="home-hero-shell">
         <p className="home-kicker">Home</p>
         <h1 className="home-title">{firstName ? `Welcome ${firstName}` : "Welcome"}</h1>
@@ -633,6 +686,13 @@ export default function HomePage() {
             </section>
           ))}
         </div>
+      )}
+
+      {isMobileView && expandedCardKey && (
+        <div
+          className="mobile-card-backdrop"
+          onClick={() => setExpandedCardKey(null)}
+        />
       )}
     </div>
   );

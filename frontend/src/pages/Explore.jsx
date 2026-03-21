@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { LayoutGrid, GalleryVertical, Heart, Eye, EyeOff, BookmarkPlus, BookmarkMinus } from "lucide-react";
+import { LayoutGrid, GalleryVertical, Heart, Eye, EyeOff, BookmarkPlus, BookmarkMinus, X } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import api from "../api/axios.js";
@@ -118,6 +118,7 @@ export default function ExplorePage() {
   const [details, setDetails] = useState("");
   const [myMediaStatus, setMyMediaStatus] = useState({});
   const [actionPending, setActionPending] = useState(new Set());
+  const [expandedCardKey, setExpandedCardKey] = useState(null);
   const [payload, setPayload] = useState({
     sections: [],
   });
@@ -150,6 +151,12 @@ export default function ExplorePage() {
       setViewMode("tape");
     }
   }, [isMobileView, viewMode]);
+
+  useEffect(() => {
+    if (!isMobileView) {
+      setExpandedCardKey(null);
+    }
+  }, [isMobileView]);
 
   useEffect(() => {
     let cancelled = false;
@@ -476,6 +483,7 @@ export default function ExplorePage() {
     const mediaLink = `/media/${item.type}/${item.tmdb_id}`;
     const posterUrl = item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : null;
     const key = mediaKey(item);
+    const cardIdentifier = `${sectionKey}-${key}`;
     const currentStatus = myMediaStatus[key] || { status: null, rating: null, is_favorite: false };
     const isPending = actionPending.has(key);
     const genresLabel = formatGenres(item);
@@ -483,10 +491,20 @@ export default function ExplorePage() {
     const isGenreSection = sectionKey === "genreSignals";
     const isFriendSection = sectionKey === "friendTrending";
     const friendLabel = Array.isArray(item.reason_context) && item.reason_context.length > 0 ? item.reason_context[0] : "Friend pick";
+    const isExpanded = isMobileView && expandedCardKey === cardIdentifier;
 
     return (
-      <article key={key} className={`media-card explore-media-card ${mode === "tape" ? "carousel-card" : ""}`}>
-        <Link to={mediaLink} className="media-image-wrapper">
+      <article key={key} className={`media-card explore-media-card ${mode === "tape" ? "carousel-card" : ""} ${isExpanded ? "mobile-card-expanded" : ""}`}>
+        <Link
+          to={mediaLink}
+          className="media-image-wrapper"
+          onClick={(e) => {
+            if (isMobileView && !isExpanded) {
+              e.preventDefault();
+              setExpandedCardKey(cardIdentifier);
+            }
+          }}
+        >
           {posterUrl ? (
             <img className="media-card-img" src={posterUrl} alt={item.title} />
           ) : (
@@ -494,6 +512,18 @@ export default function ExplorePage() {
           )}
 
           <div className="hover-controls">
+            <button
+              type="button"
+              className="mobile-card-close"
+              onClick={(e) => {
+                stop(e);
+                setExpandedCardKey(null);
+              }}
+              aria-label="Close expanded card"
+            >
+              <X size={18} />
+            </button>
+
             <div className="hover-title">
               <span className="hover-title-text">{item.title}</span>
               <span className="hover-year-text">{item.release_year || "Unknown year"}</span>
@@ -608,7 +638,14 @@ export default function ExplorePage() {
   }
 
   return (
-    <div className="explore-shell">
+    <div
+      className="explore-shell"
+      onClick={(e) => {
+        if (isMobileView && expandedCardKey && e.target === e.currentTarget) {
+          setExpandedCardKey(null);
+        }
+      }}
+    >
       <section className="explore-hero">
         <div className="explore-hero-copy">
           <div className="explore-hero-layout">
@@ -700,6 +737,13 @@ export default function ExplorePage() {
             </section>
           ))}
         </div>
+      )}
+
+      {isMobileView && expandedCardKey && (
+        <div
+          className="mobile-card-backdrop"
+          onClick={() => setExpandedCardKey(null)}
+        />
       )}
     </div>
   );

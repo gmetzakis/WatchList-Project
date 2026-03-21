@@ -183,6 +183,144 @@
     display: none;
   }
 
+  .mobile-card-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.78);
+    z-index: 1999998;
+    touch-action: none;
+  }
+
+  /* Neutralize Embla's JS-applied transform — without this, position:fixed
+     on a child is relative to the transformed container, not the viewport */
+  .embla-container:has(.mobile-card-expanded) {
+    transform: none !important;
+  }
+
+  .media-card.mobile-card-expanded {
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    width: min(68vw, 280px) !important;
+    max-width: 280px !important;
+    z-index: 2000000 !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+  }
+
+  .media-card.mobile-card-expanded .media-image-wrapper {
+    display: block;
+  }
+
+  .media-card.mobile-card-expanded .media-card-img,
+  .media-card.mobile-card-expanded .home-card-fallback,
+  .media-card.mobile-card-expanded .explore-card-fallback {
+    width: 100%;
+    transform: scale(1.08) !important;
+    filter: brightness(0.38) contrast(1.1) blur(3px) !important;
+  }
+
+  .media-card.mobile-card-expanded .hover-controls,
+  .media-card.mobile-card-expanded:hover .hover-controls {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    border-radius: 12px;
+    background: transparent;
+  }
+
+  .media-card.mobile-card-expanded .mobile-card-close {
+    display: inline-flex !important;
+    width: 34px;
+    height: 34px;
+    top: 10px;
+    right: 10px;
+  }
+
+  .media-card.mobile-card-expanded .control-icons {
+    left: 10px;
+    right: auto;
+    bottom: 10px;
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .media-card.mobile-card-expanded .hover-title {
+    padding: 14px 14px 76px;
+  }
+
+  .media-card.mobile-card-expanded .hover-title-text {
+    font-size: 1.85rem;
+    line-height: 1.05;
+    padding-right: 44px;
+  }
+
+  .media-card.mobile-card-expanded .hover-year-text {
+    margin-top: 6px;
+    font-size: 1.05rem;
+  }
+
+  .media-card.mobile-card-expanded .hover-genres-text,
+  .media-card.mobile-card-expanded .explore-hover-genres,
+  .media-card.mobile-card-expanded .explore-hover-reason,
+  .media-card.mobile-card-expanded .explore-hover-score {
+    margin-top: 8px;
+    font-size: 0.92rem;
+    line-height: 1.35;
+  }
+
+  .media-card.mobile-card-expanded .rating-inline {
+    margin-top: 10px;
+  }
+
+  .media-card.mobile-card-expanded .rating-inline .star {
+    font-size: 23px;
+  }
+
+  .media-card.mobile-card-expanded .rating-inline .rating-label {
+    font-size: 1.35rem;
+  }
+
+  .media-card.mobile-card-expanded .control-icons .favorite-icon,
+  .media-card.mobile-card-expanded .control-icons .watched-icon,
+  .media-card.mobile-card-expanded .control-icons .unbookmark-icon {
+    color: rgba(225, 228, 234, 0.92);
+    filter: none;
+  }
+
+  .media-card.mobile-card-expanded .control-icons .favorite-icon svg,
+  .media-card.mobile-card-expanded .control-icons .watched-icon svg,
+  .media-card.mobile-card-expanded .control-icons .unbookmark-icon svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .media-card.mobile-card-expanded .control-icons .favorite-icon.active svg {
+    stroke: var(--accent-glow);
+    fill: var(--accent-glow);
+  }
+  .embla-container .media-card {
+    z-index: 1 !important;
+  }
+
+  .embla-container .media-card:hover,
+  .media-card:hover {
+    z-index: 1 !important;
+  }
+
+  .embla-container .media-card.mobile-card-expanded,
+  .media-card.mobile-card-expanded:hover {
+    z-index: 2000000 !important;
+  }
+
+  .home-section-shell:has(.mobile-card-expanded),
+  .explore-section:has(.mobile-card-expanded),
+  .library-content-shell:has(.mobile-card-expanded),
+  .watched-content-shell:has(.mobile-card-expanded),
+  .media-grid:has(.mobile-card-expanded) {
+    position: relative;
+    z-index: 1999999 !important;
+  }
+
   .details-section-title {
     margin: 34px 0 16px;
     font-size: 1.45rem;
@@ -206,6 +344,16 @@
 }
 
 @media (hover: none), (pointer: coarse) {
+  .embla-carousel,
+  .embla-viewport {
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
+  .embla-container {
+    overflow: visible;
+  }
+
   .media-card:hover,
   .embla-container .media-card:hover {
     transform: none;
@@ -218,52 +366,174 @@
   }
 
   .media-card .hover-controls {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .media-card:hover .hover-controls,
+  .embla-container .media-card:hover .hover-controls {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .mobile-card-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.78);
+    z-index: 1999998;
+    touch-action: none;
+  }
+
+  /* Neutralize Embla's JS-applied transform */
+  .embla-container:has(.mobile-card-expanded) {
+    transform: none !important;
+  }
+
+  .media-card.mobile-card-expanded {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    width: min(68vw, 280px);
+    max-width: 280px;
+    z-index: 2000000 !important;
+    transform: translate(-50%, -50%);
+    margin: 0;
+  }
+
+  .embla-container .media-card,
+  .embla-container .media-card:hover,
+  .media-card:hover {
+    z-index: 1 !important;
+  }
+
+  .embla-container .media-card.mobile-card-expanded,
+  .media-card.mobile-card-expanded,
+  .media-card.mobile-card-expanded:hover {
+    z-index: 2000000 !important;
+  }
+
+  .home-section-shell:has(.mobile-card-expanded),
+  .explore-section:has(.mobile-card-expanded),
+  .library-content-shell:has(.mobile-card-expanded),
+  .watched-content-shell:has(.mobile-card-expanded),
+  .media-grid:has(.mobile-card-expanded) {
+    position: relative;
+    z-index: 1999999 !important;
+  }
+
+  .media-card.mobile-card-expanded .media-image-wrapper {
+    display: block;
+  }
+
+  .media-card.mobile-card-expanded .media-card-img,
+  .media-card.mobile-card-expanded .home-card-fallback,
+  .media-card.mobile-card-expanded .explore-card-fallback {
+    width: 100%;
+  }
+
+  .media-card.mobile-card-expanded .media-card-img {
+    transform: scale(1.08) !important;
+    filter: brightness(0.38) contrast(1.1) blur(3px) !important;
+  }
+
+  .media-card.mobile-card-expanded .hover-controls,
+  .media-card.mobile-card-expanded:hover .hover-controls {
     opacity: 1;
     pointer-events: auto;
     border-radius: 12px;
     background: transparent;
   }
 
-  .hover-title,
-  .hover-title-text,
-  .hover-year-text,
-  .hover-genres-text,
-  .explore-hover-reason,
-  .explore-hover-genres,
-  .explore-hover-score,
-  .rating-inline,
-  .rating-inline .rating-label {
-    display: none !important;
+  .media-card .mobile-card-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    background: rgba(10, 10, 14, 0.72);
+    color: rgba(245, 247, 250, 0.95);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    z-index: 5;
   }
 
-  .control-icons {
+  .media-card.mobile-card-expanded .mobile-card-close {
+    display: inline-flex;
+    width: 34px;
+    height: 34px;
+    top: 10px;
+    right: 10px;
+  }
+
+  .media-card.mobile-card-expanded .control-icons {
     left: 10px;
     right: auto;
     bottom: 10px;
     flex-direction: row;
-    gap: 8px;
+    gap: 10px;
   }
 
-  .control-icons .favorite-icon,
-  .control-icons .watched-icon,
-  .control-icons .unbookmark-icon {
+  .media-card.mobile-card-expanded .hover-title {
+    padding: 14px 14px 76px;
+  }
+
+  .media-card.mobile-card-expanded .hover-title-text {
+    font-size: 1.85rem;
+    line-height: 1.05;
+    padding-right: 44px;
+  }
+
+  .media-card.mobile-card-expanded .hover-year-text {
+    margin-top: 6px;
+    font-size: 1.05rem;
+  }
+
+  .media-card.mobile-card-expanded .hover-genres-text,
+  .media-card.mobile-card-expanded .explore-hover-genres,
+  .media-card.mobile-card-expanded .explore-hover-reason,
+  .media-card.mobile-card-expanded .explore-hover-score {
+    margin-top: 8px;
+    font-size: 0.92rem;
+    line-height: 1.35;
+  }
+
+  .media-card.mobile-card-expanded .rating-inline {
+    margin-top: 10px;
+  }
+
+  .media-card.mobile-card-expanded .rating-inline .star {
+    font-size: 23px;
+  }
+
+  .media-card.mobile-card-expanded .rating-inline .rating-label {
+    font-size: 1.35rem;
+  }
+
+  .media-card.mobile-card-expanded .control-icons .favorite-icon,
+  .media-card.mobile-card-expanded .control-icons .watched-icon,
+  .media-card.mobile-card-expanded .control-icons .unbookmark-icon {
     color: rgba(225, 228, 234, 0.92);
     filter: none;
   }
 
-  .control-icons .favorite-icon svg,
-  .control-icons .watched-icon svg,
-  .control-icons .unbookmark-icon svg {
-    width: 24px;
-    height: 24px;
+  .media-card.mobile-card-expanded .control-icons .favorite-icon svg,
+  .media-card.mobile-card-expanded .control-icons .watched-icon svg,
+  .media-card.mobile-card-expanded .control-icons .unbookmark-icon svg {
+    width: 32px;
+    height: 32px;
   }
 
-  .control-icons .favorite-icon.active svg {
+  .media-card.mobile-card-expanded .control-icons .favorite-icon.active svg {
     stroke: var(--accent-glow);
     fill: var(--accent-glow);
   }
 
-  .control-icons .disabled {
+  .media-card.mobile-card-expanded .control-icons .disabled {
     opacity: 0.4;
   }
 }
