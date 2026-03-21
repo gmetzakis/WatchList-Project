@@ -1,7 +1,72 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { Heart, Eye, EyeOff, BookmarkPlus, BookmarkMinus } from "lucide-react";
+import { Heart, Eye, EyeOff, BookmarkPlus, BookmarkMinus, X } from "lucide-react";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 import api from "../api/axios";
+
+function EmblaCarousel({ items, renderCard, itemKey }) {
+  const [autoplayEnabled, setAutoplayEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return !window.matchMedia("(max-width: 760px)").matches;
+  });
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const handleViewportChange = (event) => {
+      setAutoplayEnabled(!event.matches);
+    };
+
+    setAutoplayEnabled(!mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleViewportChange);
+    };
+  }, []);
+
+  const plugins = useMemo(
+    () => autoplayEnabled
+      ? [Autoplay({ delay: 4000, stopOnInteraction: true, stopOnMouseEnter: true })]
+      : [],
+    [autoplayEnabled]
+  );
+
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: false,
+      align: "start",
+      slidesToScroll: 2,
+      breakpoints: {
+        "(min-width: 768px)": { slidesToScroll: 3 },
+        "(min-width: 1024px)": { slidesToScroll: 4 },
+      },
+    },
+    plugins
+  );
+
+  return (
+    <div className="embla-carousel">
+      <button className="embla-arrow left" onClick={() => emblaApi?.scrollPrev()}>
+        ‹
+      </button>
+
+      <div className="embla-viewport" ref={emblaRef}>
+        <div className="embla-container">
+          {items.map((item) => (
+            <div key={itemKey(item)} className="embla-slide">
+              {renderCard(item)}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button className="embla-arrow right" onClick={() => emblaApi?.scrollNext()}>
+        ›
+      </button>
+    </div>
+  );
+}
 
 export default function MediaDetails() {
   const { type, tmdbId } = useParams();
@@ -12,6 +77,11 @@ export default function MediaDetails() {
   const [rating, setRating] = useState(null); // ⭐ NEW
   const [loading, setLoading] = useState(true);
   const [recommendationStatus, setRecommendationStatus] = useState({});
+  const [isMobileView, setIsMobileView] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 760px)").matches;
+  });
+  const [expandedCardKey, setExpandedCardKey] = useState(null);
 
   const trailerKey = media?.trailer?.site === "YouTube" ? media?.trailer?.key : null;
   const director = media?.credits?.crew?.find((member) => {
@@ -78,6 +148,23 @@ export default function MediaDetails() {
 
     hydrateRecommendationStatus();
   }, [media]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const handleViewportChange = (event) => {
+      setIsMobileView(event.matches);
+      if (!event.matches) {
+        setExpandedCardKey(null);
+      }
+    };
+
+    setIsMobileView(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleViewportChange);
+    };
+  }, []);
 
   function recommendationKey(recId) {
     const normalizedType = media?.type === "series" ? "series" : "movie";
@@ -215,6 +302,9 @@ export default function MediaDetails() {
   if (loading) return <div className="page-container">Loading...</div>;
   if (!media) return <div className="page-container">Not found</div>;
 
+  const castItems = media.credits?.cast?.filter((actor) => actor.profile_path).slice(0, 12) || [];
+  const recommendationItems = media.recommendations?.filter((rec) => rec.poster_path) || [];
+
   return (
     <div className="details-container">
 
@@ -335,9 +425,11 @@ export default function MediaDetails() {
       )}
 
       <h2 className="details-section-title">Cast</h2>
-      <div className="details-cast-grid">
-        {media.credits?.cast?.filter((actor) => actor.profile_path).slice(0, 12).map(actor => (
-          <Link to={`/person/${actor.id}`} key={actor.id} className="details-cast-item details-cast-link">
+      <EmblaCarousel
+        items={castItems}
+        itemKey={(actor) => `cast-${actor.id}`}
+        renderCard={(actor) => (
+          <Link to={`/person/${actor.id}`} className="details-cast-item details-cast-link">
             <img
               src={`https://image.tmdb.org/t/p/w300${actor.profile_path}`}
               className="details-cast-img"
@@ -345,16 +437,24 @@ export default function MediaDetails() {
             />
             <p className="details-cast-name">{actor.name}</p>
           </Link>
-        ))}
-      </div>
+        )}
+      />
 
       <h2 className="details-section-title">Recommendations</h2>
-      <div className="media-grid">
-        {media.recommendations?.filter((rec) => rec.poster_path).map((rec) => (
-          <div key={rec.id} className="media-card">
+      <EmblaCarousel
+        items={recommendationItems}
+        itemKey={(rec) => `rec-${rec.id}`}
+        renderCard={(rec) => (
+          <div key={rec.id} className={`media-card${isMobileView && expandedCardKey === `rec-${rec.id}` ? " mobile-card-expanded" : ""}`}>
             <Link
               to={`/media/${media.type}/${rec.id}`}
               className="media-image-wrapper"
+              onClick={(e) => {
+                if (isMobileView && expandedCardKey !== `rec-${rec.id}`) {
+                  e.preventDefault();
+                  setExpandedCardKey(`rec-${rec.id}`);
+                }
+              }}
             >
               <img
                 src={`https://image.tmdb.org/t/p/w300${rec.poster_path}`}
@@ -363,6 +463,17 @@ export default function MediaDetails() {
               />
 
               <div className="hover-controls">
+                <button
+                  type="button"
+                  className="mobile-card-close"
+                  onClick={(e) => {
+                    stopCardNavigation(e);
+                    setExpandedCardKey(null);
+                  }}
+                  aria-label="Close expanded card"
+                >
+                  <X size={18} />
+                </button>
                 <div className="hover-title">
                   <span className="hover-title-text">{rec.title || rec.name}</span>
                   <span className="hover-year-text">
@@ -473,8 +584,15 @@ export default function MediaDetails() {
               </div>
             </Link>
           </div>
-        ))}
-      </div>
+        )}
+      />
+
+      {isMobileView && expandedCardKey && (
+        <div
+          className="mobile-card-backdrop"
+          onClick={() => setExpandedCardKey(null)}
+        />
+      )}
 
     </div>
   );

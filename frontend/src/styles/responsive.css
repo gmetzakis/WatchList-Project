@@ -316,6 +316,7 @@
   .explore-section:has(.mobile-card-expanded),
   .library-content-shell:has(.mobile-card-expanded),
   .watched-content-shell:has(.mobile-card-expanded),
+  .details-container:has(.mobile-card-expanded),
   .media-grid:has(.mobile-card-expanded) {
     position: relative;
     z-index: 1999999 !important;
@@ -332,6 +333,15 @@
 
   .details-trailer-wrap {
     border-radius: 10px;
+  }
+
+  .details-poster {
+    width: min(155px, 42vw);
+    align-self: center;
+  }
+
+  .details-layout {
+    align-items: center;
   }
 
   .person-details-container {
@@ -416,6 +426,7 @@
   .explore-section:has(.mobile-card-expanded),
   .library-content-shell:has(.mobile-card-expanded),
   .watched-content-shell:has(.mobile-card-expanded),
+  .details-container:has(.mobile-card-expanded),
   .media-grid:has(.mobile-card-expanded) {
     position: relative;
     z-index: 1999999 !important;
