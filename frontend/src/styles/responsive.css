@@ -88,7 +88,7 @@
 
 @media (max-width: 760px) {
   .page-container {
-    padding: 0 12px;
+    padding: 0 10px;
   }
 
   .home-hero-shell,
@@ -116,8 +116,8 @@
   .library-content-shell,
   .watched-hero-shell,
   .watched-content-shell {
-    padding-left: 14px;
-    padding-right: 14px;
+    padding-left: 10px;
+    padding-right: 10px;
   }
 
   .library-type-filter-row,
@@ -132,20 +132,51 @@
     justify-content: flex-start;
   }
 
+  .home-shell,
+  .home-sections,
+  .explore-shell,
+  .explore-sections,
+  .library-explore-page,
+  .watched-explore-page {
+    gap: 12px;
+  }
+
+  .home-section-shell,
+  .explore-section,
+  .library-content-shell,
+  .watched-content-shell {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .home-section-head,
+  .explore-section-head {
+    margin-bottom: 8px;
+  }
+
+  .home-section-title,
+  .explore-section-title {
+    font-size: 1.08rem;
+  }
+
   .people-grid,
   .media-grid,
   .explore-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    gap: 10px;
   }
 
   .embla-container {
-    gap: 12px;
-    padding: 0 6px;
+    gap: 8px;
+    padding: 0 2px;
   }
 
   .embla-slide {
-    flex: 0 0 min(72vw, 220px);
+    flex: 0 0 clamp(76px, 23vw, 108px);
+  }
+
+  .embla-carousel {
+    margin-top: 10px;
   }
 
   .embla-arrow {
@@ -223,8 +254,8 @@
   .control-icons .favorite-icon svg,
   .control-icons .watched-icon svg,
   .control-icons .unbookmark-icon svg {
-    width: 36px;
-    height: 36px;
+    width: 24px;
+    height: 24px;
   }
 
   .control-icons .favorite-icon.active svg {

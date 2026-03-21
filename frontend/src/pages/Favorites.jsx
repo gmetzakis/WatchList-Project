@@ -95,6 +95,7 @@ export default function FavoritesPage() {
   const [viewMode, setViewMode] = useState("grid"); 
   // "grid" | "tape"
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 760px)");
@@ -423,8 +424,21 @@ export default function FavoritesPage() {
           </div>
         </div>
 
+        {isMobileView && (
+          <button
+            type="button"
+            className={`library-mobile-filter-toggle ${isMobileFiltersOpen ? "active" : ""}`}
+            onClick={() => setIsMobileFiltersOpen((prev) => !prev)}
+            aria-expanded={isMobileFiltersOpen}
+            aria-controls="favorites-mobile-filters"
+          >
+            {isMobileFiltersOpen ? "Hide Filters" : "Filters"}
+          </button>
+        )}
+
         {/* FILTER BAR */}
-        <div className="filter-bar library-filter-bar">
+        {(!isMobileView || isMobileFiltersOpen) && (
+        <div id="favorites-mobile-filters" className="filter-bar library-filter-bar">
 
         {!isMobileView && (
           <div className="view-toggle-container">
@@ -484,6 +498,7 @@ export default function FavoritesPage() {
         </div>
 
         </div>
+        )}
       </section>
 
       <section className="library-content-shell">

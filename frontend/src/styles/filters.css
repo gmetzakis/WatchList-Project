@@ -192,6 +192,28 @@
   color: #ffffff;
 }
 
+.library-mobile-filter-toggle {
+  border: 1px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(231, 235, 241, 0.82);
+  border-radius: 24px;
+  padding: 10px 16px;
+  width: auto;
+  text-align: center;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.library-mobile-filter-toggle:hover,
+.library-mobile-filter-toggle.active {
+  transform: translateY(-1px);
+  border-color: var(--panel-border-strong);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
 .btn-fav-toggle {
   padding: 10px 18px;
   border-radius: 6px;
@@ -301,6 +323,17 @@
   .watched-hero-shell,
   .watched-content-shell {
     border-radius: 20px;
+  }
+}
+
+@media (max-width: 760px) {
+  .library-mobile-filter-toggle {
+    margin-top: 12px;
+  }
+
+  .library-filter-bar,
+  .watched-filter-bar {
+    margin-top: 12px;
   }
 }
 

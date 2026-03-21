@@ -96,6 +96,7 @@ export default function WatchlistPage() {
   const [viewMode, setViewMode] = useState("grid"); 
   // "grid" | "tape"
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 760px)");
@@ -358,8 +359,21 @@ export default function WatchlistPage() {
           </div>
         </div>
 
+        {isMobileView && (
+          <button
+            type="button"
+            className={`library-mobile-filter-toggle ${isMobileFiltersOpen ? "active" : ""}`}
+            onClick={() => setIsMobileFiltersOpen((prev) => !prev)}
+            aria-expanded={isMobileFiltersOpen}
+            aria-controls="watchlist-mobile-filters"
+          >
+            {isMobileFiltersOpen ? "Hide Filters" : "Filters"}
+          </button>
+        )}
+
         {/* TYPE FILTER */}
-        <div className="filter-bar library-filter-bar">
+        {(!isMobileView || isMobileFiltersOpen) && (
+        <div id="watchlist-mobile-filters" className="filter-bar library-filter-bar">
         
         {!isMobileView && (
           <div className="view-toggle-container">
@@ -412,6 +426,7 @@ export default function WatchlistPage() {
           </select>
         </div>
         </div>
+        )}
       </section>
 
       <section className="library-content-shell">

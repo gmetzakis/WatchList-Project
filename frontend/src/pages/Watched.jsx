@@ -94,6 +94,7 @@ export default function WatchedPage() {
 
   const [viewMode, setViewMode] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 760px)");
@@ -389,7 +390,20 @@ export default function WatchedPage() {
           </div>
         </div>
 
-        <div className="filter-bar watched-filter-bar">
+        {isMobileView && (
+          <button
+            type="button"
+            className={`library-mobile-filter-toggle ${isMobileFiltersOpen ? "active" : ""}`}
+            onClick={() => setIsMobileFiltersOpen((prev) => !prev)}
+            aria-expanded={isMobileFiltersOpen}
+            aria-controls="watched-mobile-filters"
+          >
+            {isMobileFiltersOpen ? "Hide Filters" : "Filters"}
+          </button>
+        )}
+
+        {(!isMobileView || isMobileFiltersOpen) && (
+        <div id="watched-mobile-filters" className="filter-bar watched-filter-bar">
 
           {!isMobileView && (
             <div className="view-toggle-container">
@@ -444,6 +458,7 @@ export default function WatchedPage() {
             </select>
           </div>
         </div>
+        )}
       </section>
 
       <section className="watched-content-shell">
