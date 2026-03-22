@@ -615,6 +615,16 @@
   border: 1px solid rgba(228, 175, 87, 0.35);
   backdrop-filter: blur(3px);
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.friend-mobile-media-card:hover .friend-rating-badge {
+  opacity: 1;
+}
+
+.media-card.mobile-card-expanded .friend-rating-badge {
+  opacity: 1;
 }
 
 .friend-mobile-ratings {
