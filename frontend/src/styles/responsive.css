@@ -206,6 +206,8 @@
     z-index: 2000000 !important;
     transform: translate(-50%, -50%) !important;
     margin: 0 !important;
+    transition: none !important;
+    animation: none !important;
   }
 
   .media-card.mobile-card-expanded .media-image-wrapper {
@@ -218,6 +220,8 @@
     width: 100%;
     transform: scale(1.08) !important;
     filter: brightness(0.38) contrast(1.1) blur(3px) !important;
+    transition: none !important;
+    animation: none !important;
   }
 
   .media-card.mobile-card-expanded .hover-controls,
@@ -226,6 +230,8 @@
     pointer-events: auto !important;
     border-radius: 12px;
     background: transparent;
+    transition: none !important;
+    animation: none !important;
   }
 
   .media-card.mobile-card-expanded .mobile-card-close {
@@ -408,6 +414,8 @@
     z-index: 2000000 !important;
     transform: translate(-50%, -50%);
     margin: 0;
+    transition: none !important;
+    animation: none !important;
   }
 
   .embla-container .media-card,
@@ -445,6 +453,8 @@
   .media-card.mobile-card-expanded .media-card-img {
     transform: scale(1.08) !important;
     filter: brightness(0.38) contrast(1.1) blur(3px) !important;
+    transition: none !important;
+    animation: none !important;
   }
 
   .media-card.mobile-card-expanded .hover-controls,
@@ -453,6 +463,8 @@
     pointer-events: auto;
     border-radius: 12px;
     background: transparent;
+    transition: none !important;
+    animation: none !important;
   }
 
   .media-card .mobile-card-close {
