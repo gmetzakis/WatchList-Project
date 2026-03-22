@@ -174,6 +174,24 @@ function MediaShelf({
   else if (sortBy === "year_desc") filtered = [...filtered].sort((a, b) => (b.release_year || 0) - (a.release_year || 0));
   else if (sortBy === "year_asc") filtered = [...filtered].sort((a, b) => (a.release_year || 0) - (b.release_year || 0));
 
+  const isRatingSort = sortBy === "rating_desc" || sortBy === "rating_asc";
+  const groupedByRating = {
+    1: [], 2: [], 3: [], 4: [], 5: [],
+    6: [], 7: [], 8: [], 9: [], 10: [],
+    unrated: [],
+  };
+
+  if (isRatingSort) {
+    filtered.forEach((item) => {
+      if (!item.rating) groupedByRating.unrated.push(item);
+      else groupedByRating[item.rating].push(item);
+    });
+  }
+
+  const ratingOrder = sortBy === "rating_desc"
+    ? [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, "unrated"]
+    : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, "unrated"];
+
   const [expandedCardKey, setExpandedCardKey] = useState(null);
 
   useEffect(() => {
@@ -344,15 +362,41 @@ function MediaShelf({
         <div className="mobile-card-backdrop" onClick={() => setExpandedCardKey(null)} />
       )}
 
-      {isMobileView ? (
-        <FriendsEmblaCarousel items={displayItems} renderCard={renderMediaCard} />
-      ) : (
-        <div className="friend-library-grid">
-          {displayItems.map((item) => renderMediaCard(item))}
+      {isRatingSort ? (
+        <div className="rating-groups">
+          {ratingOrder.map((ratingKey) => {
+            const bucket = groupedByRating[ratingKey];
+            if (!bucket || bucket.length === 0) return null;
+
+            const title = ratingKey === "unrated"
+              ? "Unrated"
+              : (
+                  <>
+                    {ratingKey}/10 <span className="star active">★</span>
+                  </>
+                );
+
+            return (
+              <div key={ratingKey} className="rating-section">
+                <h2 className="rating-section-title">{title}</h2>
+                <FriendsEmblaCarousel items={bucket} renderCard={renderMediaCard} />
+              </div>
+            );
+          })}
         </div>
+      ) : (
+        <>
+          {isMobileView ? (
+            <FriendsEmblaCarousel items={displayItems} renderCard={renderMediaCard} />
+          ) : (
+            <div className="friend-library-grid">
+              {displayItems.map((item) => renderMediaCard(item))}
+            </div>
+          )}
+        </>
       )}
 
-      {!isMobileView && totalPages > 1 && (
+      {!isMobileView && !isRatingSort && totalPages > 1 && (
         <div className="friend-pagination">
           <button className="friend-page-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage === 1}>
             ‹ Prev
@@ -415,7 +459,7 @@ function FriendsEmblaCarousel({ items, renderCard }) {
   };
 
   return (
-    <div className="embla-carousel friend-embla-lock">
+    <div className="embla-carousel">
       <button className="embla-arrow left" onClick={scrollPrev}>
         ‹
       </button>

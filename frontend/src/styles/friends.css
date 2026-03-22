@@ -24,7 +24,7 @@
   border: 1px solid var(--friends-panel-border);
   background: var(--panel-bg-soft);
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.22);
-  overflow-x: hidden;
+  overflow: visible;
 }
 
 .friends-shell *,
@@ -494,7 +494,7 @@
   border-radius: 20px;
   border: 1px solid rgba(212, 175, 55, 0.12);
   background: rgba(52, 39, 13, 0.14);
-  overflow-x: hidden;
+  overflow: visible;
 }
 
 .friend-shelf-tabs {
