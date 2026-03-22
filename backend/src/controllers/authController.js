@@ -23,7 +23,7 @@ export async function checkUsernameAvailability(req, res) {
 export async function register(req, res) {
   try {  
     const {
-      email,
+      email: rawEmail,
       password,
       firstName,
       lastName,
@@ -31,6 +31,8 @@ export async function register(req, res) {
       yearOfBirth,
       country
     } = req.body;
+
+    const email = String(rawEmail || "").trim().toLowerCase();
 
     if (!email || !password || !firstName || !lastName || !username || !yearOfBirth || !country) {
       return res.status(400).json({ error: "All fields are required" });
@@ -104,7 +106,8 @@ export async function register(req, res) {
 
 export async function login(req, res) {
   try {
-    const { email, password } = req.body;
+    const { email: rawEmail, password } = req.body;
+    const email = String(rawEmail || "").trim().toLowerCase();
 
 
     if (!email || !password) {

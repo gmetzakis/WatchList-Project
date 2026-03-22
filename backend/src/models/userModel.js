@@ -1,17 +1,21 @@
 import db from "../db/index.js";
 
 export async function findUserByEmail(email) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+
   const result = await db.query(
-    "SELECT * FROM users WHERE email = $1",
-    [email]
+    "SELECT * FROM users WHERE LOWER(email) = $1",
+    [normalizedEmail]
   );
   return result.rows[0];
 }
 
 export async function createUser(email, passwordHash) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+
   const result = await db.query(
     "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING *",
-    [email, passwordHash]
+    [normalizedEmail, passwordHash]
   );
   return result.rows[0];
 }
