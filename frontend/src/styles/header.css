@@ -102,6 +102,10 @@
   width: 100%;
 }
 
+.nav-link-icon {
+  display: none;
+}
+
 .account-menu-wrapper {
   position: relative;
   padding-bottom: 8px;
@@ -373,6 +377,17 @@
   transform: translateY(-50%) translateY(-1px);
 }
 
+@media (min-width: 981px) {
+  .cinema-header {
+    z-index: 1000001;
+  }
+
+  .account-dropdown,
+  .cinema-nav {
+    z-index: 1000002;
+  }
+}
+
 @media (max-width: 980px) {
   .cinema-header {
     padding: 14px 0;
@@ -381,7 +396,7 @@
   .cinema-header-inner {
     padding: 0 16px;
     gap: 12px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     position: relative;
   }
 
@@ -395,18 +410,51 @@
     margin-left: auto;
   }
 
+  .mobile-account-menu-wrapper {
+    position: relative;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  .mobile-header-toggle {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid var(--panel-border-strong);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.15rem;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    position: relative;
+  }
+
+  .mobile-header-toggle:hover,
+  .mobile-header-toggle.open,
+  .mobile-account-menu-wrapper.open .mobile-account-toggle {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: var(--panel-border-strong);
+    color: #fff;
+  }
+
   .cinema-nav {
-    width: 100%;
-    order: 3;
+    position: absolute;
+    right: 16px;
+    top: calc(100% + 8px);
+    width: min(172px, 86vw);
     display: none;
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
-    padding: 12px;
-    border-radius: 14px;
+    gap: 6px;
+    padding: 10px;
+    border-radius: 12px;
     border: 1px solid var(--panel-border);
     background: var(--panel-bg-strong);
-    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    z-index: 80;
   }
 
   .cinema-nav.open {
@@ -414,9 +462,26 @@
   }
 
   .cinema-nav a {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     width: 100%;
     padding: 10px 12px;
+    border-radius: 8px;
+  }
+
+  .cinema-nav a .nav-link-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-size: 1rem;
+  }
+
+  .cinema-nav a:hover {
+    background: var(--panel-hover);
+  }
+
+  .cinema-nav a::before {
+    display: none;
   }
 
   .search-wrapper,
@@ -460,7 +525,13 @@
   .account-dropdown {
     right: auto;
     left: 0;
-    min-width: min(220px, 86vw);
+    min-width: min(172px, 86vw);
+  }
+
+  .mobile-account-menu-wrapper .account-dropdown {
+    right: 0;
+    left: auto;
+    top: calc(100% + 8px);
   }
 }
 

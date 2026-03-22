@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FiSearch, FiUser, FiLogOut, FiUsers, FiMenu, FiX } from "react-icons/fi";
+import { FiSearch, FiUser, FiLogOut, FiUsers, FiMenu, FiX, FiCompass, FiEye, FiBookmark, FiHeart } from "react-icons/fi";
 import api from "../api/axios.js";
 
 export default function Header() {
@@ -204,6 +204,10 @@ export default function Header() {
       accountCloseTimeoutRef.current = null;
     }
 
+    if (isMobileNav) {
+      setMobileMenuOpen(false);
+    }
+
     if (accountPinned) {
       setAccountPinned(false);
       setAccountOpen(false);
@@ -232,18 +236,69 @@ export default function Header() {
         <button
           ref={menuToggleRef}
           type="button"
-          className={`header-menu-toggle ${mobileMenuOpen ? "open" : ""}`}
+          className={`header-menu-toggle mobile-header-toggle ${mobileMenuOpen ? "open" : ""}`}
           aria-label={mobileMenuOpen ? "Close navigation" : "Open navigation"}
           aria-expanded={mobileMenuOpen}
-          onClick={() => setMobileMenuOpen((prev) => !prev)}
+          onClick={() => {
+            setAccountOpen(false);
+            setAccountPinned(false);
+            setMobileMenuOpen((prev) => !prev);
+          }}
         >
           {mobileMenuOpen ? <FiX /> : <FiMenu />}
         </button>
 
+        {isMobileNav && (
+          <div
+            className={`account-menu-wrapper mobile-account-menu-wrapper ${accountOpen ? "open" : ""}`}
+            ref={accountRef}
+          >
+            <button
+              type="button"
+              className={`mobile-account-toggle mobile-header-toggle ${accountOpen ? "open" : ""}`}
+              onClick={handleAccountToggle}
+              aria-label={accountOpen ? "Close account menu" : "Open account menu"}
+              aria-expanded={accountOpen}
+            >
+              {accountOpen ? <FiX /> : <FiUser />}
+              {!isFriendsRoute && friendNotifications.total > 0 && (
+                <span className="account-notification-badge">{friendNotifications.total}</span>
+              )}
+            </button>
+
+            <div className="account-dropdown">
+              <Link to="/friends" state={friendsLinkState} className="account-dropdown-link" onClick={handleFriendsClick}>
+                <FiUsers />
+                <span>Friends</span>
+                {!isFriendsRoute && friendNotifications.total > 0 && (
+                  <span className="menu-notification-dot">{friendNotifications.total}</span>
+                )}
+              </Link>
+
+              <Link to="/profile" className="account-dropdown-link" onClick={() => {
+                setAccountOpen(false);
+                setAccountPinned(false);
+                setMobileMenuOpen(false);
+              }}>
+                <FiUser />
+                <span>Profile</span>
+              </Link>
+
+              <button type="button" className="account-dropdown-action" onClick={handleLogout}>
+                <FiLogOut />
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         <nav ref={navRef} className={`cinema-nav ${mobileMenuOpen ? "open" : ""}`}>
 
           {isMobileNav ? (
-            <Link to="/search" onClick={() => setMobileMenuOpen(false)}>Search</Link>
+            <Link to="/search" onClick={() => setMobileMenuOpen(false)}>
+              <FiSearch className="nav-link-icon" />
+              <span>Search</span>
+            </Link>
           ) : (
             <div className={`search-wrapper ${searchOpen ? "open" : ""}`} ref={inputRef}>
               <FiSearch
@@ -294,54 +349,68 @@ export default function Header() {
             </div>
           )}
 
-          <Link to="/explore" onClick={() => setMobileMenuOpen(false)}>Explore</Link>
-          <Link to="/watched" onClick={() => setMobileMenuOpen(false)}>Watched</Link>
-          <Link to="/watchlist" onClick={() => setMobileMenuOpen(false)}>Watchlist</Link>
-          <Link to="/favorites" onClick={() => setMobileMenuOpen(false)}>Favorites</Link>
+          <Link to="/explore" onClick={() => setMobileMenuOpen(false)}>
+            <FiCompass className="nav-link-icon" />
+            <span>Explore</span>
+          </Link>
+          <Link to="/watched" onClick={() => setMobileMenuOpen(false)}>
+            <FiEye className="nav-link-icon" />
+            <span>Watched</span>
+          </Link>
+          <Link to="/watchlist" onClick={() => setMobileMenuOpen(false)}>
+            <FiBookmark className="nav-link-icon" />
+            <span>Watchlist</span>
+          </Link>
+          <Link to="/favorites" onClick={() => setMobileMenuOpen(false)}>
+            <FiHeart className="nav-link-icon" />
+            <span>Favorites</span>
+          </Link>
 
-          <div
-            className={`account-menu-wrapper ${accountOpen ? "open" : ""}`}
-            ref={accountRef}
-            onMouseEnter={handleAccountMouseEnter}
-            onMouseLeave={handleAccountMouseLeave}
-          >
-            <button
-              type="button"
-              className="account-toggle-btn"
-              onClick={handleAccountToggle}
-              aria-label="Open account menu"
-              aria-expanded={accountOpen}
+          {!isMobileNav && (
+            <div
+              className={`account-menu-wrapper ${accountOpen ? "open" : ""}`}
+              ref={accountRef}
+              onMouseEnter={handleAccountMouseEnter}
+              onMouseLeave={handleAccountMouseLeave}
             >
-              <FiUser />
-              {!isFriendsRoute && friendNotifications.total > 0 && (
-                <span className="account-notification-badge">{friendNotifications.total}</span>
-              )}
-            </button>
-
-            <div className="account-dropdown">
-              <Link to="/friends" state={friendsLinkState} className="account-dropdown-link" onClick={handleFriendsClick}>
-                <FiUsers />
-                <span>Friends</span>
-                {!isFriendsRoute && friendNotifications.total > 0 && (
-                  <span className="menu-notification-dot">{friendNotifications.total}</span>
-                )}
-              </Link>
-
-              <Link to="/profile" className="account-dropdown-link" onClick={() => {
-                setAccountOpen(false);
-                setAccountPinned(false);
-                setMobileMenuOpen(false);
-              }}>
+              <button
+                type="button"
+                className="account-toggle-btn"
+                onClick={handleAccountToggle}
+                aria-label="Open account menu"
+                aria-expanded={accountOpen}
+              >
                 <FiUser />
-                <span>Profile</span>
-              </Link>
-
-              <button type="button" className="account-dropdown-action" onClick={handleLogout}>
-                <FiLogOut />
-                <span>Logout</span>
+                {!isFriendsRoute && friendNotifications.total > 0 && (
+                  <span className="account-notification-badge">{friendNotifications.total}</span>
+                )}
               </button>
+
+              <div className="account-dropdown">
+                <Link to="/friends" state={friendsLinkState} className="account-dropdown-link" onClick={handleFriendsClick}>
+                  <FiUsers />
+                  <span>Friends</span>
+                  {!isFriendsRoute && friendNotifications.total > 0 && (
+                    <span className="menu-notification-dot">{friendNotifications.total}</span>
+                  )}
+                </Link>
+
+                <Link to="/profile" className="account-dropdown-link" onClick={() => {
+                  setAccountOpen(false);
+                  setAccountPinned(false);
+                  setMobileMenuOpen(false);
+                }}>
+                  <FiUser />
+                  <span>Profile</span>
+                </Link>
+
+                <button type="button" className="account-dropdown-action" onClick={handleLogout}>
+                  <FiLogOut />
+                  <span>Logout</span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </nav>
 
       </div>

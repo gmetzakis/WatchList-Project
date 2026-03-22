@@ -185,6 +185,10 @@ export default function PersonDetailsPage() {
     }));
   }
 
+  function getCreditState(item) {
+    return creditStatus[creditKey(item)] || { status: null, rating: null, is_favorite: false };
+  }
+
   function stopCardNavigation(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -258,6 +262,9 @@ export default function PersonDetailsPage() {
             items={credits}
             itemKey={(item) => `${sectionType}-${item.type}-${item.id}-${item.job || item.character || "credit"}`}
             renderCard={(item) => (
+              (() => {
+                const state = getCreditState(item);
+                return (
               <div
                 className={`media-card${isMobileView && expandedCardKey === `${sectionType}-${creditKey(item)}` ? " mobile-card-expanded" : ""}`}
               >
@@ -298,12 +305,12 @@ export default function PersonDetailsPage() {
                           : (item.job ? ` • ${item.job}` : "")}
                       </span>
 
-                      {creditStatus[creditKey(item)]?.status === "watched" && (
+                      {state.status === "watched" && (
                         <div className="rating-inline">
                           {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                             <span
                               key={n}
-                              className={creditStatus[creditKey(item)]?.rating >= n ? "star active" : "star"}
+                              className={state.rating >= n ? "star active" : "star"}
                               onClick={(e) => {
                                 stopCardNavigation(e);
                                 rateCredit(item, n);
@@ -312,15 +319,15 @@ export default function PersonDetailsPage() {
                               ★
                             </span>
                           ))}
-                          {creditStatus[creditKey(item)]?.rating && (
-                            <span className="rating-label">{creditStatus[creditKey(item)]?.rating}/10</span>
+                          {state.rating && (
+                            <span className="rating-label">{state.rating}/10</span>
                           )}
                         </div>
                       )}
                     </div>
 
                     <div className="control-icons">
-                      {creditStatus[creditKey(item)]?.status === null && (
+                      {!state.status && (
                         <>
                           <span
                             className="watched-icon"
@@ -345,7 +352,7 @@ export default function PersonDetailsPage() {
                         </>
                       )}
 
-                      {creditStatus[creditKey(item)]?.status === "watchlist" && (
+                      {state.status === "watchlist" && (
                         <>
                           <span
                             className="watched-icon"
@@ -370,13 +377,13 @@ export default function PersonDetailsPage() {
                         </>
                       )}
 
-                      {creditStatus[creditKey(item)]?.status === "watched" && (
+                      {state.status === "watched" && (
                         <>
                           <span
-                            className={`favorite-icon ${creditStatus[creditKey(item)]?.is_favorite ? "active" : ""}`}
+                            className={`favorite-icon ${state.is_favorite ? "active" : ""}`}
                             onClick={(e) => {
                               stopCardNavigation(e);
-                              if (creditStatus[creditKey(item)]?.is_favorite) {
+                              if (state.is_favorite) {
                                 unfavoriteCredit(item);
                               } else {
                                 favoriteCredit(item);
@@ -402,6 +409,8 @@ export default function PersonDetailsPage() {
                   </div>
                 </Link>
               </div>
+                );
+              })()
             )}
           />
         )}
