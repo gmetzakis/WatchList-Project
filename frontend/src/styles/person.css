@@ -4,24 +4,32 @@
 
 .person-details-container {
   width: 100%;
-  padding: 24px 0 40px;
+  padding: 32px;
 }
 
 .person-hero {
-  display: grid;
-  grid-template-columns: minmax(220px, 320px) 1fr;
-  gap: 28px;
+  display: flex;
+  gap: 40px;
   align-items: start;
+  margin-bottom: 48px;
 }
 
 .person-profile-img {
-  width: 100%;
-  border-radius: 14px;
+  width: 320px;
+  max-width: 100%;
+  border-radius: 12px;
   box-shadow: var(--shadow-cinematic);
+  transition: all 0.3s ease;
+}
+
+.person-profile-img:hover {
+  transform: scale(1.02) translateY(-8px);
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.44);
 }
 
 .person-bio {
   min-width: 0;
+  flex: 1;
 }
 
 .person-biography-text {
@@ -62,27 +70,9 @@
   margin-top: 8px;
 }
 
-.person-load-more-btn {
-  margin-top: 16px;
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: 1px solid var(--panel-border-strong);
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text);
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.person-load-more-btn:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
-}
-
 @media (max-width: 900px) {
   .person-hero {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .person-profile-img {

@@ -323,6 +323,7 @@
   .library-content-shell:has(.mobile-card-expanded),
   .watched-content-shell:has(.mobile-card-expanded),
   .details-container:has(.mobile-card-expanded),
+  .person-details-container:has(.mobile-card-expanded),
   .media-grid:has(.mobile-card-expanded) {
     position: relative;
     z-index: 1999999 !important;
@@ -352,6 +353,17 @@
 
   .person-details-container {
     padding: 14px 0 28px;
+  }
+
+  .person-profile-img {
+    width: min(155px, 42vw);
+    max-width: min(155px, 42vw);
+    align-self: center;
+  }
+
+  .person-hero {
+    align-items: center;
+    gap: 22px;
   }
 
   .person-profile-img {
@@ -435,6 +447,7 @@
   .library-content-shell:has(.mobile-card-expanded),
   .watched-content-shell:has(.mobile-card-expanded),
   .details-container:has(.mobile-card-expanded),
+  .person-details-container:has(.mobile-card-expanded),
   .media-grid:has(.mobile-card-expanded) {
     position: relative;
     z-index: 1999999 !important;

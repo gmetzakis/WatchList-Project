@@ -91,9 +91,13 @@ export default function MediaDetails() {
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
+      setMedia(null);
+
       try {
         const details = await api.get(`/tmdb/details/${type}/${tmdbId}`);
         setMedia(details.data);
+        window.scrollTo(0, 0);
 
         const statusRes = await api.get(`/media/${type}/${tmdbId}/status`);
         setStatus(statusRes.data.status);
@@ -165,6 +169,10 @@ export default function MediaDetails() {
       mediaQuery.removeEventListener("change", handleViewportChange);
     };
   }, []);
+
+  useEffect(() => {
+    setExpandedCardKey(null);
+  }, [tmdbId, type]);
 
   function recommendationKey(recId) {
     const normalizedType = media?.type === "series" ? "series" : "movie";
@@ -450,9 +458,16 @@ export default function MediaDetails() {
               to={`/media/${media.type}/${rec.id}`}
               className="media-image-wrapper"
               onClick={(e) => {
-                if (isMobileView && expandedCardKey !== `rec-${rec.id}`) {
-                  e.preventDefault();
-                  setExpandedCardKey(`rec-${rec.id}`);
+                if (isMobileView) {
+                  const cardKey = `rec-${rec.id}`;
+                  if (expandedCardKey !== cardKey) {
+                    e.preventDefault();
+                    setExpandedCardKey(cardKey);
+                  } else {
+                    e.preventDefault();
+                    setExpandedCardKey(null);
+                    navigate(`/media/${media.type}/${rec.id}`);
+                  }
                 }
               }}
             >

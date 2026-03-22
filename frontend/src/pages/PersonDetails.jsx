@@ -1,34 +1,91 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Heart, Eye, EyeOff, BookmarkPlus, BookmarkMinus } from "lucide-react";
+import { Heart, Eye, EyeOff, BookmarkPlus, BookmarkMinus, X } from "lucide-react";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 import api from "../api/axios";
 
-function getInitialPageSize() {
-  if (typeof window !== "undefined" && window.innerWidth <= 768) {
-    return 12;
-  }
+function EmblaCarousel({ items, renderCard, itemKey }) {
+  const [autoplayEnabled, setAutoplayEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return !window.matchMedia("(max-width: 760px)").matches;
+  });
 
-  return 24;
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const handleViewportChange = (event) => {
+      setAutoplayEnabled(!event.matches);
+    };
+
+    setAutoplayEnabled(!mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleViewportChange);
+    };
+  }, []);
+
+  const plugins = useMemo(
+    () => autoplayEnabled
+      ? [Autoplay({ delay: 4000, stopOnInteraction: true, stopOnMouseEnter: true })]
+      : [],
+    [autoplayEnabled]
+  );
+
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: false,
+      align: "start",
+      slidesToScroll: 2,
+      breakpoints: {
+        "(min-width: 768px)": { slidesToScroll: 3 },
+        "(min-width: 1024px)": { slidesToScroll: 4 },
+      },
+    },
+    plugins
+  );
+
+  return (
+    <div className="embla-carousel">
+      <button className="embla-arrow left" onClick={() => emblaApi?.scrollPrev()}>
+        ‹
+      </button>
+
+      <div className="embla-viewport" ref={emblaRef}>
+        <div className="embla-container">
+          {items.map((item) => (
+            <div key={itemKey(item)} className="embla-slide">
+              {renderCard(item)}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button className="embla-arrow right" onClick={() => emblaApi?.scrollNext()}>
+        ›
+      </button>
+    </div>
+  );
 }
 
 export default function PersonDetailsPage() {
   const { personId } = useParams();
   const navigate = useNavigate();
-  const pageSize = getInitialPageSize();
 
   const [person, setPerson] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [visibleActing, setVisibleActing] = useState(pageSize);
-  const [visibleDirecting, setVisibleDirecting] = useState(pageSize);
   const [creditStatus, setCreditStatus] = useState({});
+  const [isMobileView, setIsMobileView] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 760px)").matches;
+  });
+  const [expandedCardKey, setExpandedCardKey] = useState(null);
 
   useEffect(() => {
     async function loadPerson() {
       try {
         const res = await api.get(`/tmdb/person/${personId}`);
         setPerson(res.data);
-        setVisibleActing(pageSize);
-        setVisibleDirecting(pageSize);
       } catch (err) {
         console.error("Person details error:", err);
         setPerson(null);
@@ -38,7 +95,7 @@ export default function PersonDetailsPage() {
     }
 
     loadPerson();
-  }, [personId, pageSize]);
+  }, [personId]);
 
   useEffect(() => {
     async function hydrateVisibleCreditStatus() {
@@ -47,9 +104,10 @@ export default function PersonDetailsPage() {
         return;
       }
 
-      const visibleActingItems = (person.acting_credits || []).slice(0, visibleActing);
-      const visibleDirectingItems = (person.directing_credits || []).slice(0, visibleDirecting);
-      const visibleItems = [...visibleActingItems, ...visibleDirectingItems];
+      const visibleItems = [
+        ...(person.acting_credits || []),
+        ...(person.directing_credits || []),
+      ].filter((item) => item.poster_path);
       if (visibleItems.length === 0) {
         setCreditStatus({});
         return;
@@ -87,7 +145,24 @@ export default function PersonDetailsPage() {
     }
 
     hydrateVisibleCreditStatus();
-  }, [person, visibleActing, visibleDirecting]);
+  }, [person]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const handleViewportChange = (event) => {
+      setIsMobileView(event.matches);
+      if (!event.matches) {
+        setExpandedCardKey(null);
+      }
+    };
+
+    setIsMobileView(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleViewportChange);
+    };
+  }, []);
 
   if (loading) return <div className="page-container">Loading person...</div>;
   if (!person) return <div className="page-container">Person not found</div>;
@@ -170,161 +245,165 @@ export default function PersonDetailsPage() {
   function renderCreditsSection(sectionType) {
     const isActing = sectionType === "acting";
     const title = isActing ? "Acting Credits" : "Directing Credits";
-    const credits = isActing ? (person.acting_credits || []) : (person.directing_credits || []);
-    const visibleCount = isActing ? visibleActing : visibleDirecting;
-    const shownItems = credits.slice(0, visibleCount);
-    const hasMore = credits.length > visibleCount;
+    const credits = (isActing ? (person.acting_credits || []) : (person.directing_credits || []))
+      .filter((item) => item.poster_path);
 
     return (
       <div key={sectionType} className="person-credits-section">
         <h2 className="details-section-title">{title}</h2>
-        <div className="media-grid">
-          {shownItems.map((item) => (
-            <div
-              key={`${sectionType}-${item.type}-${item.id}-${item.job || item.character || "credit"}`}
-              className="media-card"
-            >
-              <Link
-                to={`/media/${item.type === "tv" ? "series" : item.type}/${item.id}`}
-                className="media-image-wrapper"
+        {credits.length === 0 ? (
+          <p className="details-meta">No titles available.</p>
+        ) : (
+          <EmblaCarousel
+            items={credits}
+            itemKey={(item) => `${sectionType}-${item.type}-${item.id}-${item.job || item.character || "credit"}`}
+            renderCard={(item) => (
+              <div
+                className={`media-card${isMobileView && expandedCardKey === `${sectionType}-${creditKey(item)}` ? " mobile-card-expanded" : ""}`}
               >
-                <img
-                  src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
-                  alt={item.title}
-                  className="media-card-img"
-                />
+                <Link
+                  to={`/media/${item.type === "tv" ? "series" : item.type}/${item.id}`}
+                  className="media-image-wrapper"
+                  onClick={(e) => {
+                    if (isMobileView && expandedCardKey !== `${sectionType}-${creditKey(item)}`) {
+                      e.preventDefault();
+                      setExpandedCardKey(`${sectionType}-${creditKey(item)}`);
+                    }
+                  }}
+                >
+                  <img
+                    src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+                    alt={item.title}
+                    className="media-card-img"
+                  />
 
-                <div className="hover-controls">
-                  <div className="hover-title">
-                    <span className="hover-title-text">{item.title}</span>
-                    <span className="hover-year-text">
-                      {item.release_year || "-"}
-                      {isActing
-                        ? (item.character ? ` • ${item.character}` : "")
-                        : (item.job ? ` • ${item.job}` : "")}
-                    </span>
+                  <div className="hover-controls">
+                    <button
+                      type="button"
+                      className="mobile-card-close"
+                      onClick={(e) => {
+                        stopCardNavigation(e);
+                        setExpandedCardKey(null);
+                      }}
+                      aria-label="Close expanded card"
+                    >
+                      <X size={18} />
+                    </button>
+                    <div className="hover-title">
+                      <span className="hover-title-text">{item.title}</span>
+                      <span className="hover-year-text">
+                        {item.release_year || "-"}
+                        {isActing
+                          ? (item.character ? ` • ${item.character}` : "")
+                          : (item.job ? ` • ${item.job}` : "")}
+                      </span>
 
-                    {creditStatus[creditKey(item)]?.status === "watched" && (
-                      <div className="rating-inline">
-                        {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+                      {creditStatus[creditKey(item)]?.status === "watched" && (
+                        <div className="rating-inline">
+                          {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+                            <span
+                              key={n}
+                              className={creditStatus[creditKey(item)]?.rating >= n ? "star active" : "star"}
+                              onClick={(e) => {
+                                stopCardNavigation(e);
+                                rateCredit(item, n);
+                              }}
+                            >
+                              ★
+                            </span>
+                          ))}
+                          {creditStatus[creditKey(item)]?.rating && (
+                            <span className="rating-label">{creditStatus[creditKey(item)]?.rating}/10</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="control-icons">
+                      {creditStatus[creditKey(item)]?.status === null && (
+                        <>
                           <span
-                            key={n}
-                            className={creditStatus[creditKey(item)]?.rating >= n ? "star active" : "star"}
+                            className="watched-icon"
                             onClick={(e) => {
                               stopCardNavigation(e);
-                              rateCredit(item, n);
+                              addCreditToWatchlist(item);
                             }}
+                            title="Add to Watchlist"
                           >
-                            ★
+                            <BookmarkPlus size={32} />
                           </span>
-                        ))}
-                        {creditStatus[creditKey(item)]?.rating && (
-                          <span className="rating-label">{creditStatus[creditKey(item)]?.rating}/10</span>
-                        )}
-                      </div>
-                    )}
+                          <span
+                            className="watched-icon"
+                            onClick={(e) => {
+                              stopCardNavigation(e);
+                              markCreditAsWatched(item);
+                            }}
+                            title="Mark as Watched"
+                          >
+                            <Eye size={32} />
+                          </span>
+                        </>
+                      )}
+
+                      {creditStatus[creditKey(item)]?.status === "watchlist" && (
+                        <>
+                          <span
+                            className="watched-icon"
+                            onClick={(e) => {
+                              stopCardNavigation(e);
+                              removeCreditFromWatchlist(item);
+                            }}
+                            title="Remove from Watchlist"
+                          >
+                            <BookmarkMinus size={32} />
+                          </span>
+                          <span
+                            className="watched-icon"
+                            onClick={(e) => {
+                              stopCardNavigation(e);
+                              moveCreditToWatched(item);
+                            }}
+                            title="Move to Watched"
+                          >
+                            <Eye size={32} />
+                          </span>
+                        </>
+                      )}
+
+                      {creditStatus[creditKey(item)]?.status === "watched" && (
+                        <>
+                          <span
+                            className={`favorite-icon ${creditStatus[creditKey(item)]?.is_favorite ? "active" : ""}`}
+                            onClick={(e) => {
+                              stopCardNavigation(e);
+                              if (creditStatus[creditKey(item)]?.is_favorite) {
+                                unfavoriteCredit(item);
+                              } else {
+                                favoriteCredit(item);
+                              }
+                            }}
+                            title="Favorite"
+                          >
+                            <Heart size={32} />
+                          </span>
+                          <span
+                            className="watched-icon active"
+                            onClick={(e) => {
+                              stopCardNavigation(e);
+                              removeCreditFromWatched(item);
+                            }}
+                            title="Remove from Watched"
+                          >
+                            <EyeOff size={32} />
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
-
-                  <div className="control-icons">
-                    {creditStatus[creditKey(item)]?.status === null && (
-                      <>
-                        <span
-                          className="watched-icon"
-                          onClick={(e) => {
-                            stopCardNavigation(e);
-                            addCreditToWatchlist(item);
-                          }}
-                          title="Add to Watchlist"
-                        >
-                          <BookmarkPlus size={32} />
-                        </span>
-                        <span
-                          className="watched-icon"
-                          onClick={(e) => {
-                            stopCardNavigation(e);
-                            markCreditAsWatched(item);
-                          }}
-                          title="Mark as Watched"
-                        >
-                          <Eye size={32} />
-                        </span>
-                      </>
-                    )}
-
-                    {creditStatus[creditKey(item)]?.status === "watchlist" && (
-                      <>
-                        <span
-                          className="watched-icon"
-                          onClick={(e) => {
-                            stopCardNavigation(e);
-                            removeCreditFromWatchlist(item);
-                          }}
-                          title="Remove from Watchlist"
-                        >
-                          <BookmarkMinus size={32} />
-                        </span>
-                        <span
-                          className="watched-icon"
-                          onClick={(e) => {
-                            stopCardNavigation(e);
-                            moveCreditToWatched(item);
-                          }}
-                          title="Move to Watched"
-                        >
-                          <Eye size={32} />
-                        </span>
-                      </>
-                    )}
-
-                    {creditStatus[creditKey(item)]?.status === "watched" && (
-                      <>
-                        <span
-                          className={`favorite-icon ${creditStatus[creditKey(item)]?.is_favorite ? "active" : ""}`}
-                          onClick={(e) => {
-                            stopCardNavigation(e);
-                            if (creditStatus[creditKey(item)]?.is_favorite) {
-                              unfavoriteCredit(item);
-                            } else {
-                              favoriteCredit(item);
-                            }
-                          }}
-                          title="Favorite"
-                        >
-                          <Heart size={32} />
-                        </span>
-                        <span
-                          className="watched-icon active"
-                          onClick={(e) => {
-                            stopCardNavigation(e);
-                            removeCreditFromWatched(item);
-                          }}
-                          title="Remove from Watched"
-                        >
-                          <EyeOff size={32} />
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            </div>
-          ))}
-        </div>
-
-        {hasMore && (
-          <button
-            type="button"
-            className="person-load-more-btn"
-            onClick={() => {
-              if (isActing) {
-                setVisibleActing((prev) => prev + pageSize);
-              } else {
-                setVisibleDirecting((prev) => prev + pageSize);
-              }
-            }}
-          >
-            Load more ({credits.length - visibleCount} remaining)
-          </button>
+                </Link>
+              </div>
+            )}
+          />
         )}
       </div>
     );
@@ -333,7 +412,7 @@ export default function PersonDetailsPage() {
   return (
     <div className="person-details-container">
       <button className="details-back" onClick={() => navigate(-1)}>
-        {"<- Back"}
+        {"← Back"}
       </button>
 
       <div className="person-hero">
@@ -357,6 +436,13 @@ export default function PersonDetailsPage() {
       </div>
 
       {sectionOrder.map((sectionType) => renderCreditsSection(sectionType))}
+
+      {isMobileView && expandedCardKey && (
+        <div
+          className="mobile-card-backdrop"
+          onClick={() => setExpandedCardKey(null)}
+        />
+      )}
     </div>
   );
 }
