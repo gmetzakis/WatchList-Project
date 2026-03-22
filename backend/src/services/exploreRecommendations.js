@@ -1,6 +1,7 @@
-import { getRecommendationSnapshot } from "../models/exploreModel.js";
+import { addDiscardedRecommendation, getRecommendationSnapshot } from "../models/exploreModel.js";
 import { runNeo4jSession } from "./neo4j.js";
-import { discoverTMDBByGenres, fetchTMDBDetails } from "./tmdb.js";
+import { discoverTMDBByGenres, discoverTMDBPopular, fetchTMDBDetails } from "./tmdb.js";
+import { findOrCreateMedia } from "../models/mediaModel.js";
 
 const GENRE_MAP = {
   28: "Action",
@@ -214,13 +215,19 @@ function buildSnapshotPayload(snapshot) {
         tmdbId: Number(interaction.tmdb_id),
         type: interaction.type,
       })),
+    disliked: (snapshot.discarded || []).map((interaction) => ({
+      userId: Number(interaction.user_id),
+      tmdbId: Number(interaction.tmdb_id),
+      type: interaction.type,
+      createdAt: interaction.created_at ? new Date(interaction.created_at).toISOString() : null,
+    })),
   };
 }
 
 function getSeenTitleKeys(payload, userId) {
   const seenKeys = new Set();
 
-  for (const collection of [payload.watchlisted, payload.watched, payload.favorited]) {
+  for (const collection of [payload.watchlisted, payload.watched, payload.favorited, payload.disliked]) {
     for (const item of collection) {
       if (item.userId === userId) {
         seenKeys.add(`${item.type}-${item.tmdbId}`);
@@ -302,20 +309,42 @@ function mapTmdbCandidate(candidate, score, reasonContext) {
   };
 }
 
-function dedupeSectionItems(sections) {
-  const seenKeys = new Set();
+async function buildPopularFallbackItems({ seenKeys, type, limit = 12, pageStart = 1, reasonContext = ["Fresh picks"] }) {
+  const discoverTypes = type === "all" ? ["movie", "series"] : [type];
+  const candidates = [];
 
+  for (const discoverType of discoverTypes) {
+    try {
+      const popularItems = await discoverTMDBPopular(discoverType, pageStart, 2);
+      popularItems.forEach((item, index) => {
+        const key = `${item.type}-${item.id}`;
+        if (seenKeys.has(key) || !item.poster_path) {
+          return;
+        }
+
+        candidates.push(
+          mapTmdbCandidate(
+            item,
+            Math.max(100 - index, 1) + (item.vote_average || 0),
+            reasonContext
+          )
+        );
+      });
+    } catch (error) {
+      console.error("Explore popular fallback error:", error.message);
+    }
+  }
+
+  return candidates.slice(0, limit);
+}
+
+function dedupeSectionItems(sections) {
   return sections
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) => {
+      items: section.items.filter((item, index, items) => {
         const key = `${item.type}-${item.tmdb_id}`;
-        if (seenKeys.has(key)) {
-          return false;
-        }
-
-        seenKeys.add(key);
-        return true;
+        return index === items.findIndex((entry) => `${entry.type}-${entry.tmdb_id}` === key);
       }),
     }))
     .filter((section) => section.items.length > 0);
@@ -364,14 +393,25 @@ async function buildFavoriteSeedSection(snapshot, payload, userId, type) {
     }
   }
 
+  const computedItems = Array.from(candidateMap.values())
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 12)
+    .map((entry) => mapTmdbCandidate(entry.candidate, entry.score, Array.from(entry.reasonContext).slice(0, 3)));
+
+  const items = computedItems.length > 0
+    ? computedItems
+    : await buildPopularFallbackItems({
+        seenKeys,
+        type,
+        pageStart: 1,
+        reasonContext: ["Because you loved these", "Fresh picks"],
+      });
+
   return {
     key: "fromYourFavorites",
     title: "Because You Loved These",
     description: "TMDB recommendations expanded from your favorite and highest-rated picks.",
-    items: Array.from(candidateMap.values())
-      .sort((left, right) => right.score - left.score)
-      .slice(0, 12)
-      .map((entry) => mapTmdbCandidate(entry.candidate, entry.score, Array.from(entry.reasonContext).slice(0, 3))),
+    items,
   };
 }
 
@@ -409,14 +449,25 @@ async function buildGenreDiscoverSection(snapshot, payload, userId, type) {
     }
   }
 
+  const computedItems = Array.from(candidateMap.values())
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 12)
+    .map((entry) => mapTmdbCandidate(entry.candidate, entry.score, Array.from(entry.reasonContext).slice(0, 3)));
+
+  const items = computedItems.length > 0
+    ? computedItems
+    : await buildPopularFallbackItems({
+        seenKeys,
+        type,
+        pageStart: 3,
+        reasonContext: ["Built from your top genres", "Fresh picks"],
+      });
+
   return {
     key: "genreSignals",
     title: "Built From Your Top Genres",
     description: "Fresh titles from TMDB based on the genres you keep rating and favoriting the most.",
-    items: Array.from(candidateMap.values())
-      .sort((left, right) => right.score - left.score)
-      .slice(0, 12)
-      .map((entry) => mapTmdbCandidate(entry.candidate, entry.score, Array.from(entry.reasonContext).slice(0, 3))),
+    items,
   };
 }
 
@@ -430,7 +481,7 @@ async function syncGraph(payload) {
   await runNeo4jSession("write", async (session) => {
     await ensureGraphSchema(session);
 
-    await session.run(`MATCH (:User)-[r:WATCHED|WATCHLISTED|FAVORITED|FRIENDS_WITH]->() DELETE r`);
+    await session.run(`MATCH (:User)-[r:WATCHED|WATCHLISTED|FAVORITED|DISLIKED|FRIENDS_WITH]->() DELETE r`);
 
     await session.run(
       `UNWIND $users AS user
@@ -497,7 +548,55 @@ async function syncGraph(payload) {
        MERGE (u)-[:FAVORITED]->(t)`,
       { favorited: payload.favorited }
     );
+
+    await session.run(
+      `UNWIND $disliked AS interaction
+       MATCH (u:User {id: interaction.userId})
+       MATCH (t:Title {tmdbId: interaction.tmdbId, type: interaction.type})
+       MERGE (u)-[r:DISLIKED]->(t)
+       SET r.createdAt = interaction.createdAt`,
+      { disliked: payload.disliked }
+    );
   });
+}
+
+export async function discardExploreRecommendation(userId, tmdbId, type) {
+  const normalizedType = type === "series" ? "series" : type === "movie" ? "movie" : null;
+  if (!normalizedType) {
+    const error = new Error("Invalid media type");
+    error.code = "INVALID_TYPE";
+    throw error;
+  }
+
+  const media = await findOrCreateMedia(tmdbId, normalizedType);
+  await addDiscardedRecommendation(userId, media.id);
+
+  return {
+    userId,
+    mediaId: media.id,
+    tmdbId: Number(tmdbId),
+    type: normalizedType,
+  };
+}
+
+export async function discardExploreRecommendationsBulk(userId, items = []) {
+  const uniqueItems = Array.from(
+    new Map(
+      (Array.isArray(items) ? items : [])
+        .filter((item) => Number.isInteger(Number(item?.tmdbId)) && Number(item.tmdbId) > 0 && (item?.type === "movie" || item?.type === "series"))
+        .map((item) => [`${item.type}-${Number(item.tmdbId)}`, { tmdbId: Number(item.tmdbId), type: item.type }])
+    ).values()
+  );
+
+  if (uniqueItems.length === 0) {
+    return { processed: 0 };
+  }
+
+  for (const item of uniqueItems) {
+    await discardExploreRecommendation(userId, item.tmdbId, item.type);
+  }
+
+  return { processed: uniqueItems.length };
 }
 
 function mapRecommendationRecord(record) {
@@ -543,6 +642,7 @@ export async function getExploreRecommendations(userId, type = "all") {
         session,
         `MATCH (me:User {id: $userId})-[:FRIENDS_WITH]-(friend:User)-[rel:FAVORITED|WATCHED]->(candidate:Title)
          WHERE NOT (me)-[:WATCHED|WATCHLISTED|FAVORITED]->(candidate)
+           AND NOT (me)-[:DISLIKED]->(candidate)
            AND ($type = 'all' OR candidate.type = $type)
          WITH candidate,
               collect(DISTINCT friend.username)[0..3] AS reasonContext,
@@ -575,7 +675,7 @@ export async function getExploreRecommendations(userId, type = "all") {
         users: payload.users.length,
         friendships: payload.friendships.length,
         titles: payload.titles.length,
-        interactions: payload.watchlisted.length + payload.watched.length + payload.favorited.length,
+        interactions: payload.watchlisted.length + payload.watched.length + payload.favorited.length + payload.disliked.length,
       },
       sections: dedupeSectionItems(sections),
     };

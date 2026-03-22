@@ -179,10 +179,36 @@
 
 .explore-section-head {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 18px;
   align-items: flex-start;
   margin-bottom: 16px;
+}
+
+.section-refresh-btn {
+  border: 1px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(231, 235, 241, 0.84);
+  border-radius: 999px;
+  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.section-refresh-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--panel-border-strong);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.section-refresh-btn:disabled {
+  opacity: 0.52;
+  cursor: default;
 }
 
 .explore-section-title {

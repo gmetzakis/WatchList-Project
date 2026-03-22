@@ -1,6 +1,34 @@
 import db from "../db/index.js";
 
+async function ensureDiscardedRecommendationsTable() {
+  await db.query(
+    `CREATE TABLE IF NOT EXISTS user_disliked_media (
+       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+       media_id INTEGER NOT NULL REFERENCES media(id) ON DELETE CASCADE,
+       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       PRIMARY KEY (user_id, media_id)
+     )`
+  );
+}
+
+export async function addDiscardedRecommendation(userId, mediaId) {
+  await ensureDiscardedRecommendationsTable();
+
+  const result = await db.query(
+    `INSERT INTO user_disliked_media (user_id, media_id)
+     VALUES ($1, $2)
+     ON CONFLICT (user_id, media_id)
+     DO UPDATE SET created_at = NOW()
+     RETURNING user_id, media_id, created_at`,
+    [userId, mediaId]
+  );
+
+  return result.rows[0];
+}
+
 export async function getRecommendationSnapshot() {
+  await ensureDiscardedRecommendationsTable();
+
   const usersResult = await db.query(
     `SELECT
        up.user_id,
@@ -41,9 +69,21 @@ export async function getRecommendationSnapshot() {
      ORDER BY um.user_id ASC, um.created_at DESC`
   );
 
+  const discardedResult = await db.query(
+    `SELECT
+       udm.user_id,
+       udm.created_at,
+       m.tmdb_id,
+       m.type
+     FROM user_disliked_media udm
+     JOIN media m ON m.id = udm.media_id
+     ORDER BY udm.user_id ASC, udm.created_at DESC`
+  );
+
   return {
     users: usersResult.rows,
     friendships: friendshipsResult.rows,
     interactions: interactionsResult.rows,
+    discarded: discardedResult.rows,
   };
 }

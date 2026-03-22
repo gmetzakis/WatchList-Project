@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { LayoutGrid, GalleryVertical, Heart, Eye, EyeOff, BookmarkPlus, BookmarkMinus, X } from "lucide-react";
+import { LayoutGrid, GalleryVertical, Heart, Eye, EyeOff, BookmarkPlus, BookmarkMinus, X, ThumbsDown, RotateCcw } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import api from "../api/axios.js";
@@ -37,6 +37,37 @@ function normalizeGenreNames(genres) {
   return genres
     .map((genre) => (typeof genre === "string" ? genre : genre?.name))
     .filter(Boolean);
+}
+
+async function fetchHydratedExploreSections(typeFilter) {
+  const res = await api.get("/explore/recommendations", {
+    params: { type: typeFilter },
+  });
+
+  const sections = Array.isArray(res.data?.sections) ? res.data.sections : [];
+
+  return Promise.all(
+    sections.map(async (section) => {
+      const hydratedItems = await Promise.all(
+        (Array.isArray(section.items) ? section.items : []).map(async (item) => {
+          const existingGenres = normalizeGenreNames(item.genres);
+          if (existingGenres.length > 0) {
+            return { ...item, genres: existingGenres };
+          }
+
+          try {
+            const detailsRes = await api.get(`/tmdb/details/${item.type}/${item.tmdb_id}`);
+            const fallbackGenres = normalizeGenreNames(detailsRes.data?.genres);
+            return { ...item, genres: fallbackGenres };
+          } catch {
+            return { ...item, genres: [] };
+          }
+        })
+      );
+
+      return { ...section, items: hydratedItems };
+    })
+  );
 }
 
 function EmblaCarousel({ items, renderCard }) {
@@ -119,6 +150,7 @@ export default function ExplorePage() {
   const [myMediaStatus, setMyMediaStatus] = useState({});
   const [actionPending, setActionPending] = useState(new Set());
   const [expandedCardKey, setExpandedCardKey] = useState(null);
+  const [refreshingSections, setRefreshingSections] = useState(new Set());
   const [payload, setPayload] = useState({
     sections: [],
   });
@@ -416,6 +448,80 @@ export default function ExplorePage() {
     }
   }
 
+  async function handleDiscardRecommendation(item, sectionKey) {
+    const key = mediaKey(item);
+
+    if (actionPending.has(key)) {
+      return;
+    }
+
+    if (isMobileView) {
+      setExpandedCardKey(null);
+    }
+
+    setPayload((prev) => ({
+      ...prev,
+      sections: prev.sections
+        .map((section) => {
+          if (section.key !== sectionKey) {
+            return section;
+          }
+
+          return {
+            ...section,
+            items: (section.items || []).filter((candidate) => mediaKey(candidate) !== key),
+          };
+        })
+        .filter((section) => (section.items || []).length > 0),
+    }));
+
+    setActionPending((prev) => new Set([...prev, key]));
+    try {
+      await api.post(`/explore/recommendations/${item.tmdb_id}/discard`, { type: item.type });
+      const nextSections = await fetchHydratedExploreSections(typeFilter);
+      setPayload({ sections: nextSections });
+    } catch {
+      // Keep optimistic remove if silent refresh fails.
+    } finally {
+      setActionPending((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
+  }
+
+  async function handleRefreshSection(section) {
+    const sectionKey = section?.key;
+    const sectionItems = Array.isArray(section?.items) ? section.items : [];
+
+    if (!sectionKey || sectionKey === "friendTrending" || sectionItems.length === 0 || refreshingSections.has(sectionKey)) {
+      return;
+    }
+
+    if (isMobileView) {
+      setExpandedCardKey(null);
+    }
+
+    setRefreshingSections((prev) => new Set([...prev, sectionKey]));
+    try {
+      await api.post("/explore/recommendations/discard-bulk", {
+        items: sectionItems.map((item) => ({ tmdbId: item.tmdb_id, type: item.type })),
+      });
+
+      const nextSections = await fetchHydratedExploreSections(typeFilter);
+      setPayload({ sections: nextSections });
+    } catch {
+      // Keep existing cards if bulk refresh fails.
+    } finally {
+      setRefreshingSections((prev) => {
+        const next = new Set(prev);
+        next.delete(sectionKey);
+        return next;
+      });
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
 
@@ -425,34 +531,7 @@ export default function ExplorePage() {
       setDetails("");
 
       try {
-        const res = await api.get("/explore/recommendations", {
-          params: { type: typeFilter },
-        });
-
-        const sections = Array.isArray(res.data?.sections) ? res.data.sections : [];
-
-        const hydratedSections = await Promise.all(
-          sections.map(async (section) => {
-            const hydratedItems = await Promise.all(
-              (Array.isArray(section.items) ? section.items : []).map(async (item) => {
-                const existingGenres = normalizeGenreNames(item.genres);
-                if (existingGenres.length > 0) {
-                  return { ...item, genres: existingGenres };
-                }
-
-                try {
-                  const detailsRes = await api.get(`/tmdb/details/${item.type}/${item.tmdb_id}`);
-                  const fallbackGenres = normalizeGenreNames(detailsRes.data?.genres);
-                  return { ...item, genres: fallbackGenres };
-                } catch {
-                  return { ...item, genres: [] };
-                }
-              })
-            );
-
-            return { ...section, items: hydratedItems };
-          })
-        );
+        const hydratedSections = await fetchHydratedExploreSections(typeFilter);
 
         if (!cancelled) {
           setPayload({
@@ -555,6 +634,17 @@ export default function ExplorePage() {
             <div className="control-icons explore-control-icons">
               {currentStatus.status === null && (
                 <>
+                  <span
+                    className={`watched-icon ${isPending ? "disabled" : ""}`}
+                    onClick={(e) => {
+                      stop(e);
+                      handleDiscardRecommendation(item, sectionKey);
+                    }}
+                    title="Not interested"
+                  >
+                    <ThumbsDown size={34} />
+                  </span>
+
                   <span
                     className={`watched-icon ${isPending ? "disabled" : ""}`}
                     onClick={(e) => {
@@ -723,6 +813,19 @@ export default function ExplorePage() {
                 <div>
                   <h2 className="explore-section-title">{section.title}</h2>
                 </div>
+
+                {section.key !== "friendTrending" && (
+                  <button
+                    type="button"
+                    className="section-refresh-btn"
+                    onClick={() => handleRefreshSection(section)}
+                    disabled={refreshingSections.has(section.key) || section.items.length === 0}
+                    title="Refresh this carousel"
+                  >
+                    <RotateCcw size={16} />
+                    <span>{refreshingSections.has(section.key) ? "Refreshing..." : "Refresh"}</span>
+                  </button>
+                )}
               </div>
 
               {viewMode === "grid" && !isMobileView && (

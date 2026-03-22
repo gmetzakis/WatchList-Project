@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
-import { BookmarkMinus, BookmarkPlus, Eye, EyeOff, Heart, Trash, X } from "lucide-react";
+import { BookmarkMinus, BookmarkPlus, Eye, EyeOff, Heart, RotateCcw, ThumbsDown, Trash, X } from "lucide-react";
 import api from "../api/axios.js";
 import "../styles/home.css";
 import "../styles/media-card.css";
@@ -64,6 +64,16 @@ function upsertByKey(list, item) {
   const key = mediaKey(item);
   const next = [item, ...list.filter((entry) => mediaKey(entry) !== key)];
   return pickLatest(next);
+}
+
+function flattenRecommendationSections(recommendationSections) {
+  return Array.from(
+    new Map(
+      recommendationSections
+        .flatMap((section) => section.items || [])
+        .map((item) => [`${item.type}-${item.tmdb_id}`, item])
+    ).values()
+  ).slice(0, MAX_ITEMS_PER_SECTION);
 }
 
 function EmblaCarousel({ items, renderCard }) {
@@ -144,6 +154,7 @@ export default function HomePage() {
     return window.matchMedia("(max-width: 760px)").matches;
   });
   const [expandedCardKey, setExpandedCardKey] = useState(null);
+  const [isRefreshingHomeRecommendations, setIsRefreshingHomeRecommendations] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 760px)");
@@ -320,6 +331,57 @@ export default function HomePage() {
     });
   }
 
+  async function refreshHomeRecommendations() {
+    try {
+      const response = await api.get("/explore/recommendations", { params: { type: "all" } });
+      const recommendationSections = Array.isArray(response.data?.sections) ? response.data.sections : [];
+      setRecommendationItems(flattenRecommendationSections(recommendationSections));
+    } catch {
+      // Keep current items if refresh fails.
+    }
+  }
+
+  async function handleDiscardRecommendation(item) {
+    const key = mediaKey(item);
+
+    await withPending(item, async () => {
+      if (isMobileView) {
+        setExpandedCardKey(null);
+      }
+
+      setRecommendationItems((prev) => prev.filter((entry) => mediaKey(entry) !== key));
+
+      try {
+        await api.post(`/explore/recommendations/${item.tmdb_id}/discard`, { type: item.type });
+      } finally {
+        await refreshHomeRecommendations();
+      }
+    });
+  }
+
+  async function handleRefreshHomeRecommendationsCarousel() {
+    if (isRefreshingHomeRecommendations || recommendationItems.length === 0) {
+      return;
+    }
+
+    if (isMobileView) {
+      setExpandedCardKey(null);
+    }
+
+    setIsRefreshingHomeRecommendations(true);
+    try {
+      await api.post("/explore/recommendations/discard-bulk", {
+        items: recommendationItems.map((item) => ({ tmdbId: item.tmdb_id, type: item.type })),
+      });
+
+      await refreshHomeRecommendations();
+    } catch {
+      // Keep existing cards if refresh fails.
+    } finally {
+      setIsRefreshingHomeRecommendations(false);
+    }
+  }
+
   function renderCard(item, sectionKey) {
     const itemKey = mediaKey(item);
     const cardIdentifier = `${sectionKey}-${itemKey}`;
@@ -476,6 +538,17 @@ export default function HomePage() {
                         className={`watched-icon ${isPending ? "disabled" : ""}`}
                         onClick={(e) => {
                           stop(e);
+                          handleDiscardRecommendation(item);
+                        }}
+                        title="Not interested"
+                      >
+                        <ThumbsDown size={34} />
+                      </span>
+
+                      <span
+                        className={`watched-icon ${isPending ? "disabled" : ""}`}
+                        onClick={(e) => {
+                          stop(e);
                           handleAddToWatchlist(item);
                         }}
                         title="Add to Watchlist"
@@ -589,13 +662,7 @@ export default function HomePage() {
         const watchlistLatest = pickLatest(watchlistRaw, ["added_at"]);
         const favoritesLatest = pickLatest(favoritesRaw, ["favorited_at"]);
 
-        const recommendations = Array.from(
-          new Map(
-            recommendationSections
-              .flatMap((section) => section.items || [])
-              .map((item) => [`${item.type}-${item.tmdb_id}`, item])
-          ).values()
-        ).slice(0, MAX_ITEMS_PER_SECTION);
+        const recommendations = flattenRecommendationSections(recommendationSections);
 
         const nextStatus = {};
 
@@ -673,6 +740,19 @@ export default function HomePage() {
             <section key={section.key} className="home-section-shell">
               <div className="home-section-head">
                 <h2 className="home-section-title">{section.title}</h2>
+
+                {section.key === "recommendations" && (
+                  <button
+                    type="button"
+                    className="section-refresh-btn"
+                    onClick={handleRefreshHomeRecommendationsCarousel}
+                    disabled={isRefreshingHomeRecommendations || section.items.length === 0}
+                    title="Refresh this carousel"
+                  >
+                    <RotateCcw size={16} />
+                    <span>{isRefreshingHomeRecommendations ? "Refreshing..." : "Refresh"}</span>
+                  </button>
+                )}
               </div>
 
               {section.items.length === 0 ? (

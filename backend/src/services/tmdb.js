@@ -63,6 +63,29 @@ export async function discoverTMDBByGenres(type, genreIds = []) {
   }));
 }
 
+export async function discoverTMDBPopular(type, pageStart = 1, pageCount = 2) {
+  const endpoint = type === "series" ? "tv" : "movie";
+  const pages = Array.from({ length: Math.max(1, pageCount) }, (_, index) => pageStart + index);
+
+  const responses = await Promise.all(
+    pages.map(async (page) => {
+      const url = `${TMDB_BASE}/discover/${endpoint}?api_key=${API_KEY}&language=en-US&include_adult=false&sort_by=popularity.desc&page=${page}&vote_count.gte=50`;
+      const { data } = await fetchWithRetry(url, { timeout: 5000 });
+      return data.results || [];
+    })
+  );
+
+  return responses.flat().map((item) => ({
+    id: item.id,
+    type,
+    title: item.title || item.name,
+    poster_path: item.poster_path,
+    release_year: (item.release_date || item.first_air_date)?.slice(0, 4) || null,
+    vote_average: item.vote_average || 0,
+    genre_ids: item.genre_ids || [],
+  }));
+}
+
 export async function searchTMDBByPerson(query) {
   const personSearchUrl = `${TMDB_BASE}/search/person?api_key=${API_KEY}&language=en-US&query=${encodeURIComponent(query)}&page=1`;
   const { data } = await axios.get(personSearchUrl);
