@@ -419,7 +419,7 @@ export default function PersonDetailsPage() {
   }
 
   return (
-    <div className="person-details-container">
+    <div className={`person-details-container${isMobileView ? " is-mobile-view" : ""}`}>
       <button className="details-back" onClick={() => navigate(-1)}>
         {"← Back"}
       </button>

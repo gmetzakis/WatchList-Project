@@ -80,6 +80,31 @@
   pointer-events: auto;
 }
 
+@media (max-width: 760px) {
+  .person-details-container.is-mobile-view .media-card:hover,
+  .person-details-container.is-mobile-view .embla-container .media-card:hover {
+    transform: none;
+  }
+
+  .person-details-container.is-mobile-view .media-card:hover .media-card-img,
+  .person-details-container.is-mobile-view .embla-container .media-card:hover .media-card-img {
+    transform: none;
+    filter: none;
+  }
+
+  .person-details-container.is-mobile-view .media-card:not(.mobile-card-expanded):hover .hover-controls,
+  .person-details-container.is-mobile-view .embla-container .media-card:not(.mobile-card-expanded):hover .hover-controls {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .person-details-container.is-mobile-view .media-card.mobile-card-expanded .hover-controls,
+  .person-details-container.is-mobile-view .media-card.mobile-card-expanded:hover .hover-controls {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
 @media (hover: none), (pointer: coarse) {
   .person-details-container .media-card.mobile-card-expanded .hover-controls,
   .person-details-container .media-card.mobile-card-expanded:hover .hover-controls {
