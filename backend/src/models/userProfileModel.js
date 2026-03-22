@@ -27,6 +27,18 @@ export async function getProfileByUserId(userId) {
   return result.rows[0];
 }
 
+export async function findProfileByUsername(username) {
+  const result = await db.query(
+    `SELECT user_id, username
+     FROM user_profiles
+     WHERE LOWER(username) = LOWER($1)
+     LIMIT 1`,
+    [username]
+  );
+
+  return result.rows[0] || null;
+}
+
 export async function updateProfile(userId, fields) {
   const keys = Object.keys(fields);
   if (keys.length === 0) return null;

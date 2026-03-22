@@ -1,8 +1,24 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { findUserById, findUserByEmail, createUser } from "../models/userModel.js";
-import { getProfileByUserId, createProfile } from "../models/userProfileModel.js";
+import { getProfileByUserId, createProfile, findProfileByUsername } from "../models/userProfileModel.js";
 import db from "../db/index.js";
+
+export async function checkUsernameAvailability(req, res) {
+  try {
+    const username = (req.query.username || "").trim();
+
+    if (!username) {
+      return res.status(400).json({ error: "Username is required" });
+    }
+
+    const existing = await findProfileByUsername(username);
+    return res.json({ available: !existing });
+  } catch (err) {
+    console.error("Username availability error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}
 
 export async function register(req, res) {
   try {  
@@ -20,9 +36,24 @@ export async function register(req, res) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
+    if (String(password).length < 8) {
+      return res.status(400).json({ error: "Password must be at least 8 characters" });
+    }
+
+    const maxYearOfBirth = new Date().getFullYear() - 10;
+    const numericYearOfBirth = Number(yearOfBirth);
+    if (!Number.isInteger(numericYearOfBirth) || numericYearOfBirth > maxYearOfBirth) {
+      return res.status(400).json({ error: `Year of birth must be ${maxYearOfBirth} or earlier` });
+    }
+
     const existing = await findUserByEmail(email);
     if (existing) {
       return res.status(400).json({ error: "Email already in use" });
+    }
+
+    const existingUsername = await findProfileByUsername(username);
+    if (existingUsername) {
+      return res.status(400).json({ error: "Username already taken" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -36,7 +67,7 @@ export async function register(req, res) {
       firstName,
       lastName,
       username,
-      yearOfBirth,
+      yearOfBirth: numericYearOfBirth,
       country
     });
 

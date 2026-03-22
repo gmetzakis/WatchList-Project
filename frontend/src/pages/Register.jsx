@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios.js";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const maxYearOfBirth = new Date().getFullYear() - 10;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -13,6 +14,57 @@ export default function RegisterPage() {
   const [yearOfBirth, setYearOfBirth] = useState("");
   const [country, setCountry] = useState("");
   const [loading, setLoading] = useState(false);
+  const [usernameStatus, setUsernameStatus] = useState("idle");
+  const [usernameStatusMessage, setUsernameStatusMessage] = useState("");
+  const isPasswordValid = password.length >= 8;
+  const canSubmitCredentials = isPasswordValid && usernameStatus === "available";
+
+  useEffect(() => {
+    const trimmed = username.trim();
+
+    if (!trimmed) {
+      setUsernameStatus("idle");
+      setUsernameStatusMessage("");
+      return;
+    }
+
+    if (trimmed.length < 3) {
+      setUsernameStatus("error");
+      setUsernameStatusMessage("Username must be at least 3 characters");
+      return;
+    }
+
+    setUsernameStatus("checking");
+    setUsernameStatusMessage("Checking username...");
+
+    let isActive = true;
+    const timeoutId = setTimeout(async () => {
+      try {
+        const res = await api.get("/auth/username-availability", {
+          params: { username: trimmed },
+        });
+
+        if (!isActive) return;
+
+        if (res.data?.available) {
+          setUsernameStatus("available");
+          setUsernameStatusMessage("Username is available");
+        } else {
+          setUsernameStatus("taken");
+          setUsernameStatusMessage("Username is already taken");
+        }
+      } catch {
+        if (!isActive) return;
+        setUsernameStatus("error");
+        setUsernameStatusMessage("Could not check username right now");
+      }
+    }, 350);
+
+    return () => {
+      isActive = false;
+      clearTimeout(timeoutId);
+    };
+  }, [username]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -26,13 +78,38 @@ export default function RegisterPage() {
         return;
       }
 
+      if (password.length < 8) {
+        setError("Password must be at least 8 characters");
+        setLoading(false);
+        return;
+      }
+
+      if (username.trim().length < 3) {
+        setError("Username must be at least 3 characters");
+        setLoading(false);
+        return;
+      }
+
+      if (usernameStatus === "taken") {
+        setError("Username is already taken");
+        setLoading(false);
+        return;
+      }
+
+      const numericYearOfBirth = parseInt(yearOfBirth, 10);
+      if (!Number.isInteger(numericYearOfBirth) || numericYearOfBirth > maxYearOfBirth) {
+        setError(`Year of Birth must be ${maxYearOfBirth} or earlier`);
+        setLoading(false);
+        return;
+      }
+
       const res = await api.post("/auth/register", {
         email,
         password,
         firstName,
         lastName,
         username,
-        yearOfBirth: parseInt(yearOfBirth),
+        yearOfBirth: numericYearOfBirth,
         country
       });
 
@@ -81,8 +158,14 @@ export default function RegisterPage() {
           className="auth-input"
           value={password}
           onChange={e => setPassword(e.target.value)}
+          minLength={8}
           required
         />
+        {password.length > 0 && (
+          <p className={`auth-field-hint auth-password-hint ${isPasswordValid ? "success" : "error"}`}>
+            {isPasswordValid ? "Password length is valid" : "Password must be at least 8 characters"}
+          </p>
+        )}
 
         {/* FIRST NAME */}
         <input
@@ -113,6 +196,13 @@ export default function RegisterPage() {
           onChange={e => setUsername(e.target.value)}
           required
         />
+        {usernameStatusMessage && (
+          <p
+            className={`auth-field-hint auth-username-hint ${usernameStatus === "available" ? "success" : ""} ${usernameStatus === "taken" || usernameStatus === "error" ? "error" : ""}`}
+          >
+            {usernameStatusMessage}
+          </p>
+        )}
 
         {/* YEAR OF BIRTH */}
         <input
@@ -120,7 +210,7 @@ export default function RegisterPage() {
           placeholder="Year of Birth"
           className="auth-input"
           min="1900"
-          max={new Date().getFullYear()}
+          max={maxYearOfBirth}
           value={yearOfBirth}
           onChange={e => setYearOfBirth(e.target.value)}
           required
@@ -136,7 +226,7 @@ export default function RegisterPage() {
           required
         />
 
-        <button className="auth-btn" type="submit" disabled={loading}>
+        <button className="auth-btn" type="submit" disabled={loading || !canSubmitCredentials}>
           {loading ? "Registering..." : "Register"}
         </button>
       </form>
