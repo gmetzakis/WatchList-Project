@@ -183,6 +183,24 @@
     display: none;
   }
 
+  .friend-embla-lock {
+    overflow-x: hidden;
+  }
+
+  .friend-embla-lock .embla-viewport {
+    overflow-x: hidden;
+  }
+
+  .friend-embla-lock .embla-container {
+    gap: 10px;
+    padding: 0 4px;
+  }
+
+  .friend-embla-lock .embla-slide {
+    flex: 0 0 156px;
+    min-width: 156px;
+  }
+
   .mobile-card-backdrop {
     position: fixed;
     inset: 0;
@@ -585,5 +603,32 @@
 
   .media-card.mobile-card-expanded .control-icons .disabled {
     opacity: 0.4;
+  }
+}
+
+@media (max-width: 760px), (hover: none) and (pointer: coarse) {
+  .friends-shell,
+  .friends-detail-panel,
+  .friend-library-section,
+  .friend-embla-lock,
+  .friend-embla-lock .embla-viewport {
+    overflow-x: hidden !important;
+    max-width: 100% !important;
+  }
+
+  .friend-embla-lock .embla-container {
+    padding: 0 4px !important;
+    gap: 10px !important;
+  }
+
+  .friend-embla-lock .embla-slide {
+    flex: 0 0 156px !important;
+    min-width: 156px !important;
+    max-width: 156px !important;
+  }
+
+  .friend-embla-lock .friend-media-card {
+    width: 100% !important;
+    min-width: 0 !important;
   }
 }

@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 import api from "../api/axios.js";
-import { Bookmark, BookmarkCheck, Eye, CheckCheck, Heart } from "lucide-react";
+import { Bookmark, BookmarkCheck, Eye, CheckCheck, Heart, Minus } from "lucide-react";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -131,6 +133,25 @@ function MediaShelf({
   page,
   setPage,
 }) {
+  const [isMobileView, setIsMobileView] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 760px)").matches;
+  });
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const handleViewportChange = (event) => {
+      setIsMobileView(event.matches);
+    };
+
+    setIsMobileView(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleViewportChange);
+    };
+  }, []);
+
   let filtered = items;
 
   if (typeFilter !== "all") filtered = filtered.filter((i) => i.type === typeFilter);
@@ -152,89 +173,96 @@ function MediaShelf({
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const safePage = Math.min(page, totalPages);
   const paged = filtered.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
+  const displayItems = isMobileView ? filtered : paged;
 
   if (!filtered.length) {
     return <p className="friends-empty friends-library-empty">{emptyText}</p>;
   }
 
+  function renderMediaCard(item) {
+    const key = `${item.type}-${item.tmdb_id}`;
+    const myStatus = myMediaStatus[key] || {};
+    const isPending = actionPending.has(key);
+    const posterUrl = item.poster_path ? `https://image.tmdb.org/t/p/w300${item.poster_path}` : null;
+    const mediaLink = `/media/${item.type}/${item.tmdb_id}`;
+    const watchedLabel = formatDateLabel(item.watched_at);
+    const addedLabel = formatDateLabel(item.added_at);
+    const isInWatchlist = myStatus.status === "watchlist";
+    const isWatched = myStatus.status === "watched";
+    const isFavorite = myStatus.isFavorite;
+
+    return (
+      <div key={key} className="friend-media-card">
+        <div className="friend-media-poster-wrap">
+          <Link to={mediaLink} className="friend-media-poster-link">
+            {posterUrl ? (
+              <img className="friend-media-poster" src={posterUrl} alt={item.title} />
+            ) : (
+              <div className="friend-media-fallback">{item.title?.slice(0, 1) || "?"}</div>
+            )}
+          </Link>
+          {Number.isInteger(item.rating) && <span className="friend-media-rating">{item.rating}/10</span>}
+          <div className="friend-media-overlay">
+            {!isWatched && !isInWatchlist && (
+              <button className="friend-overlay-btn" title="Add to Watchlist" disabled={isPending} onClick={() => onAddWatchlist(item)}>
+                <Bookmark size={18} />
+              </button>
+            )}
+            {isInWatchlist && (
+              <button className="friend-overlay-btn active" title="In your Watchlist" disabled>
+                <BookmarkCheck size={18} />
+              </button>
+            )}
+            {!isWatched && (
+              <button className="friend-overlay-btn" title="Mark as Watched" disabled={isPending} onClick={() => onMarkWatched(item)}>
+                <Eye size={18} />
+              </button>
+            )}
+            {isWatched && (
+              <button className="friend-overlay-btn active" title="Already Watched" disabled>
+                <CheckCheck size={18} />
+              </button>
+            )}
+            {isWatched && (
+              <button
+                className={`friend-overlay-btn${isFavorite ? " favorite" : ""}`}
+                title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+                disabled={isPending}
+                onClick={() => onToggleFavorite(item)}
+              >
+                <Heart size={18} fill={isFavorite ? "currentColor" : "none"} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="friend-media-copy">
+          <h4 className="friend-media-title">
+            <Link to={mediaLink} className="friend-media-title-link">{item.title}</Link>
+          </h4>
+          <p className="friend-media-meta">
+            {item.type === "movie" ? "Movie" : "Series"}
+            {item.release_year ? ` • ${item.release_year}` : ""}
+          </p>
+          {watchedLabel && <p className="friend-media-submeta">Watched {watchedLabel}</p>}
+          {!watchedLabel && addedLabel && <p className="friend-media-submeta">Added {addedLabel}</p>}
+          {item.is_favorite && <span className="friend-media-pill">Favorite</span>}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
-      <div className="friend-library-grid">
-        {paged.map((item) => {
-          const key = `${item.type}-${item.tmdb_id}`;
-          const myStatus = myMediaStatus[key] || {};
-          const isPending = actionPending.has(key);
-          const posterUrl = item.poster_path ? `https://image.tmdb.org/t/p/w300${item.poster_path}` : null;
-          const mediaLink = `/media/${item.type}/${item.tmdb_id}`;
-          const watchedLabel = formatDateLabel(item.watched_at);
-          const addedLabel = formatDateLabel(item.added_at);
-          const isInWatchlist = myStatus.status === "watchlist";
-          const isWatched = myStatus.status === "watched";
-          const isFavorite = myStatus.isFavorite;
+      {isMobileView ? (
+        <FriendsEmblaCarousel items={displayItems} renderCard={renderMediaCard} />
+      ) : (
+        <div className="friend-library-grid">
+          {displayItems.map((item) => renderMediaCard(item))}
+        </div>
+      )}
 
-          return (
-            <div key={key} className="friend-media-card">
-              <div className="friend-media-poster-wrap">
-                <Link to={mediaLink} className="friend-media-poster-link">
-                  {posterUrl ? (
-                    <img className="friend-media-poster" src={posterUrl} alt={item.title} />
-                  ) : (
-                    <div className="friend-media-fallback">{item.title?.slice(0, 1) || "?"}</div>
-                  )}
-                </Link>
-                {Number.isInteger(item.rating) && <span className="friend-media-rating">{item.rating}/10</span>}
-                <div className="friend-media-overlay">
-                  {!isWatched && !isInWatchlist && (
-                    <button className="friend-overlay-btn" title="Add to Watchlist" disabled={isPending} onClick={() => onAddWatchlist(item)}>
-                      <Bookmark size={18} />
-                    </button>
-                  )}
-                  {isInWatchlist && (
-                    <button className="friend-overlay-btn active" title="In your Watchlist" disabled>
-                      <BookmarkCheck size={18} />
-                    </button>
-                  )}
-                  {!isWatched && (
-                    <button className="friend-overlay-btn" title="Mark as Watched" disabled={isPending} onClick={() => onMarkWatched(item)}>
-                      <Eye size={18} />
-                    </button>
-                  )}
-                  {isWatched && (
-                    <button className="friend-overlay-btn active" title="Already Watched" disabled>
-                      <CheckCheck size={18} />
-                    </button>
-                  )}
-                  {isWatched && (
-                    <button
-                      className={`friend-overlay-btn${isFavorite ? " favorite" : ""}`}
-                      title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-                      disabled={isPending}
-                      onClick={() => onToggleFavorite(item)}
-                    >
-                      <Heart size={18} fill={isFavorite ? "currentColor" : "none"} />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div className="friend-media-copy">
-                <h4 className="friend-media-title">
-                  <Link to={mediaLink} className="friend-media-title-link">{item.title}</Link>
-                </h4>
-                <p className="friend-media-meta">
-                  {item.type === "movie" ? "Movie" : "Series"}
-                  {item.release_year ? ` • ${item.release_year}` : ""}
-                </p>
-                {watchedLabel && <p className="friend-media-submeta">Watched {watchedLabel}</p>}
-                {!watchedLabel && addedLabel && <p className="friend-media-submeta">Added {addedLabel}</p>}
-                {item.is_favorite && <span className="friend-media-pill">Favorite</span>}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {totalPages > 1 && (
+      {!isMobileView && totalPages > 1 && (
         <div className="friend-pagination">
           <button className="friend-page-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage === 1}>
             ‹ Prev
@@ -246,6 +274,76 @@ function MediaShelf({
         </div>
       )}
     </>
+  );
+}
+
+function FriendsEmblaCarousel({ items, renderCard }) {
+  const [autoplayEnabled, setAutoplayEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return !window.matchMedia("(max-width: 760px)").matches;
+  });
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const handleViewportChange = (event) => {
+      setAutoplayEnabled(!event.matches);
+    };
+
+    setAutoplayEnabled(!mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleViewportChange);
+    };
+  }, []);
+
+  const plugins = useMemo(
+    () => autoplayEnabled
+      ? [Autoplay({ delay: 4000, stopOnInteraction: true, stopOnMouseEnter: true })]
+      : [],
+    [autoplayEnabled]
+  );
+
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: false,
+      align: "start",
+      slidesToScroll: 2,
+      breakpoints: {
+        "(min-width: 768px)": { slidesToScroll: 3 },
+        "(min-width: 1024px)": { slidesToScroll: 4 },
+      },
+    },
+    plugins
+  );
+
+  const scrollPrev = () => {
+    if (emblaApi) emblaApi.scrollPrev();
+  };
+  const scrollNext = () => {
+    if (emblaApi) emblaApi.scrollNext();
+  };
+
+  return (
+    <div className="embla-carousel friend-embla-lock">
+      <button className="embla-arrow left" onClick={scrollPrev}>
+        ‹
+      </button>
+
+      <div className="embla-viewport" ref={emblaRef}>
+        <div className="embla-container">
+          {items.map((item) => (
+            <div key={`${item.type}-${item.tmdb_id}`} className="embla-slide">
+              {renderCard(item)}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button className="embla-arrow right" onClick={scrollNext}>
+        ›
+      </button>
+    </div>
   );
 }
 
@@ -689,15 +787,17 @@ export default function FriendsPage() {
                         {selectedFriendAge ? ` • ${selectedFriendAge}` : ""}
                       </p>
                     </div>
-                  </div>
 
-                  <button
-                    className="friends-danger-btn"
-                    type="button"
-                    onClick={() => handleRemoveFriend(selectedFriend.user_id, selectedFriend.username)}
-                  >
-                    Remove Friend
-                  </button>
+                    <button
+                      className="friend-remove-icon-btn"
+                      type="button"
+                      title="Remove Friend"
+                      aria-label="Remove Friend"
+                      onClick={() => handleRemoveFriend(selectedFriend.user_id, selectedFriend.username)}
+                    >
+                      <Minus size={16} />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="friend-stats-grid">
@@ -742,6 +842,30 @@ export default function FriendsPage() {
                       <h3 className="friends-section-title">{activeShelf.label}</h3>
                     </div>
                     <span className="friends-count-pill">{activeShelf.items.length}</span>
+                  </div>
+
+                  <div className="friend-shelf-tabs" role="tablist" aria-label="Friend library sections">
+                    <button
+                      type="button"
+                      className={`friend-shelf-tab ${selectedShelf === "watched" ? "active" : ""}`}
+                      onClick={() => { setSelectedShelf("watched"); setFriendTypeFilter("all"); setFriendGenreFilter("all"); setFriendPage(1); }}
+                    >
+                      <CheckCheck size={14} /> Watched
+                    </button>
+                    <button
+                      type="button"
+                      className={`friend-shelf-tab ${selectedShelf === "favorites" ? "active" : ""}`}
+                      onClick={() => { setSelectedShelf("favorites"); setFriendTypeFilter("all"); setFriendGenreFilter("all"); setFriendPage(1); }}
+                    >
+                      <Heart size={14} /> Favorites
+                    </button>
+                    <button
+                      type="button"
+                      className={`friend-shelf-tab ${selectedShelf === "watchlist" ? "active" : ""}`}
+                      onClick={() => { setSelectedShelf("watchlist"); setFriendTypeFilter("all"); setFriendGenreFilter("all"); setFriendPage(1); }}
+                    >
+                      <Bookmark size={14} /> Watchlist
+                    </button>
                   </div>
 
                   <div className="friend-filter-bar">
