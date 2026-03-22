@@ -191,6 +191,20 @@
     touch-action: none;
   }
 
+  .search-page-shell .media-card:not(.mobile-card-expanded) {
+    transform: none !important;
+  }
+
+  .search-page-shell .media-card:not(.mobile-card-expanded) .media-card-img {
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .search-page-shell .media-card:not(.mobile-card-expanded) .hover-controls {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
   /* Neutralize Embla's JS-applied transform — without this, position:fixed
      on a child is relative to the transformed container, not the viewport */
   .embla-container:has(.mobile-card-expanded) {

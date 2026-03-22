@@ -9,6 +9,10 @@ export default function Header() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [accountPinned, setAccountPinned] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobileNav, setIsMobileNav] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 980px)").matches;
+  });
   const [query, setQuery] = useState("");
   const [friendNotifications, setFriendNotifications] = useState({
     incomingPending: 0,
@@ -26,6 +30,24 @@ export default function Header() {
   const friendsLinkState = !isFriendsRoute && friendNotifications.total > 0
     ? { friendNotificationSnapshot: friendNotifications }
     : null;
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 980px)");
+    const handleViewportChange = (event) => {
+      setIsMobileNav(event.matches);
+      if (event.matches) {
+        setSearchOpen(false);
+        setQuery("");
+      }
+    };
+
+    setIsMobileNav(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleViewportChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleViewportChange);
+    };
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -220,53 +242,57 @@ export default function Header() {
 
         <nav ref={navRef} className={`cinema-nav ${mobileMenuOpen ? "open" : ""}`}>
 
-          <div className={`search-wrapper ${searchOpen ? "open" : ""}`} ref={inputRef}>
-            <FiSearch
-              className="search-icon"
-              onClick={toggleSearch}
-            />
+          {isMobileNav ? (
+            <Link to="/search" onClick={() => setMobileMenuOpen(false)}>Search</Link>
+          ) : (
+            <div className={`search-wrapper ${searchOpen ? "open" : ""}`} ref={inputRef}>
+              <FiSearch
+                className="search-icon"
+                onClick={toggleSearch}
+              />
 
-            {searchOpen && (
-              <div className="header-search-panel">
-                <input
-                  autoFocus
-                  type="text"
-                  className="search-input"
-                  placeholder={searchMode === "people" ? "Search actor or director..." : "Search movies or series..."}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                />
+              {searchOpen && (
+                <div className="header-search-panel">
+                  <input
+                    autoFocus
+                    type="text"
+                    className="search-input"
+                    placeholder={searchMode === "people" ? "Search actor or director..." : "Search movies or series..."}
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                  />
 
-                <div className="header-search-actions-row">
-                  <div className="header-search-mode-switch" role="tablist" aria-label="Header search mode">
+                  <div className="header-search-actions-row">
+                    <div className="header-search-mode-switch" role="tablist" aria-label="Header search mode">
+                      <button
+                        type="button"
+                        className={`header-search-mode-btn ${searchMode === "titles" ? "active" : ""}`}
+                        onClick={() => setSearchMode("titles")}
+                      >
+                        Titles
+                      </button>
+                      <button
+                        type="button"
+                        className={`header-search-mode-btn ${searchMode === "people" ? "active" : ""}`}
+                        onClick={() => setSearchMode("people")}
+                      >
+                        Actor / Director
+                      </button>
+                    </div>
+
                     <button
                       type="button"
-                      className={`header-search-mode-btn ${searchMode === "titles" ? "active" : ""}`}
-                      onClick={() => setSearchMode("titles")}
+                      className="header-search-submit"
+                      onClick={runHeaderSearch}
                     >
-                      Titles
-                    </button>
-                    <button
-                      type="button"
-                      className={`header-search-mode-btn ${searchMode === "people" ? "active" : ""}`}
-                      onClick={() => setSearchMode("people")}
-                    >
-                      Actor / Director
+                      Search
                     </button>
                   </div>
-
-                  <button
-                    type="button"
-                    className="header-search-submit"
-                    onClick={runHeaderSearch}
-                  >
-                    Search
-                  </button>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           <Link to="/explore" onClick={() => setMobileMenuOpen(false)}>Explore</Link>
           <Link to="/watched" onClick={() => setMobileMenuOpen(false)}>Watched</Link>

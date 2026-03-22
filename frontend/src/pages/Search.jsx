@@ -156,6 +156,13 @@ export default function SearchPage() {
     e.stopPropagation();
   }
 
+  function closeExpandedCard() {
+    setExpandedCardKey(null);
+    if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+  }
+
   function updateItem(itemKey, updates) {
     setResults(prev =>
       prev.map(item =>
@@ -235,22 +242,28 @@ export default function SearchPage() {
   // ---------------------------
   return (
     <div
-      className="page-container"
+      className="page-container search-page-shell"
       onClick={(e) => {
         if (isMobileView && expandedCardKey && e.target === e.currentTarget) {
-          setExpandedCardKey(null);
+          closeExpandedCard();
         }
       }}
     >
 
       <form className="search-bar" onSubmit={handleSearch}>
-        <input
-          type="text"
-          placeholder={searchMode === "people" ? "Search actor or director..." : "Search movies or series..."}
-          className="searchpage-input"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+        <div className="search-input-wrap">
+          <input
+            type="text"
+            placeholder={searchMode === "people" ? "Search actor or director..." : "Search movies or series..."}
+            className="searchpage-input"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+
+          <button className="search-inline-btn" type="submit" aria-label="Search">
+            Search
+          </button>
+        </div>
 
         <div className="search-mode-switch" role="tablist" aria-label="Search mode">
           <button
@@ -322,7 +335,7 @@ export default function SearchPage() {
                     className="mobile-card-close"
                     onClick={(e) => {
                       stop(e);
-                      setExpandedCardKey(null);
+                      closeExpandedCard();
                     }}
                     aria-label="Close expanded card"
                   >
@@ -444,7 +457,7 @@ export default function SearchPage() {
       {isMobileView && expandedCardKey && (
         <div
           className="mobile-card-backdrop"
-          onClick={() => setExpandedCardKey(null)}
+          onClick={closeExpandedCard}
         />
       )}
     </div>
