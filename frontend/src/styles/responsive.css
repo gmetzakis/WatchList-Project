@@ -275,47 +275,48 @@
   }
 
   .media-card.mobile-card-expanded .control-icons {
-    left: 10px;
+    left: 14px;
     right: auto;
-    bottom: 10px;
-    flex-direction: row;
-    gap: 10px;
+    bottom: 14px;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
   }
 
   .media-card.mobile-card-expanded .hover-title {
-    padding: 14px 14px 76px;
+    padding: 14px 14px 70px;
   }
 
   .media-card.mobile-card-expanded .hover-title-text {
-    font-size: 1.85rem;
-    line-height: 1.05;
+    font-size: 1.25rem;
+    line-height: 1.2;
     padding-right: 44px;
   }
 
   .media-card.mobile-card-expanded .hover-year-text {
-    margin-top: 6px;
-    font-size: 1.05rem;
+    margin-top: 4px;
+    font-size: 0.95rem;
   }
 
   .media-card.mobile-card-expanded .hover-genres-text,
   .media-card.mobile-card-expanded .explore-hover-genres,
   .media-card.mobile-card-expanded .explore-hover-reason,
   .media-card.mobile-card-expanded .explore-hover-score {
-    margin-top: 8px;
-    font-size: 0.92rem;
+    margin-top: 6px;
+    font-size: 0.82rem;
     line-height: 1.35;
   }
 
   .media-card.mobile-card-expanded .rating-inline {
-    margin-top: 10px;
+    margin-top: 8px;
   }
 
   .media-card.mobile-card-expanded .rating-inline .star {
-    font-size: 23px;
+    font-size: 18px;
   }
 
   .media-card.mobile-card-expanded .rating-inline .rating-label {
-    font-size: 1.35rem;
+    font-size: 0.95rem;
   }
 
   .media-card.mobile-card-expanded .control-icons .favorite-icon,
@@ -539,47 +540,48 @@
   }
 
   .media-card.mobile-card-expanded .control-icons {
-    left: 10px;
+    left: 14px;
     right: auto;
-    bottom: 10px;
-    flex-direction: row;
-    gap: 10px;
+    bottom: 14px;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
   }
 
   .media-card.mobile-card-expanded .hover-title {
-    padding: 14px 14px 76px;
+    padding: 14px 14px 70px;
   }
 
   .media-card.mobile-card-expanded .hover-title-text {
-    font-size: 1.85rem;
-    line-height: 1.05;
+    font-size: 1.25rem;
+    line-height: 1.2;
     padding-right: 44px;
   }
 
   .media-card.mobile-card-expanded .hover-year-text {
-    margin-top: 6px;
-    font-size: 1.05rem;
+    margin-top: 4px;
+    font-size: 0.95rem;
   }
 
   .media-card.mobile-card-expanded .hover-genres-text,
   .media-card.mobile-card-expanded .explore-hover-genres,
   .media-card.mobile-card-expanded .explore-hover-reason,
   .media-card.mobile-card-expanded .explore-hover-score {
-    margin-top: 8px;
-    font-size: 0.92rem;
+    margin-top: 6px;
+    font-size: 0.82rem;
     line-height: 1.35;
   }
 
   .media-card.mobile-card-expanded .rating-inline {
-    margin-top: 10px;
+    margin-top: 8px;
   }
 
   .media-card.mobile-card-expanded .rating-inline .star {
-    font-size: 23px;
+    font-size: 18px;
   }
 
   .media-card.mobile-card-expanded .rating-inline .rating-label {
-    font-size: 1.35rem;
+    font-size: 0.95rem;
   }
 
   .media-card.mobile-card-expanded .control-icons .favorite-icon,
