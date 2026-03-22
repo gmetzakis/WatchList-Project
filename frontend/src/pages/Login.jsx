@@ -21,7 +21,7 @@ export default function LoginPage() {
       }
 
       localStorage.setItem("token", res.data.token);
-      navigate("/watched");
+      navigate("/");
     } catch (err) {
         if (err.response && err.response.data) {
             const backendError = err.response.data.error || err.response.data.message;
