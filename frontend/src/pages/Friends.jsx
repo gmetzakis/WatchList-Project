@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import api from "../api/axios.js";
-import { Bookmark, BookmarkCheck, Eye, CheckCheck, Heart, Minus } from "lucide-react";
+import { Bookmark, BookmarkPlus, BookmarkMinus, Eye, EyeOff, CheckCheck, Heart, Minus, X } from "lucide-react";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -124,7 +124,10 @@ function MediaShelf({
   myMediaStatus,
   actionPending,
   onAddWatchlist,
+  onRemoveWatchlist,
   onMarkWatched,
+  onRemoveWatched,
+  onRate,
   onToggleFavorite,
   typeFilter,
   genreFilter,
@@ -132,6 +135,7 @@ function MediaShelf({
   searchQuery,
   page,
   setPage,
+  friendName,
 }) {
   const [isMobileView, setIsMobileView] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -170,6 +174,14 @@ function MediaShelf({
   else if (sortBy === "year_desc") filtered = [...filtered].sort((a, b) => (b.release_year || 0) - (a.release_year || 0));
   else if (sortBy === "year_asc") filtered = [...filtered].sort((a, b) => (a.release_year || 0) - (b.release_year || 0));
 
+  const [expandedCardKey, setExpandedCardKey] = useState(null);
+
+  useEffect(() => {
+    if (!isMobileView) {
+      setExpandedCardKey(null);
+    }
+  }, [isMobileView]);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const safePage = Math.min(page, totalPages);
   const paged = filtered.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
@@ -183,77 +195,155 @@ function MediaShelf({
     const key = `${item.type}-${item.tmdb_id}`;
     const myStatus = myMediaStatus[key] || {};
     const isPending = actionPending.has(key);
+    const isExpanded = isMobileView && expandedCardKey === key;
     const posterUrl = item.poster_path ? `https://image.tmdb.org/t/p/w300${item.poster_path}` : null;
     const mediaLink = `/media/${item.type}/${item.tmdb_id}`;
-    const watchedLabel = formatDateLabel(item.watched_at);
-    const addedLabel = formatDateLabel(item.added_at);
     const isInWatchlist = myStatus.status === "watchlist";
     const isWatched = myStatus.status === "watched";
     const isFavorite = myStatus.isFavorite;
+    const genresText = normalizeGenres(item.genres).slice(0, 3).join(" • ");
+    const showFriendRating = Number.isInteger(item.rating) && (!isMobileView || isExpanded);
 
     return (
-      <div key={key} className="friend-media-card">
-        <div className="friend-media-poster-wrap">
-          <Link to={mediaLink} className="friend-media-poster-link">
+      <article key={key} className={`media-card friend-mobile-media-card ${isExpanded ? "mobile-card-expanded" : ""}`}>
+        <Link
+          to={mediaLink}
+          className="media-image-wrapper"
+          onClick={(e) => {
+            if (isMobileView && !isExpanded) {
+              e.preventDefault();
+              setExpandedCardKey(key);
+            }
+          }}
+        >
             {posterUrl ? (
-              <img className="friend-media-poster" src={posterUrl} alt={item.title} />
+              <img className="media-card-img" src={posterUrl} alt={item.title} />
             ) : (
-              <div className="friend-media-fallback">{item.title?.slice(0, 1) || "?"}</div>
+              <div className="friend-mobile-fallback">{item.title?.slice(0, 1) || "?"}</div>
             )}
-          </Link>
-          {Number.isInteger(item.rating) && <span className="friend-media-rating">{item.rating}/10</span>}
-          <div className="friend-media-overlay">
+
+          {showFriendRating && (
+            <span className="friend-rating-badge">{friendName}: {item.rating}/10</span>
+          )}
+
+          <div className="hover-controls">
+            <button
+              type="button"
+              className="mobile-card-close"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setExpandedCardKey(null);
+              }}
+              aria-label="Close expanded card"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="hover-title">
+              <span className="hover-title-text">{item.title}</span>
+              <span className="hover-year-text">{item.release_year}</span>
+              {genresText && <span className="hover-genres-text">{genresText}</span>}
+
+              {isWatched && (
+                <div className="rating-inline">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                    <span
+                      key={n}
+                      className={Number(myStatus.rating) >= n ? "star active" : "star"}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!isPending) onRate(item, n);
+                      }}
+                    >
+                      ★
+                    </span>
+                  ))}
+                  {Number(myStatus.rating) > 0 && <span className="rating-label">{myStatus.rating}/10</span>}
+                </div>
+              )}
+            </div>
+
+            <div className="control-icons">
             {!isWatched && !isInWatchlist && (
-              <button className="friend-overlay-btn" title="Add to Watchlist" disabled={isPending} onClick={() => onAddWatchlist(item)}>
-                <Bookmark size={18} />
-              </button>
+              <span
+                className={`unbookmark-icon ${isPending ? "disabled" : ""}`}
+                title="Add to Watchlist"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!isPending) onAddWatchlist(item);
+                }}
+              >
+                <BookmarkPlus size={32} />
+              </span>
             )}
             {isInWatchlist && (
-              <button className="friend-overlay-btn active" title="In your Watchlist" disabled>
-                <BookmarkCheck size={18} />
-              </button>
+              <span
+                className={`unbookmark-icon ${isPending ? "disabled" : ""}`}
+                title="Remove from watchlist"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!isPending) onRemoveWatchlist(item);
+                }}
+              >
+                <BookmarkMinus size={32} />
+              </span>
             )}
             {!isWatched && (
-              <button className="friend-overlay-btn" title="Mark as Watched" disabled={isPending} onClick={() => onMarkWatched(item)}>
-                <Eye size={18} />
-              </button>
-            )}
-            {isWatched && (
-              <button className="friend-overlay-btn active" title="Already Watched" disabled>
-                <CheckCheck size={18} />
-              </button>
-            )}
-            {isWatched && (
-              <button
-                className={`friend-overlay-btn${isFavorite ? " favorite" : ""}`}
-                title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-                disabled={isPending}
-                onClick={() => onToggleFavorite(item)}
+              <span
+                className={`watched-icon ${isPending ? "disabled" : ""}`}
+                title="Mark as Watched"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!isPending) onMarkWatched(item);
+                }}
               >
-                <Heart size={18} fill={isFavorite ? "currentColor" : "none"} />
-              </button>
+                <Eye size={32} />
+              </span>
             )}
+            {isWatched && (
+              <span
+                className={`watched-icon active ${isPending ? "disabled" : ""}`}
+                title="Remove from watched"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!isPending) onRemoveWatched(item);
+                }}
+              >
+                <EyeOff size={32} />
+              </span>
+            )}
+            {isWatched && (
+              <span
+                className={`favorite-icon ${isFavorite ? "active" : ""} ${isPending ? "disabled" : ""}`}
+                title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!isPending) onToggleFavorite(item);
+                }}
+              >
+                <Heart size={32} fill={isFavorite ? "currentColor" : "none"} />
+              </span>
+            )}
+            </div>
           </div>
-        </div>
-
-        <div className="friend-media-copy">
-          <h4 className="friend-media-title">
-            <Link to={mediaLink} className="friend-media-title-link">{item.title}</Link>
-          </h4>
-          <p className="friend-media-meta">
-            {item.type === "movie" ? "Movie" : "Series"}
-            {item.release_year ? ` • ${item.release_year}` : ""}
-          </p>
-          {watchedLabel && <p className="friend-media-submeta">Watched {watchedLabel}</p>}
-          {!watchedLabel && addedLabel && <p className="friend-media-submeta">Added {addedLabel}</p>}
-          {item.is_favorite && <span className="friend-media-pill">Favorite</span>}
-        </div>
-      </div>
+        </Link>
+      </article>
     );
   }
 
   return (
     <>
+      {isMobileView && expandedCardKey && (
+        <div className="mobile-card-backdrop" onClick={() => setExpandedCardKey(null)} />
+      )}
+
       {isMobileView ? (
         <FriendsEmblaCarousel items={displayItems} renderCard={renderMediaCard} />
       ) : (
@@ -472,7 +562,7 @@ export default function FriendsPage() {
         statusMap[`${item.type}-${item.tmdb_id}`] = { status: "watchlist", isFavorite: false };
       }
       for (const item of (watchedRes.data.items || [])) {
-        statusMap[`${item.type}-${item.tmdb_id}`] = { status: "watched", isFavorite: !!item.is_favorite };
+        statusMap[`${item.type}-${item.tmdb_id}`] = { status: "watched", isFavorite: !!item.is_favorite, rating: item.rating ?? null };
       }
       setMyMediaStatus(statusMap);
 
@@ -612,6 +702,67 @@ export default function FriendsPage() {
       setMyMediaStatus((prev) => ({
         ...prev,
         [key]: { status: "watched", isFavorite: prev[key]?.isFavorite || false },
+      }));
+    } catch {
+      // silent fail
+    } finally {
+      setActionPending((prev) => { const next = new Set(prev); next.delete(key); return next; });
+    }
+  }
+
+  async function handleRemoveFromWatchlist(item) {
+    const key = `${item.type}-${item.tmdb_id}`;
+    if (actionPending.has(key)) return;
+    setActionPending((prev) => new Set([...prev, key]));
+    try {
+      await api.delete(`/media/${item.tmdb_id}/watchlist`, { data: { type: item.type } });
+      setMyMediaStatus((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    } catch {
+      // silent fail
+    } finally {
+      setActionPending((prev) => { const next = new Set(prev); next.delete(key); return next; });
+    }
+  }
+
+  async function handleRemoveWatched(item) {
+    const key = `${item.type}-${item.tmdb_id}`;
+    if (actionPending.has(key)) return;
+    setActionPending((prev) => new Set([...prev, key]));
+    try {
+      await api.delete(`/media/${item.tmdb_id}/watched`, { data: { type: item.type } });
+      setMyMediaStatus((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    } catch {
+      // silent fail
+    } finally {
+      setActionPending((prev) => { const next = new Set(prev); next.delete(key); return next; });
+    }
+  }
+
+  async function handleRate(item, rating) {
+    const key = `${item.type}-${item.tmdb_id}`;
+    if (actionPending.has(key)) return;
+    setActionPending((prev) => new Set([...prev, key]));
+    try {
+      await api.post(`/media/${item.tmdb_id}/rating`, {
+        type: item.type,
+        rating,
+      });
+      setMyMediaStatus((prev) => ({
+        ...prev,
+        [key]: {
+          ...(prev[key] || {}),
+          status: "watched",
+          isFavorite: prev[key]?.isFavorite || false,
+          rating,
+        },
       }));
     } catch {
       // silent fail
@@ -916,7 +1067,10 @@ export default function FriendsPage() {
                     myMediaStatus={myMediaStatus}
                     actionPending={actionPending}
                     onAddWatchlist={handleAddToWatchlist}
+                    onRemoveWatchlist={handleRemoveFromWatchlist}
                     onMarkWatched={handleMarkAsWatched}
+                    onRemoveWatched={handleRemoveWatched}
+                    onRate={handleRate}
                     onToggleFavorite={handleToggleFavorite}
                     typeFilter={friendTypeFilter}
                     genreFilter={friendGenreFilter}
@@ -924,6 +1078,7 @@ export default function FriendsPage() {
                     searchQuery={friendSearchQuery}
                     page={friendPage}
                     setPage={setFriendPage}
+                    friendName={selectedFriend?.first_name?.split(" ")[0] || selectedFriend?.username || "Friend"}
                   />
                 </div>
               </>
