@@ -46,12 +46,13 @@
 
 .library-page-title {
   margin: 0;
-  font-size: clamp(1.8rem, 3.1vw, 2.5rem);
-  font-weight: 800;
-  line-height: 1.08;
-  letter-spacing: 0.2px;
+  font-size: clamp(1.45rem, 2.4vw, 1.95rem);
+  font-weight: 700;
+  line-height: 1.14;
+  letter-spacing: 0.01em;
   color: rgba(255, 255, 255, 0.96);
-  text-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  text-shadow: none;
+  font-family: "Montserrat", sans-serif;
 }
 
 .library-page-count {
@@ -292,9 +293,11 @@
 .watched-explore-page .library-page-title {
   margin: 0;
   color: rgba(244, 246, 248, 0.96);
-  font-family: "Playfair Display", serif;
-  font-size: clamp(2rem, 4vw, 3.25rem);
-  line-height: 0.98;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.65rem, 3vw, 2.2rem);
+  line-height: 1.1;
+  letter-spacing: 0.01em;
 }
 
 .library-explore-page .filter-bar.library-filter-bar,

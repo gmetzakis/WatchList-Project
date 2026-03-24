@@ -27,19 +27,19 @@
 }
 
 .cinema-logo {
-  font-size: 1.8rem;
-  font-weight: 900;
+  font-size: 1.24rem;
+  font-weight: 700;
   color: rgba(246, 247, 249, 0.95);
-  letter-spacing: 2px;
-  text-shadow: 0 10px 24px rgba(0,0,0,0.36);
-  font-family: "Playfair Display", serif;
+  letter-spacing: 0.02em;
+  text-shadow: none;
+  font-family: "Montserrat", sans-serif;
   transition: all 0.3s ease;
 }
 
 .cinema-logo:hover {
   color: #ffffff;
-  text-shadow: 0 12px 28px rgba(0,0,0,0.42);
-  transform: scale(1.05);
+  text-shadow: none;
+  transform: none;
 }
 
 .cinema-nav {
