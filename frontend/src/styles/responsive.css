@@ -87,6 +87,58 @@
 }
 
 @media (max-width: 760px) {
+  /* Disable all hover effects on mobile viewport */
+  .media-card:hover {
+    z-index: 1 !important;
+    transform: none !important;
+  }
+
+  .media-card:hover .media-card-img {
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .media-card:hover .hover-controls {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  .favorite-icon:hover,
+  .watched-icon:hover,
+  .unbookmark-icon:hover {
+    transform: none !important;
+    color: rgba(177, 173, 173, 0.8) !important;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)) !important;
+  }
+
+  .star:hover {
+    transform: none !important;
+    color: rgba(100, 100, 100, 0.7) !important;
+  }
+
+  .star.active:hover {
+    color: #ffd700 !important;
+  }
+
+  .remove-rating:hover {
+    transform: none !important;
+    opacity: 0.6 !important;
+  }
+
+  .rating-inline .star:hover {
+    transform: none !important;
+    color: rgba(150, 150, 150, 0.6) !important;
+  }
+
+  .rating-inline .remove-rating:hover {
+    transform: none !important;
+    color: rgba(200, 200, 200, 0.6) !important;
+  }
+
+  .media-image-wrapper:hover .media-card-img {
+    transform: none !important;
+  }
+
   .page-container {
     padding: 0 10px;
   }
@@ -264,6 +316,24 @@
     background: transparent;
     transition: none !important;
     animation: none !important;
+  }
+
+  /* Allow hover effects on expanded card's interactive elements */
+  .media-card.mobile-card-expanded:hover .media-card-img {
+    transform: scale(1.08) !important;
+    filter: brightness(0.38) contrast(1.1) blur(3px) !important;
+  }
+
+  .media-card.mobile-card-expanded .favorite-icon:hover,
+  .media-card.mobile-card-expanded .watched-icon:hover,
+  .media-card.mobile-card-expanded .unbookmark-icon:hover {
+    transform: scale(1.25) rotate(5deg) !important;
+    color: #fff !important;
+  }
+
+  .media-card.mobile-card-expanded .star:hover {
+    transform: scale(1.3) rotate(15deg) !important;
+    color: #fff !important;
   }
 
   .media-card.mobile-card-expanded .mobile-card-close {
