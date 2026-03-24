@@ -231,7 +231,7 @@ export default function Header() {
     <header className="cinema-header">
       <div className="cinema-header-inner">
 
-        <Link to="/" className="cinema-logo">MyScreenbook</Link>
+        <Link to="/" className="cinema-logo">MyCineShelf</Link>
 
         <button
           ref={menuToggleRef}
