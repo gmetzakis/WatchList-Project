@@ -6,6 +6,7 @@ import { BookmarkMinus, BookmarkPlus, Eye, EyeOff, Heart, RotateCcw, ThumbsDown,
 import api from "../api/axios.js";
 import "../styles/home.css";
 import "../styles/media-card.css";
+import "../styles/embla-carousel.css";
 
 const MAX_ITEMS_PER_SECTION = 12;
 
@@ -410,7 +411,14 @@ export default function HomePage() {
           }}
         >
           {item.poster_path ? (
-            <img src={`https://image.tmdb.org/t/p/w300${item.poster_path}`} alt={item.title} className="media-card-img" />
+            <img
+              src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+              alt={item.title}
+              className="media-card-img"
+              width="300"
+              height="450"
+              decoding="async"
+            />
           ) : (
             <div className="home-card-fallback">{item.title?.slice(0, 1) || "?"}</div>
           )}
@@ -637,32 +645,21 @@ export default function HomePage() {
       setError("");
 
       try {
-        const [watchedRes, watchlistRes, favoritesRes, recommendationsRes, profileRes] = await Promise.allSettled([
+        const [watchedRes, watchlistRes, favoritesRes] = await Promise.allSettled([
           api.get("/media/watched"),
           api.get("/media/watchlist"),
           api.get("/media/favorites"),
-          api.get("/explore/recommendations", { params: { type: "all" } }),
-          api.get("/profile"),
         ]);
 
         if (cancelled) return;
 
-        if (profileRes.status === "fulfilled") {
-          const fetchedFirstName = profileRes.value?.data?.profile?.first_name || "";
-          setFirstName(fetchedFirstName);
-        }
-
         const watchedRaw = watchedRes.status === "fulfilled" ? watchedRes.value.data?.items || [] : [];
         const watchlistRaw = watchlistRes.status === "fulfilled" ? watchlistRes.value.data?.items || [] : [];
         const favoritesRaw = favoritesRes.status === "fulfilled" ? favoritesRes.value.data?.items || [] : [];
-        const recommendationSections =
-          recommendationsRes.status === "fulfilled" ? recommendationsRes.value.data?.sections || [] : [];
 
         const watchedLatest = pickLatest(watchedRaw, ["watched_at"]);
         const watchlistLatest = pickLatest(watchlistRaw, ["added_at"]);
         const favoritesLatest = pickLatest(favoritesRaw, ["favorited_at"]);
-
-        const recommendations = flattenRecommendationSections(recommendationSections);
 
         const nextStatus = {};
 
@@ -690,12 +687,37 @@ export default function HomePage() {
         setWatchedItems(watchedLatest);
         setWatchlistItems(watchlistLatest);
         setFavoritesItems(favoritesLatest);
-        setRecommendationItems(recommendations);
         setMyMediaStatus(nextStatus);
+
+        if (
+          watchedRes.status !== "fulfilled" &&
+          watchlistRes.status !== "fulfilled" &&
+          favoritesRes.status !== "fulfilled"
+        ) {
+          setError("Could not load Home feed right now.");
+        }
+
+        setLoading(false);
+
+        Promise.allSettled([
+          api.get("/explore/recommendations", { params: { type: "all" } }),
+          api.get("/profile"),
+        ]).then(([recommendationsRes, profileRes]) => {
+          if (cancelled) return;
+
+          if (recommendationsRes.status === "fulfilled") {
+            const recommendationSections = recommendationsRes.value.data?.sections || [];
+            setRecommendationItems(flattenRecommendationSections(recommendationSections));
+          }
+
+          if (profileRes.status === "fulfilled") {
+            const fetchedFirstName = profileRes.value?.data?.profile?.first_name || "";
+            setFirstName(fetchedFirstName);
+          }
+        });
       } catch {
-        if (!cancelled) setError("Could not load Home feed right now.");
-      } finally {
         if (!cancelled) {
+          setError("Could not load Home feed right now.");
           setLoading(false);
         }
       }

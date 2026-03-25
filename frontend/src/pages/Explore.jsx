@@ -6,6 +6,7 @@ import Autoplay from "embla-carousel-autoplay";
 import api from "../api/axios.js";
 import "../styles/explore.css";
 import "../styles/media-card.css";
+import "../styles/embla-carousel.css";
 
 const FILTERS = [
   { key: "all", label: "All titles" },
@@ -585,7 +586,15 @@ export default function ExplorePage() {
           }}
         >
           {posterUrl ? (
-            <img className="media-card-img" src={posterUrl} alt={item.title} />
+            <img
+              className="media-card-img"
+              src={posterUrl}
+              alt={item.title}
+              loading="lazy"
+              decoding="async"
+              width="300"
+              height="450"
+            />
           ) : (
             <div className="explore-card-fallback">{item.title?.slice(0, 1) || "?"}</div>
           )}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../api/axios.js";
+import "../styles/profile.css";
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
@@ -221,7 +222,13 @@ export default function ProfilePage() {
         <div className="avatar-row">
           <div className="avatar-preview-wrap">
             {avatarData ? (
-              <img src={avatarData} alt="Profile avatar" className="avatar-preview" />
+              <img
+                src={avatarData}
+                alt="Profile avatar"
+                className="avatar-preview"
+                loading="lazy"
+                decoding="async"
+              />
             ) : (
               <div className="avatar-placeholder">No avatar</div>
             )}

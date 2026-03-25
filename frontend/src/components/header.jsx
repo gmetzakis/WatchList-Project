@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FiSearch, FiUser, FiLogOut, FiUsers, FiMenu, FiX, FiCompass, FiEye, FiBookmark, FiHeart } from "react-icons/fi";
 import api from "../api/axios.js";
+import "../styles/header.css";
 
 export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -106,8 +107,14 @@ export default function Header() {
 
   useEffect(() => {
     let cancelled = false;
+    let intervalId;
+    let initialTimeoutId;
 
     async function loadFriendNotifications() {
+      if (typeof document !== "undefined" && document.hidden) {
+        return;
+      }
+
       try {
         const res = await api.get("/friends/notifications");
         if (!cancelled) {
@@ -129,12 +136,22 @@ export default function Header() {
       }
     }
 
-    loadFriendNotifications();
-    const intervalId = setInterval(loadFriendNotifications, 30000);
+    initialTimeoutId = window.setTimeout(loadFriendNotifications, 1500);
+    intervalId = window.setInterval(loadFriendNotifications, 60000);
+
+    function handleVisibilityChange() {
+      if (!document.hidden) {
+        loadFriendNotifications();
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       cancelled = true;
+      clearTimeout(initialTimeoutId);
       clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [location.pathname, isFriendsRoute]);
 

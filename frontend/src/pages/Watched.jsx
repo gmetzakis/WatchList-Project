@@ -4,6 +4,12 @@ import api from "../api/axios.js";
 import { Heart, EyeOff, LayoutGrid, GalleryVertical, X } from "lucide-react";
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
+import "../styles/filters.css";
+import "../styles/rating.css";
+import "../styles/buttons.css";
+import "../styles/media-grid.css";
+import "../styles/media-card.css";
+import "../styles/embla-carousel.css";
 
 const TYPE_FILTERS = [
   { key: "all", label: "All titles" },
@@ -172,6 +178,10 @@ export default function WatchedPage() {
           <img
             src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
             className="media-card-img"
+            loading="lazy"
+            decoding="async"
+            width="300"
+            height="450"
           />
 
           <div className="hover-controls">

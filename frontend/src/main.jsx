@@ -1,23 +1,24 @@
-import React from "react";
+import { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import App from "./App";
-import WatchedPage from "./pages/Watched.jsx";
-import WatchlistPage from "./pages/Watchlist.jsx";
-import FavoritesPage from "./pages/Favorites.jsx";
-import LoginPage from "./pages/Login.jsx";
-import RegisterPage from "./pages/Register.jsx";
-import SearchPage from "./pages/Search.jsx";
-import HomePage from "./pages/Home.jsx";
-import MediaDetails from "./pages/MediaDetails.jsx";
-import FriendsPage from "./pages/Friends.jsx";
-import ProfilePage from "./pages/Profile.jsx";
-import PersonDetailsPage from "./pages/PersonDetails.jsx";
-import ExplorePage from "./pages/Explore.jsx";
+const WatchedPage = lazy(() => import("./pages/Watched.jsx"));
+const WatchlistPage = lazy(() => import("./pages/Watchlist.jsx"));
+const FavoritesPage = lazy(() => import("./pages/Favorites.jsx"));
+const LoginPage = lazy(() => import("./pages/Login.jsx"));
+const RegisterPage = lazy(() => import("./pages/Register.jsx"));
+const SearchPage = lazy(() => import("./pages/Search.jsx"));
+const HomePage = lazy(() => import("./pages/Home.jsx"));
+const MediaDetails = lazy(() => import("./pages/MediaDetails.jsx"));
+const FriendsPage = lazy(() => import("./pages/Friends.jsx"));
+const ProfilePage = lazy(() => import("./pages/Profile.jsx"));
+const PersonDetailsPage = lazy(() => import("./pages/PersonDetails.jsx"));
+const ExplorePage = lazy(() => import("./pages/Explore.jsx"));
 
 import "./index.css";
-import "./styles/cinema.css";
+import "./styles/global.css";
+import "./styles/responsive.css";
 
 
 function isTokenValid(token) {
@@ -57,28 +58,30 @@ function ProtectedRoute({ children }) {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
-    <Routes>
-      {/* PUBLIC ROUTES */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+    <Suspense fallback={<div className="page-container">Loading...</div>}>
+      <Routes>
+        {/* PUBLIC ROUTES */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
-      {/* PROTECTED ROUTES */}
-      <Route path="/" element={
-          <ProtectedRoute>
-            <App />
-          </ProtectedRoute>
-        }>
-        <Route index element={<HomePage />} />
-        <Route path="media/:type/:tmdbId" element={<MediaDetails />} />
-        <Route path="person/:personId" element={<PersonDetailsPage />} />
-        <Route path="search" element={<SearchPage />} />
-        <Route path="explore" element={<ExplorePage />} />
-        <Route path="watched" element={<WatchedPage />} />
-        <Route path="watchlist" element={<WatchlistPage />} />
-        <Route path="favorites" element={<FavoritesPage />} />
-        <Route path="friends" element={<FriendsPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-      </Route>
-    </Routes>
+        {/* PROTECTED ROUTES */}
+        <Route path="/" element={
+            <ProtectedRoute>
+              <App />
+            </ProtectedRoute>
+          }>
+          <Route index element={<HomePage />} />
+          <Route path="media/:type/:tmdbId" element={<MediaDetails />} />
+          <Route path="person/:personId" element={<PersonDetailsPage />} />
+          <Route path="search" element={<SearchPage />} />
+          <Route path="explore" element={<ExplorePage />} />
+          <Route path="watched" element={<WatchedPage />} />
+          <Route path="watchlist" element={<WatchlistPage />} />
+          <Route path="favorites" element={<FavoritesPage />} />
+          <Route path="friends" element={<FriendsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+        </Route>
+      </Routes>
+    </Suspense>
   </BrowserRouter>
 );

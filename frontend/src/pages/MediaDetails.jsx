@@ -4,6 +4,10 @@ import { Heart, Eye, EyeOff, BookmarkPlus, BookmarkMinus, X } from "lucide-react
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import api from "../api/axios";
+import "../styles/media-details.css";
+import "../styles/media-card.css";
+import "../styles/rating.css";
+import "../styles/embla-carousel.css";
 
 function EmblaCarousel({ items, renderCard, itemKey }) {
   const [autoplayEnabled, setAutoplayEnabled] = useState(() => {
@@ -442,6 +446,8 @@ export default function MediaDetails() {
               src={`https://image.tmdb.org/t/p/w300${actor.profile_path}`}
               className="details-cast-img"
               alt={actor.name}
+              loading="lazy"
+              decoding="async"
             />
             <p className="details-cast-name">{actor.name}</p>
           </Link>
@@ -475,6 +481,10 @@ export default function MediaDetails() {
                 src={`https://image.tmdb.org/t/p/w300${rec.poster_path}`}
                 alt={rec.title || rec.name}
                 className="media-card-img"
+                loading="lazy"
+                decoding="async"
+                width="300"
+                height="450"
               />
 
               <div className="hover-controls">

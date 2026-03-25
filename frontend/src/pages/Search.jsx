@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import api from "../api/axios";
 import { Link, useSearchParams } from "react-router-dom";
 import { Heart, Eye, EyeOff, Bookmark, BookmarkMinus, BookmarkPlus, X } from "lucide-react";
+import "../styles/search.css";
+import "../styles/media-grid.css";
+import "../styles/media-card.css";
+import "../styles/rating.css";
 
 const TMDB_GENRE_MAP = {
   28: "Action",
@@ -297,6 +301,10 @@ export default function SearchPage() {
                 src={`https://image.tmdb.org/t/p/w300${person.profile_path}`}
                 alt={person.name}
                 className="person-result-img"
+                loading="lazy"
+                decoding="async"
+                width="300"
+                height="450"
               />
               <div className="person-result-body">
                 <p className="person-result-name">{person.name}</p>
@@ -327,6 +335,10 @@ export default function SearchPage() {
                   src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
                   alt={item.title || item.name}
                   className="media-card-img"
+                  loading="lazy"
+                  decoding="async"
+                  width="300"
+                  height="450"
                 />
 
                 <div className="hover-controls">

@@ -4,6 +4,11 @@ import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import api from "../api/axios.js";
 import { Bookmark, BookmarkPlus, BookmarkMinus, Eye, EyeOff, CheckCheck, Heart, Minus, X } from "lucide-react";
+import "../styles/friends.css";
+import "../styles/rating.css";
+import "../styles/media-grid.css";
+import "../styles/media-card.css";
+import "../styles/embla-carousel.css";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -235,7 +240,15 @@ function MediaShelf({
           }}
         >
             {posterUrl ? (
-              <img className="media-card-img" src={posterUrl} alt={item.title} />
+              <img
+                className="media-card-img"
+                src={posterUrl}
+                alt={item.title}
+                loading="lazy"
+                decoding="async"
+                width="300"
+                height="450"
+              />
             ) : (
               <div className="friend-mobile-fallback">{item.title?.slice(0, 1) || "?"}</div>
             )}
@@ -968,7 +981,13 @@ export default function FriendsPage() {
                 <div className="friend-profile-hero">
                   <div className="friend-profile-head">
                     {selectedFriend.avatarData ? (
-                      <img className="friend-profile-avatar" src={selectedFriend.avatarData} alt={selectedFriend.username} />
+                      <img
+                        className="friend-profile-avatar"
+                        src={selectedFriend.avatarData}
+                        alt={selectedFriend.username}
+                        loading="lazy"
+                        decoding="async"
+                      />
                     ) : (
                       <div className="friend-profile-avatar fallback">{getInitials(selectedFriend)}</div>
                     )}
