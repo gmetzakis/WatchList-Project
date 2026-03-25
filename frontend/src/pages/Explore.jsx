@@ -30,45 +30,22 @@ function formatGenres(item) {
   return item.genres.slice(0, 3).join(" • ");
 }
 
-function normalizeGenreNames(genres) {
-  if (!Array.isArray(genres)) {
-    return [];
-  }
-
-  return genres
-    .map((genre) => (typeof genre === "string" ? genre : genre?.name))
-    .filter(Boolean);
-}
-
-async function fetchHydratedExploreSections(typeFilter) {
+async function fetchExploreSections(typeFilter) {
   const res = await api.get("/explore/recommendations", {
     params: { type: typeFilter },
   });
 
   const sections = Array.isArray(res.data?.sections) ? res.data.sections : [];
 
-  return Promise.all(
-    sections.map(async (section) => {
-      const hydratedItems = await Promise.all(
-        (Array.isArray(section.items) ? section.items : []).map(async (item) => {
-          const existingGenres = normalizeGenreNames(item.genres);
-          if (existingGenres.length > 0) {
-            return { ...item, genres: existingGenres };
-          }
-
-          try {
-            const detailsRes = await api.get(`/tmdb/details/${item.type}/${item.tmdb_id}`);
-            const fallbackGenres = normalizeGenreNames(detailsRes.data?.genres);
-            return { ...item, genres: fallbackGenres };
-          } catch {
-            return { ...item, genres: [] };
-          }
-        })
-      );
-
-      return { ...section, items: hydratedItems };
-    })
-  );
+  return sections.map((section) => ({
+    ...section,
+    items: (Array.isArray(section.items) ? section.items : []).map((item) => ({
+      ...item,
+      genres: Array.isArray(item.genres)
+        ? item.genres.map((genre) => (typeof genre === "string" ? genre : genre?.name)).filter(Boolean)
+        : [],
+    })),
+  }));
 }
 
 function EmblaCarousel({ items, renderCard }) {
@@ -479,7 +456,7 @@ export default function ExplorePage() {
     setActionPending((prev) => new Set([...prev, key]));
     try {
       await api.post(`/explore/recommendations/${item.tmdb_id}/discard`, { type: item.type });
-      const nextSections = await fetchHydratedExploreSections(typeFilter);
+      const nextSections = await fetchExploreSections(typeFilter);
       setPayload({ sections: nextSections });
     } catch {
       // Keep optimistic remove if silent refresh fails.
@@ -510,7 +487,7 @@ export default function ExplorePage() {
         items: sectionItems.map((item) => ({ tmdbId: item.tmdb_id, type: item.type })),
       });
 
-      const nextSections = await fetchHydratedExploreSections(typeFilter);
+      const nextSections = await fetchExploreSections(typeFilter);
       setPayload({ sections: nextSections });
     } catch {
       // Keep existing cards if bulk refresh fails.
@@ -532,7 +509,7 @@ export default function ExplorePage() {
       setDetails("");
 
       try {
-        const hydratedSections = await fetchHydratedExploreSections(typeFilter);
+        const hydratedSections = await fetchExploreSections(typeFilter);
 
         if (!cancelled) {
           setPayload({

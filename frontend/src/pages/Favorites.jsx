@@ -17,6 +17,8 @@ const TYPE_FILTERS = [
   { key: "series", label: "Series" },
 ];
 
+const PAGE_SIZE = 24;
+
 // Extracted EmblaCarousel component
 function EmblaCarousel({ items, renderCard }) {
   const [autoplayEnabled, setAutoplayEnabled] = useState(() => {
@@ -97,12 +99,19 @@ export default function FavoritesPage() {
   const sort = searchParams.get("sort") || "";
   const type = searchParams.get("type") || "all";
   const genre = searchParams.get("genre") || "all";
+  const search = searchParams.get("search") || "";
+  const page = Math.max(Number.parseInt(searchParams.get("page") || "1", 10) || 1, 1);
 
   const [viewMode, setViewMode] = useState("grid"); 
   // "grid" | "tape"
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(search);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [expandedCardKey, setExpandedCardKey] = useState(null);
+  const [pagination, setPagination] = useState({ page: 1, limit: PAGE_SIZE, total: 0, totalPages: 1 });
+
+  useEffect(() => {
+    setSearchQuery(search);
+  }, [search]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 760px)");
@@ -140,25 +149,6 @@ export default function FavoritesPage() {
   function formatGenres(genres) {
     const names = normalizeGenreNames(genres);
     return names.length ? names.slice(0, 3).join(" • ") : "";
-  }
-
-  async function hydrateItemGenres(sourceItems) {
-    return Promise.all(
-      sourceItems.map(async (item) => {
-        const existingGenres = normalizeGenreNames(item.genres);
-        if (existingGenres.length > 0) {
-          return { ...item, genres: existingGenres };
-        }
-
-        try {
-          const detailsRes = await api.get(`/tmdb/details/${item.type}/${item.tmdb_id}`);
-          const detailedGenres = normalizeGenreNames(detailsRes.data?.genres);
-          return { ...item, genres: detailedGenres };
-        } catch {
-          return { ...item, genres: [] };
-        }
-      })
-    );
   }
 
   function renderCard(item) {
@@ -271,31 +261,25 @@ export default function FavoritesPage() {
 
   useEffect(() => {
     load();
-  }, [sort, type]);
+  }, [sort, type, genre, search, page]);
 
   async function load() {
+    setLoading(true);
     try {
-      const [itemsRes, genresRes] = await Promise.all([
-        api.get("/media/favorites", {
+      const itemsRes = await api.get("/media/favorites", {
         params: {
           sort: sort || undefined,
-          type: type !== "all" ? type : undefined
+          type: type !== "all" ? type : undefined,
+          genre: genre !== "all" ? genre : undefined,
+          search: search || undefined,
+          page,
+          limit: PAGE_SIZE,
         }
-        }),
-        api.get("/media/favorites")
-      ]);
+      });
 
-      const hydratedItems = await hydrateItemGenres(itemsRes.data.items || []);
-
-      const mergedGenres = Array.from(
-        new Set([
-          ...(genresRes.data.genres || []),
-          ...hydratedItems.flatMap(item => normalizeGenreNames(item.genres))
-        ])
-      ).sort((a, b) => a.localeCompare(b));
-
-      setItems(hydratedItems);
-      setAvailableGenres(mergedGenres);
+      setItems(itemsRes.data?.items || []);
+      setAvailableGenres(itemsRes.data?.genres || []);
+      setPagination(itemsRes.data?.pagination || { page: 1, limit: PAGE_SIZE, total: (itemsRes.data?.items || []).length, totalPages: 1 });
 
     } catch (err) {
       console.error("Favorites load error:", err);
@@ -304,42 +288,42 @@ export default function FavoritesPage() {
     }
   }
 
-  function updateQuery(newSort, newType, newGenre) {
+  function updateQuery(newSort, newType, newGenre, newSearch = "", newPage = 1) {
     const params = new URLSearchParams();
 
     if (newSort) params.set("sort", newSort);
     if (newType && newType !== "all") params.set("type", newType);
     if (newGenre && newGenre !== "all") params.set("genre", newGenre);
+    if (newSearch.trim()) params.set("search", newSearch.trim());
+    if (newPage > 1) params.set("page", String(newPage));
 
     navigate(`/favorites?${params.toString()}`);
   }
 
   function handleSortChange(e) {
-    updateQuery(e.target.value, type, genre);
+    updateQuery(e.target.value, type, genre, searchQuery, 1);
   }
 
   function handleTypeChange(e) {
-    updateQuery(sort, e.target.value, genre);
+    updateQuery(sort, e.target.value, genre, searchQuery, 1);
   }
 
   function handleGenreChange(e) {
-    updateQuery(sort, type, e.target.value);
+    updateQuery(sort, type, e.target.value, searchQuery, 1);
   }
 
-  function applySortToItems(itemsToSort) {
-    if (sort === "title_asc") {
-      return itemsToSort.slice().sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+  function handlePageChange(nextPage) {
+    if (nextPage < 1 || nextPage > pagination.totalPages) {
+      return;
     }
-    if (sort === "title_desc") {
-      return itemsToSort.slice().sort((a, b) => (b.title || "").localeCompare(a.title || ""));
-    }
-    if (sort === "year_asc") {
-      return itemsToSort.slice().sort((a, b) => (a.release_year || 0) - (b.release_year || 0));
-    }
-    if (sort === "year_desc") {
-      return itemsToSort.slice().sort((a, b) => (b.release_year || 0) - (a.release_year || 0));
-    }
-    return itemsToSort;
+
+    updateQuery(sort, type, genre, searchQuery, nextPage);
+  }
+
+  function handleSearchInputChange(e) {
+    const nextValue = e.target.value;
+    setSearchQuery(nextValue);
+    updateQuery(sort, type, genre, nextValue, 1);
   }
 
   async function handleRemoveFavorite(item) {
@@ -412,20 +396,8 @@ export default function FavoritesPage() {
     unrated: []
   };
 
-  let filteredItems = genre === "all"
-  ? items
-  : items.filter(item =>
-      Array.isArray(item.genres) &&
-      item.genres.includes(genre)
-    );
-
-  filteredItems = filteredItems.filter(item =>
-    !searchQuery.trim() ||
-    item.title?.toLowerCase().includes(searchQuery.trim().toLowerCase())
-  );
-
-  filteredItems = applySortToItems(filteredItems);
-  const titlesCountLabel = `${filteredItems.length} title${filteredItems.length === 1 ? "" : "s"}`;
+  const filteredItems = items;
+  const titlesCountLabel = `${pagination.total} total`;
 
   filteredItems.forEach(item => {
     if (!item.rating) grouped.unrated.push(item);
@@ -507,7 +479,7 @@ export default function FavoritesPage() {
           className="filter-search-input"
           placeholder="Search titles…"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={handleSearchInputChange}
         />
 
         <div>
@@ -543,6 +515,26 @@ export default function FavoritesPage() {
 
         </div>
         )}
+
+        <div className="library-pagination-row">
+          <button
+            type="button"
+            className="library-pagination-btn"
+            onClick={() => handlePageChange(page - 1)}
+            disabled={page <= 1}
+          >
+            Previous
+          </button>
+          <span className="library-pagination-label">Page {pagination.page} of {pagination.totalPages}</span>
+          <button
+            type="button"
+            className="library-pagination-btn"
+            onClick={() => handlePageChange(page + 1)}
+            disabled={page >= pagination.totalPages}
+          >
+            Next
+          </button>
+        </div>
       </section>
 
       <section className="library-content-shell">

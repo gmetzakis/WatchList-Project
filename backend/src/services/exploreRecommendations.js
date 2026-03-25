@@ -1,7 +1,71 @@
-import { addDiscardedRecommendation, getRecommendationSnapshot } from "../models/exploreModel.js";
-import { runNeo4jSession } from "./neo4j.js";
+import { addDiscardedRecommendation, getDiscardedRecommendationsByUser, getRecommendationSnapshot } from "../models/exploreModel.js";
+import { runNeo4jSession, isNeo4jConfigured } from "./neo4j.js";
 import { discoverTMDBByGenres, discoverTMDBPopular, fetchTMDBDetails } from "./tmdb.js";
 import { findOrCreateMedia } from "../models/mediaModel.js";
+import { getUserFavorites, getUserWatchlist, getUserWatched } from "../models/userMediaModel.js";
+import { getProfileByUserId } from "../models/userProfileModel.js";
+
+const EXPLORE_CACHE_TTL_MS = 5 * 60 * 1000;
+const exploreRecommendationCache = new Map();
+let graphBootstrapped = false;
+
+function getExploreCacheKey(userId, type) {
+  return `${userId}:${type}`;
+}
+
+function cloneRecommendationPayload(payload) {
+  return {
+    ...payload,
+    syncSummary: payload?.syncSummary ? { ...payload.syncSummary } : undefined,
+    sections: Array.isArray(payload?.sections)
+      ? payload.sections.map((section) => ({
+          ...section,
+          items: Array.isArray(section.items) ? section.items.map((item) => ({ ...item })) : [],
+        }))
+      : [],
+  };
+}
+
+function getCachedExploreRecommendations(userId, type) {
+  const cacheKey = getExploreCacheKey(userId, type);
+  const cacheEntry = exploreRecommendationCache.get(cacheKey);
+  if (!cacheEntry) {
+    return null;
+  }
+
+  if (cacheEntry.expiresAt <= Date.now()) {
+    exploreRecommendationCache.delete(cacheKey);
+    return null;
+  }
+
+  return cloneRecommendationPayload(cacheEntry.payload);
+}
+
+function setCachedExploreRecommendations(userId, type, payload) {
+  const cacheKey = getExploreCacheKey(userId, type);
+  exploreRecommendationCache.set(cacheKey, {
+    payload: cloneRecommendationPayload(payload),
+    expiresAt: Date.now() + EXPLORE_CACHE_TTL_MS,
+  });
+}
+
+function invalidateExploreRecommendationsForUser(userId) {
+  for (const key of exploreRecommendationCache.keys()) {
+    if (key.startsWith(`${userId}:`)) {
+      exploreRecommendationCache.delete(key);
+    }
+  }
+}
+
+export { invalidateExploreRecommendationsForUser };
+
+function markGraphBootstrapped() {
+  graphBootstrapped = true;
+}
+
+function markGraphDirty() {
+  graphBootstrapped = false;
+}
 
 const GENRE_MAP = {
   28: "Action",
@@ -146,6 +210,90 @@ function normalizeGenres(rawGenres) {
   }
 
   return [];
+}
+
+function toRecommendationContextItem(item) {
+  return {
+    tmdb_id: Number(item.tmdb_id),
+    type: item.type,
+    title: item.title,
+    poster_path: item.poster_path,
+    release_year: item.release_year ? Number(item.release_year) : null,
+    rating: Number.isFinite(Number(item.rating)) ? Number(item.rating) : null,
+    is_favorite: Boolean(item.is_favorite),
+    genres: normalizeGenres(item.genres),
+    watched_at: item.watched_at || null,
+    created_at: item.created_at || item.added_at || null,
+  };
+}
+
+async function buildUserExploreContext(userId, type) {
+  const [watchlistRaw, watchedRaw, favoritesRaw, discardedRaw] = await Promise.all([
+    getUserWatchlist(userId, type),
+    getUserWatched(userId, undefined, undefined, type),
+    getUserFavorites(userId, undefined, type),
+    getDiscardedRecommendationsByUser(userId, type),
+  ]);
+
+  const watchlist = watchlistRaw.map(toRecommendationContextItem);
+  const watched = watchedRaw.map(toRecommendationContextItem);
+  const favorites = favoritesRaw.map(toRecommendationContextItem);
+  const discarded = discardedRaw.map((item) => ({
+    tmdb_id: Number(item.tmdb_id),
+    type: item.type,
+    created_at: item.created_at || null,
+  }));
+
+  const seenKeys = new Set();
+  for (const collection of [watchlist, watched, favorites, discarded]) {
+    for (const item of collection) {
+      seenKeys.add(`${item.type}-${item.tmdb_id}`);
+    }
+  }
+
+  return { watchlist, watched, favorites, discarded, seenKeys };
+}
+
+function getTopSeedTitlesFromContext(context) {
+  return context.watched
+    .map((interaction) => {
+      const rating = Number.isFinite(Number(interaction.rating)) ? Number(interaction.rating) : 0;
+      const recencyTimestamp = interaction.watched_at || interaction.created_at || null;
+      const recencyWeight = recencyTimestamp ? new Date(recencyTimestamp).getTime() / 1e13 : 0;
+
+      return {
+        tmdbId: Number(interaction.tmdb_id),
+        type: interaction.type,
+        title: interaction.title,
+        score: (interaction.is_favorite ? 6 : 0) + rating + recencyWeight,
+      };
+    })
+    .sort((left, right) => right.score - left.score)
+    .filter((seed, index, seeds) => index === seeds.findIndex((entry) => entry.tmdbId === seed.tmdbId && entry.type === seed.type))
+    .slice(0, 5);
+}
+
+function getTopGenresFromContext(context) {
+  const genreWeights = new Map();
+
+  for (const interaction of context.watched) {
+    const genreIds = extractGenreIds(interaction.genres);
+    const rating = Number.isFinite(Number(interaction.rating)) ? Number(interaction.rating) : 0;
+    const weight = (interaction.is_favorite ? 4 : 1) + Math.max(rating - 6, 0);
+
+    for (const genreId of genreIds) {
+      genreWeights.set(genreId, (genreWeights.get(genreId) || 0) + weight);
+    }
+  }
+
+  return Array.from(genreWeights.entries())
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, 3)
+    .map(([genreId, weight]) => ({
+      genreId,
+      name: GENRE_MAP[genreId],
+      weight,
+    }));
 }
 
 function buildSnapshotPayload(snapshot) {
@@ -350,10 +498,10 @@ function dedupeSectionItems(sections) {
     .filter((section) => section.items.length > 0);
 }
 
-async function buildFavoriteSeedSection(snapshot, payload, userId, type) {
-  const seenKeys = getSeenTitleKeys(payload, userId);
+async function buildFavoriteSeedSection(context, type) {
+  const seenKeys = context.seenKeys;
   const candidateMap = new Map();
-  const seeds = getTopSeedTitles(snapshot, userId, type).filter((seed) => seed.score >= 8);
+  const seeds = getTopSeedTitlesFromContext(context).filter((seed) => seed.score >= 8);
 
   for (const seed of seeds) {
     try {
@@ -415,10 +563,10 @@ async function buildFavoriteSeedSection(snapshot, payload, userId, type) {
   };
 }
 
-async function buildGenreDiscoverSection(snapshot, payload, userId, type) {
-  const seenKeys = getSeenTitleKeys(payload, userId);
+async function buildGenreDiscoverSection(context, type) {
+  const seenKeys = context.seenKeys;
   const candidateMap = new Map();
-  const topGenres = getTopGenres(snapshot, userId, type);
+  const topGenres = getTopGenresFromContext(context);
 
   for (const genre of topGenres) {
     const discoverTypes = type === "all" ? ["movie", "series"] : [type];
@@ -477,6 +625,91 @@ async function ensureGraphSchema(session) {
   await session.run(`CREATE CONSTRAINT explore_genre_name IF NOT EXISTS FOR (g:Genre) REQUIRE g.name IS UNIQUE`);
 }
 
+async function getUserNodePayload(userId) {
+  const profile = await getProfileByUserId(userId);
+
+  return {
+    id: Number(userId),
+    username: profile?.username || `user-${userId}`,
+    displayName: toDisplayName({
+      user_id: userId,
+      username: profile?.username || null,
+      first_name: profile?.first_name || null,
+      last_name: profile?.last_name || null,
+    }),
+    country: profile?.country || null,
+    yearOfBirth: profile?.year_of_birth ? Number(profile.year_of_birth) : null,
+  };
+}
+
+function getTitleNodePayload(media) {
+  return {
+    tmdbId: Number(media.tmdb_id),
+    type: media.type,
+    title: media.title,
+    posterPath: media.poster_path,
+    releaseYear: media.release_year ? Number(media.release_year) : null,
+    genres: normalizeGenres(media.genres),
+  };
+}
+
+async function upsertUserNode(session, userId) {
+  const user = await getUserNodePayload(userId);
+
+  await session.run(
+    `MERGE (u:User {id: $id})
+     SET u.username = $username,
+         u.displayName = $displayName,
+         u.country = $country,
+         u.yearOfBirth = $yearOfBirth`,
+    user
+  );
+}
+
+async function upsertTitleNode(session, media) {
+  const title = getTitleNodePayload(media);
+
+  await session.run(
+    `MERGE (t:Title {tmdbId: $tmdbId, type: $type})
+     SET t.title = $title,
+         t.posterPath = $posterPath,
+         t.releaseYear = $releaseYear,
+         t.genres = $genres`,
+    title
+  );
+
+  await session.run(
+    `MATCH (t:Title {tmdbId: $tmdbId, type: $type})
+     OPTIONAL MATCH (t)-[r:IN_GENRE]->(:Genre)
+     DELETE r`,
+    { tmdbId: title.tmdbId, type: title.type }
+  );
+
+  await session.run(
+    `UNWIND $genres AS genreName
+     MATCH (t:Title {tmdbId: $tmdbId, type: $type})
+     MERGE (g:Genre {name: genreName})
+     MERGE (t)-[:IN_GENRE]->(g)`,
+    { tmdbId: title.tmdbId, type: title.type, genres: title.genres }
+  );
+}
+
+async function runIncrementalGraphWrite(callback) {
+  if (!isNeo4jConfigured()) {
+    return;
+  }
+
+  try {
+    await runNeo4jSession("write", async (session) => {
+      await ensureGraphSchema(session);
+      await callback(session);
+    });
+  } catch (error) {
+    markGraphDirty();
+    console.error("Incremental Explore graph update error:", error.message);
+  }
+}
+
 async function syncGraph(payload) {
   await runNeo4jSession("write", async (session) => {
     await ensureGraphSchema(session);
@@ -498,7 +731,8 @@ async function syncGraph(payload) {
        MERGE (t:Title {tmdbId: title.tmdbId, type: title.type})
        SET t.title = title.title,
            t.posterPath = title.posterPath,
-           t.releaseYear = title.releaseYear`,
+           t.releaseYear = title.releaseYear,
+           t.genres = coalesce(title.genres, [])`,
       { titles: payload.titles }
     );
 
@@ -558,6 +792,184 @@ async function syncGraph(payload) {
       { disliked: payload.disliked }
     );
   });
+
+  markGraphBootstrapped();
+}
+
+export async function syncExploreGraphOnWatchlistAdded(userId, media) {
+  invalidateExploreRecommendationsForUser(userId);
+
+  await runIncrementalGraphWrite(async (session) => {
+    await upsertUserNode(session, userId);
+    await upsertTitleNode(session, media);
+
+    await session.run(
+      `MATCH (u:User {id: $userId})
+       MATCH (t:Title {tmdbId: $tmdbId, type: $type})
+       OPTIONAL MATCH (u)-[watched:WATCHED]->(t)
+       DELETE watched
+       WITH u, t
+       OPTIONAL MATCH (u)-[favorite:FAVORITED]->(t)
+       DELETE favorite
+       WITH u, t
+       MERGE (u)-[r:WATCHLISTED]->(t)
+       SET r.createdAt = datetime($createdAt)`,
+      {
+        userId,
+        tmdbId: Number(media.tmdb_id),
+        type: media.type,
+        createdAt: new Date().toISOString(),
+      }
+    );
+  });
+}
+
+export async function syncExploreGraphOnWatchlistRemoved(userId, media) {
+  invalidateExploreRecommendationsForUser(userId);
+
+  await runIncrementalGraphWrite(async (session) => {
+    await session.run(
+      `MATCH (u:User {id: $userId})-[r:WATCHLISTED]->(t:Title {tmdbId: $tmdbId, type: $type})
+       DELETE r`,
+      { userId, tmdbId: Number(media.tmdb_id), type: media.type }
+    );
+  });
+}
+
+export async function syncExploreGraphOnWatchedAdded(userId, media, options = {}) {
+  invalidateExploreRecommendationsForUser(userId);
+
+  await runIncrementalGraphWrite(async (session) => {
+    await upsertUserNode(session, userId);
+    await upsertTitleNode(session, media);
+
+    await session.run(
+      `MATCH (u:User {id: $userId})
+       MATCH (t:Title {tmdbId: $tmdbId, type: $type})
+       OPTIONAL MATCH (u)-[watchlist:WATCHLISTED]->(t)
+       DELETE watchlist
+       WITH u, t
+       MERGE (u)-[r:WATCHED]->(t)
+       SET r.rating = $rating,
+           r.watchedAt = datetime($watchedAt),
+           r.createdAt = datetime($createdAt)`,
+      {
+        userId,
+        tmdbId: Number(media.tmdb_id),
+        type: media.type,
+        rating: Number.isFinite(Number(options.rating)) ? Number(options.rating) : null,
+        watchedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+      }
+    );
+
+    if (options.isFavorite) {
+      await session.run(
+        `MATCH (u:User {id: $userId})
+         MATCH (t:Title {tmdbId: $tmdbId, type: $type})
+         MERGE (u)-[:FAVORITED]->(t)`,
+        { userId, tmdbId: Number(media.tmdb_id), type: media.type }
+      );
+    } else {
+      await session.run(
+        `MATCH (u:User {id: $userId})-[r:FAVORITED]->(t:Title {tmdbId: $tmdbId, type: $type})
+         DELETE r`,
+        { userId, tmdbId: Number(media.tmdb_id), type: media.type }
+      );
+    }
+  });
+}
+
+export async function syncExploreGraphOnWatchedRemoved(userId, media) {
+  invalidateExploreRecommendationsForUser(userId);
+
+  await runIncrementalGraphWrite(async (session) => {
+    await session.run(
+      `MATCH (u:User {id: $userId})-[r:WATCHED]->(t:Title {tmdbId: $tmdbId, type: $type})
+       DELETE r`,
+      { userId, tmdbId: Number(media.tmdb_id), type: media.type }
+    );
+
+    await session.run(
+      `MATCH (u:User {id: $userId})-[r:FAVORITED]->(t:Title {tmdbId: $tmdbId, type: $type})
+       DELETE r`,
+      { userId, tmdbId: Number(media.tmdb_id), type: media.type }
+    );
+  });
+}
+
+export async function syncExploreGraphOnRatingChanged(userId, media, rating) {
+  invalidateExploreRecommendationsForUser(userId);
+
+  await runIncrementalGraphWrite(async (session) => {
+    await session.run(
+      `MATCH (u:User {id: $userId})-[r:WATCHED]->(t:Title {tmdbId: $tmdbId, type: $type})
+       SET r.rating = $rating`,
+      {
+        userId,
+        tmdbId: Number(media.tmdb_id),
+        type: media.type,
+        rating: Number.isFinite(Number(rating)) ? Number(rating) : null,
+      }
+    );
+  });
+}
+
+export async function syncExploreGraphOnFavoriteChanged(userId, media, isFavorite) {
+  invalidateExploreRecommendationsForUser(userId);
+
+  await runIncrementalGraphWrite(async (session) => {
+    if (isFavorite) {
+      await upsertUserNode(session, userId);
+      await upsertTitleNode(session, media);
+      await session.run(
+        `MATCH (u:User {id: $userId})
+         MATCH (t:Title {tmdbId: $tmdbId, type: $type})
+         MERGE (u)-[:FAVORITED]->(t)`,
+        { userId, tmdbId: Number(media.tmdb_id), type: media.type }
+      );
+      return;
+    }
+
+    await session.run(
+      `MATCH (u:User {id: $userId})-[r:FAVORITED]->(t:Title {tmdbId: $tmdbId, type: $type})
+       DELETE r`,
+      { userId, tmdbId: Number(media.tmdb_id), type: media.type }
+    );
+  });
+}
+
+export async function syncExploreGraphOnFriendshipChanged(userId, friendUserId, isActive) {
+  invalidateExploreRecommendationsForUser(userId);
+  invalidateExploreRecommendationsForUser(friendUserId);
+
+  await runIncrementalGraphWrite(async (session) => {
+    await upsertUserNode(session, userId);
+    await upsertUserNode(session, friendUserId);
+
+    if (isActive) {
+      await session.run(
+        `MATCH (a:User {id: $userId})
+         MATCH (b:User {id: $friendUserId})
+         MERGE (a)-[:FRIENDS_WITH]->(b)
+         MERGE (b)-[:FRIENDS_WITH]->(a)`,
+        { userId, friendUserId }
+      );
+      return;
+    }
+
+    await session.run(
+      `MATCH (a:User {id: $userId})-[r:FRIENDS_WITH]->(b:User {id: $friendUserId})
+       DELETE r`,
+      { userId, friendUserId }
+    );
+
+    await session.run(
+      `MATCH (a:User {id: $friendUserId})-[r:FRIENDS_WITH]->(b:User {id: $userId})
+       DELETE r`,
+      { userId, friendUserId }
+    );
+  });
 }
 
 export async function discardExploreRecommendation(userId, tmdbId, type) {
@@ -570,6 +982,24 @@ export async function discardExploreRecommendation(userId, tmdbId, type) {
 
   const media = await findOrCreateMedia(tmdbId, normalizedType);
   await addDiscardedRecommendation(userId, media.id);
+  invalidateExploreRecommendationsForUser(userId);
+
+  await runIncrementalGraphWrite(async (session) => {
+    await upsertUserNode(session, userId);
+    await upsertTitleNode(session, media);
+    await session.run(
+      `MATCH (u:User {id: $userId})
+       MATCH (t:Title {tmdbId: $tmdbId, type: $type})
+       MERGE (u)-[r:DISLIKED]->(t)
+       SET r.createdAt = datetime($createdAt)`,
+      {
+        userId,
+        tmdbId: Number(tmdbId),
+        type: normalizedType,
+        createdAt: new Date().toISOString(),
+      }
+    );
+  });
 
   return {
     userId,
@@ -595,6 +1025,8 @@ export async function discardExploreRecommendationsBulk(userId, items = []) {
   for (const item of uniqueItems) {
     await discardExploreRecommendation(userId, item.tmdbId, item.type);
   }
+
+  invalidateExploreRecommendationsForUser(userId);
 
   return { processed: uniqueItems.length };
 }
@@ -624,17 +1056,33 @@ async function querySection(session, cypher, params, section) {
 }
 
 export async function getExploreRecommendations(userId, type = "all") {
-  const snapshot = await getRecommendationSnapshot();
-  const payload = buildSnapshotPayload(snapshot);
+  const cached = getCachedExploreRecommendations(userId, type);
+  if (cached) {
+    return cached;
+  }
 
-  await syncGraph(payload);
+  let syncSummary = null;
+
+  if (!graphBootstrapped) {
+    const snapshot = await getRecommendationSnapshot();
+    const payload = buildSnapshotPayload(snapshot);
+    await syncGraph(payload);
+    syncSummary = {
+      users: payload.users.length,
+      friendships: payload.friendships.length,
+      titles: payload.titles.length,
+      interactions: payload.watchlisted.length + payload.watched.length + payload.favorited.length + payload.disliked.length,
+    };
+  }
+
+  const context = await buildUserExploreContext(userId, type);
 
   const personalSections = await Promise.all([
-    buildFavoriteSeedSection(snapshot, payload, userId, type),
-    buildGenreDiscoverSection(snapshot, payload, userId, type),
+    buildFavoriteSeedSection(context, type),
+    buildGenreDiscoverSection(context, type),
   ]);
 
-  return runNeo4jSession("read", async (session) => {
+  const response = await runNeo4jSession("read", async (session) => {
     const sections = [...personalSections];
 
     sections.push(
@@ -671,13 +1119,11 @@ export async function getExploreRecommendations(userId, type = "all") {
 
     return {
       generatedAt: new Date().toISOString(),
-      syncSummary: {
-        users: payload.users.length,
-        friendships: payload.friendships.length,
-        titles: payload.titles.length,
-        interactions: payload.watchlisted.length + payload.watched.length + payload.favorited.length + payload.disliked.length,
-      },
+      syncSummary,
       sections: dedupeSectionItems(sections),
     };
   });
+
+  setCachedExploreRecommendations(userId, type, response);
+  return response;
 }

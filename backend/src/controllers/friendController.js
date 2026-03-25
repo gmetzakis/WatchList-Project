@@ -13,6 +13,7 @@ import {
 } from "../models/friendModel.js";
 import { getAvatarByUserId } from "../models/userAvatarModel.js";
 import { getUserFavorites, getUserWatched, getUserWatchlist } from "../models/userMediaModel.js";
+import { syncExploreGraphOnFriendshipChanged } from "../services/exploreRecommendations.js";
 
 export async function listFriendsController(req, res) {
   try {
@@ -114,6 +115,10 @@ export async function respondToFriendRequestController(req, res) {
       responded_at: new Date(),
     });
 
+    if (action === "accept") {
+      await syncExploreGraphOnFriendshipChanged(request.requester_id, request.receiver_id, true);
+    }
+
     return res.json({
       message: action === "accept" ? "Friend request accepted" : "Friend request declined",
       request: updated,
@@ -214,6 +219,8 @@ export async function removeFriendController(req, res) {
     if (!removed) {
       return res.status(404).json({ error: "Friend relationship not found" });
     }
+
+    await syncExploreGraphOnFriendshipChanged(req.user.id, friendUserId, false);
 
     return res.json({ message: "Friend removed" });
   } catch (err) {

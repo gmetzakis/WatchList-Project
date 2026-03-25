@@ -87,3 +87,30 @@ export async function getRecommendationSnapshot() {
     discarded: discardedResult.rows,
   };
 }
+
+export async function getDiscardedRecommendationsByUser(userId, type) {
+  await ensureDiscardedRecommendationsTable();
+
+  let filter = "udm.user_id = $1";
+  const params = [userId];
+
+  if (type === "movie" || type === "series") {
+    params.push(type);
+    filter += ` AND m.type = $${params.length}`;
+  }
+
+  const result = await db.query(
+    `SELECT
+       udm.user_id,
+       udm.created_at,
+       m.tmdb_id,
+       m.type
+     FROM user_disliked_media udm
+     JOIN media m ON m.id = udm.media_id
+     WHERE ${filter}
+     ORDER BY udm.created_at DESC`,
+    params
+  );
+
+  return result.rows;
+}

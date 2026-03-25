@@ -3,6 +3,14 @@ import { addUserMedia, findUserMedia, deleteUserMedia, setRating,
          updateUserMediaStatus, getUserWatchlist, getUserWatched,
          setFavorite, getUserFavorites } from "../models/userMediaModel.js";
 import { incrementWatchedCount, decrementWatchedCount } from "../models/userProfileModel.js";
+import {
+  syncExploreGraphOnFavoriteChanged,
+  syncExploreGraphOnRatingChanged,
+  syncExploreGraphOnWatchlistAdded,
+  syncExploreGraphOnWatchlistRemoved,
+  syncExploreGraphOnWatchedAdded,
+  syncExploreGraphOnWatchedRemoved,
+} from "../services/exploreRecommendations.js";
 
 export async function markAsWatched(req, res) {
   const userId = req.user.id;
@@ -33,6 +41,7 @@ export async function markAsWatched(req, res) {
 
     // Step 4: Update profile stats
     await incrementWatchedCount(userId, type);
+    await syncExploreGraphOnWatchedAdded(userId, media, { rating: existing?.rating || null, isFavorite: existing?.is_favorite || false });
 
     res.status(201).json({
       media,
@@ -69,6 +78,7 @@ export async function addToWatchlist(req, res) {
     }    
 
     await addUserMedia(userId, media.id, "watchlist", genres);
+  await syncExploreGraphOnWatchlistAdded(userId, media);
 
     res.status(201).json({
       media,
@@ -101,6 +111,7 @@ export async function removeFromWatchlist(req, res) {
     }
 
     await deleteUserMedia(userId, media.id);
+  await syncExploreGraphOnWatchlistRemoved(userId, media);
 
     res.json({ success: true });
 
@@ -131,6 +142,7 @@ export async function removeFromWatched(req, res) {
 
     await deleteUserMedia(userId, media.id);
     await decrementWatchedCount(userId, type);
+    await syncExploreGraphOnWatchedRemoved(userId, media);
 
     res.json({ success: true });
 
@@ -161,6 +173,7 @@ export async function moveWatchlistToWatched(req, res) {
 
     await updateUserMediaStatus(userId, media.id, "watched");
     await incrementWatchedCount(userId, type);
+    await syncExploreGraphOnWatchedAdded(userId, media);
 
     res.json({
       media,
@@ -176,10 +189,19 @@ export async function moveWatchlistToWatched(req, res) {
 
 export async function getWatchlist(req, res) {
   const userId = req.user.id;
-  const { type } = req.query;
+  const { type, sort } = req.query;
+  const search = String(req.query.search || "").trim();
+  const genre = String(req.query.genre || "").trim();
+  const genreId = genre ? findGenreIdByName(genre) : null;
+  const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+  const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 0, 0), 100);
 
   try {
-    const items = await getUserWatchlist(userId, type);
+    const result = limit > 0
+      ? await getUserWatchlist(userId, type, { page, limit, sort, search, genreId })
+      : await getUserWatchlist(userId, type, { sort, search, genreId });
+
+    const items = Array.isArray(result) ? result : result.items;
     
     // Extract unique genres from items
     const allGenres = new Set();
@@ -193,10 +215,21 @@ export async function getWatchlist(req, res) {
       }
     });
     
-    res.json({
+    const payload = {
       items,
       genres: Array.from(allGenres).sort()
-    });
+    };
+
+    if (!Array.isArray(result)) {
+      payload.pagination = {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: result.totalPages,
+      };
+    }
+
+    res.json(payload);
   } catch (err) {
     console.error("Get watchlist error:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -207,9 +240,18 @@ export async function getWatchlist(req, res) {
 export async function getWatchedHistory(req, res) {
   const userId = req.user.id;
   const { sort, favorites, type } = req.query;
+  const search = String(req.query.search || "").trim();
+  const genre = String(req.query.genre || "").trim();
+  const genreId = genre ? findGenreIdByName(genre) : null;
+  const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+  const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 0, 0), 100);
 
   try {
-    const items = await getUserWatched(userId, sort, favorites, type);
+    const result = limit > 0
+      ? await getUserWatched(userId, sort, favorites, type, { page, limit, search, genreId })
+      : await getUserWatched(userId, sort, favorites, type, { search, genreId });
+
+    const items = Array.isArray(result) ? result : result.items;
     // Extract unique genres from items
     const allGenres = new Set();
 
@@ -222,10 +264,21 @@ export async function getWatchedHistory(req, res) {
       }
     });
 
-    res.json({
+    const payload = {
       items,
       genres: Array.from(allGenres).sort()
-    });
+    };
+
+    if (!Array.isArray(result)) {
+      payload.pagination = {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: result.totalPages,
+      };
+    }
+
+    res.json(payload);
   } catch (err) {
     console.error("Get watched history error:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -255,6 +308,7 @@ export async function rateMedia(req, res) {
     }
 
     await setRating(userId, media.id, rating);
+  await syncExploreGraphOnRatingChanged(userId, media, rating);
 
     res.json({
       media,
@@ -286,6 +340,7 @@ export async function removeRating(req, res) {
     }
 
     await setRating(userId, media.id, null);
+  await syncExploreGraphOnRatingChanged(userId, media, null);
 
     res.json({ success: true });
 
@@ -314,6 +369,7 @@ export async function markAsFavorite(req, res) {
     }
 
     await setFavorite(userId, media.id, true);
+  await syncExploreGraphOnFavoriteChanged(userId, media, true);
 
     res.json({
       media,
@@ -345,6 +401,7 @@ export async function removeFavorite(req, res) {
     }
 
     await setFavorite(userId, media.id, false);
+  await syncExploreGraphOnFavoriteChanged(userId, media, false);
 
     res.json({ success: true });
 
@@ -358,9 +415,18 @@ export async function removeFavorite(req, res) {
 export async function getFavorites(req, res) {
   const userId = req.user.id;
   const { sort, type } = req.query;
+  const search = String(req.query.search || "").trim();
+  const genre = String(req.query.genre || "").trim();
+  const genreId = genre ? findGenreIdByName(genre) : null;
+  const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+  const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 0, 0), 100);
 
   try {
-    const items = await getUserFavorites(userId, sort, type);
+    const result = limit > 0
+      ? await getUserFavorites(userId, sort, type, { page, limit, search, genreId })
+      : await getUserFavorites(userId, sort, type, { search, genreId });
+
+    const items = Array.isArray(result) ? result : result.items;
     // Extract unique genres from items
     const allGenres = new Set();
 
@@ -373,10 +439,21 @@ export async function getFavorites(req, res) {
       }
     });
     
-    res.json({
+    const payload = {
       items,
       genres: Array.from(allGenres).sort()
-    });
+    };
+
+    if (!Array.isArray(result)) {
+      payload.pagination = {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: result.totalPages,
+      };
+    }
+
+    res.json(payload);
   } catch (err) {
     console.error("Get favorites error:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -430,4 +507,19 @@ function parseGenreSet(str) {
     .split(",")            // split by comma
     .map(s => s.trim())    // clean spaces
     .filter(Boolean);      // remove empty
+}
+
+function findGenreIdByName(genreName) {
+  const normalized = String(genreName || "").trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+
+  for (const [id, name] of Object.entries(GENRE_MAP)) {
+    if (String(name).toLowerCase() === normalized) {
+      return Number(id);
+    }
+  }
+
+  return null;
 }

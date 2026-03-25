@@ -49,20 +49,54 @@ export async function updateUserMediaStatus(userId, mediaId, status) {
 }
 
 
-export async function getUserWatchlist(userId, type) {
+export async function getUserWatchlist(userId, type, options = {}) {
+  const hasPagination = Number.isInteger(options?.limit) && options.limit > 0;
+  const page = hasPagination ? Math.max(options.page || 1, 1) : 1;
+  const limit = hasPagination ? options.limit : null;
+  const offset = hasPagination ? (page - 1) * limit : 0;
+  const search = String(options?.search || "").trim();
+  const genreId = Number.isInteger(options?.genreId) ? options.genreId : null;
+
+  let orderBy = "um.created_at DESC";
+  if (options?.sort === "title_asc") {
+    orderBy = "m.title ASC";
+  } else if (options?.sort === "title_desc") {
+    orderBy = "m.title DESC";
+  } else if (options?.sort === "year_asc") {
+    orderBy = "m.release_year ASC NULLS LAST, m.title ASC";
+  } else if (options?.sort === "year_desc") {
+    orderBy = "m.release_year DESC NULLS LAST, m.title ASC";
+  }
 
   let filter = "um.status = 'watchlist'";
+  const queryParams = [userId];
+  let paramIndex = 2;
 
   if (type === "movie") {
-    filter += " AND m.type = 'movie'";
+    filter += ` AND m.type = $${paramIndex}`;
+    queryParams.push("movie");
+    paramIndex += 1;
   }
 
   if (type === "series") {
-    filter += " AND m.type = 'series'";
+    filter += ` AND m.type = $${paramIndex}`;
+    queryParams.push("series");
+    paramIndex += 1;
   }
 
-  const result = await db.query(
-    `SELECT 
+  if (search) {
+    filter += ` AND m.title ILIKE $${paramIndex}`;
+    queryParams.push(`%${search}%`);
+    paramIndex += 1;
+  }
+
+  if (genreId) {
+    filter += ` AND COALESCE(um.genres::text, '') ~ $${paramIndex}`;
+    queryParams.push(`(^|[^0-9])${genreId}([^0-9]|$)`);
+    paramIndex += 1;
+  }
+
+  const selectQuery = `SELECT 
         m.id,
         m.tmdb_id,
         m.type,
@@ -75,15 +109,51 @@ export async function getUserWatchlist(userId, type) {
      JOIN media m ON m.id = um.media_id
      WHERE um.user_id = $1
        AND ${filter}
-     ORDER BY um.created_at DESC`,
-    [userId]
+     ORDER BY ${orderBy}`;
+
+  const paginatedQueryParams = hasPagination
+    ? [...queryParams, limit, offset]
+    : queryParams;
+
+  const queryText = hasPagination
+    ? `${selectQuery}\nLIMIT $${paginatedQueryParams.length - 1} OFFSET $${paginatedQueryParams.length}`
+    : selectQuery;
+
+  const result = await db.query(queryText, paginatedQueryParams);
+
+  if (!hasPagination) {
+    return result.rows;
+  }
+
+  const countResult = await db.query(
+    `SELECT COUNT(*)::int AS total
+     FROM user_media um
+     JOIN media m ON m.id = um.media_id
+     WHERE um.user_id = $1
+       AND ${filter}`,
+    queryParams
   );
 
-  return result.rows;
+  const total = countResult.rows[0]?.total || 0;
+
+  return {
+    items: result.rows,
+    total,
+    page,
+    limit,
+    totalPages: Math.max(Math.ceil(total / limit), 1),
+  };
 }
 
 
-export async function getUserWatched(userId, sort, favorites, type) {
+export async function getUserWatched(userId, sort, favorites, type, options = {}) {
+  const hasPagination = Number.isInteger(options?.limit) && options.limit > 0;
+  const page = hasPagination ? Math.max(options.page || 1, 1) : 1;
+  const limit = hasPagination ? options.limit : null;
+  const offset = hasPagination ? (page - 1) * limit : 0;
+  const search = String(options?.search || "").trim();
+  const genreId = Number.isInteger(options?.genreId) ? options.genreId : null;
+
   let orderBy = "um.watched_at DESC";
 
   if (sort === "rating_desc") {
@@ -94,23 +164,56 @@ export async function getUserWatched(userId, sort, favorites, type) {
     orderBy = "um.rating ASC NULLS LAST, um.watched_at DESC";
   }
 
+  if (sort === "title_asc") {
+    orderBy = "m.title ASC";
+  }
+
+  if (sort === "title_desc") {
+    orderBy = "m.title DESC";
+  }
+
+  if (sort === "year_asc") {
+    orderBy = "m.release_year ASC NULLS LAST, m.title ASC";
+  }
+
+  if (sort === "year_desc") {
+    orderBy = "m.release_year DESC NULLS LAST, m.title ASC";
+  }
+
 
   let filter = "um.status = 'watched'";
+  const queryParams = [userId];
+  let paramIndex = 2;
 
   if (favorites === "true") {
     filter += " AND um.is_favorite = true";
   }
 
   if (type === "movie") {
-    filter += " AND m.type = 'movie'";
+    filter += ` AND m.type = $${paramIndex}`;
+    queryParams.push("movie");
+    paramIndex += 1;
   }
 
   if (type === "series") {
-    filter += " AND m.type = 'series'";
+    filter += ` AND m.type = $${paramIndex}`;
+    queryParams.push("series");
+    paramIndex += 1;
   }
 
-  const result = await db.query(
-    `SELECT 
+  if (search) {
+    filter += ` AND m.title ILIKE $${paramIndex}`;
+    queryParams.push(`%${search}%`);
+    paramIndex += 1;
+  }
+
+  if (genreId) {
+    filter += ` AND COALESCE(um.genres::text, '') ~ $${paramIndex}`;
+    queryParams.push(`(^|[^0-9])${genreId}([^0-9]|$)`);
+    paramIndex += 1;
+  }
+
+  const selectQuery = `SELECT 
         m.id,
         m.tmdb_id,
         m.type,
@@ -125,11 +228,40 @@ export async function getUserWatched(userId, sort, favorites, type) {
      JOIN media m ON m.id = um.media_id
      WHERE um.user_id = $1
        AND ${filter}
-     ORDER BY ${orderBy}`,
-    [userId]
+     ORDER BY ${orderBy}`;
+
+  const paginatedQueryParams = hasPagination
+    ? [...queryParams, limit, offset]
+    : queryParams;
+
+  const queryText = hasPagination
+    ? `${selectQuery}\nLIMIT $${paginatedQueryParams.length - 1} OFFSET $${paginatedQueryParams.length}`
+    : selectQuery;
+
+  const result = await db.query(queryText, paginatedQueryParams);
+
+  if (!hasPagination) {
+    return result.rows;
+  }
+
+  const countResult = await db.query(
+    `SELECT COUNT(*)::int AS total
+     FROM user_media um
+     JOIN media m ON m.id = um.media_id
+     WHERE um.user_id = $1
+       AND ${filter}`,
+    queryParams
   );
 
-  return result.rows;
+  const total = countResult.rows[0]?.total || 0;
+
+  return {
+    items: result.rows,
+    total,
+    page,
+    limit,
+    totalPages: Math.max(Math.ceil(total / limit), 1),
+  };
 }
 
 
@@ -159,7 +291,13 @@ export async function setFavorite(userId, mediaId, isFavorite) {
 }
 
 
-export async function getUserFavorites(userId, sort, type) {
+export async function getUserFavorites(userId, sort, type, options = {}) {
+  const hasPagination = Number.isInteger(options?.limit) && options.limit > 0;
+  const page = hasPagination ? Math.max(options.page || 1, 1) : 1;
+  const limit = hasPagination ? options.limit : null;
+  const offset = hasPagination ? (page - 1) * limit : 0;
+  const search = String(options?.search || "").trim();
+  const genreId = Number.isInteger(options?.genreId) ? options.genreId : null;
 
   let orderBy = "um.watched_at DESC";
 
@@ -171,18 +309,51 @@ export async function getUserFavorites(userId, sort, type) {
     orderBy = "um.rating ASC NULLS LAST, um.watched_at DESC";
   }
 
+  if (sort === "title_asc") {
+    orderBy = "m.title ASC";
+  }
+
+  if (sort === "title_desc") {
+    orderBy = "m.title DESC";
+  }
+
+  if (sort === "year_asc") {
+    orderBy = "m.release_year ASC NULLS LAST, m.title ASC";
+  }
+
+  if (sort === "year_desc") {
+    orderBy = "m.release_year DESC NULLS LAST, m.title ASC";
+  }
+
   let filter = "um.status = 'watched' AND um.is_favorite = true";
+  const queryParams = [userId];
+  let paramIndex = 2;
 
   if (type === "movie") {
-    filter += " AND m.type = 'movie'";
+    filter += ` AND m.type = $${paramIndex}`;
+    queryParams.push("movie");
+    paramIndex += 1;
   }
 
   if (type === "series") {
-    filter += " AND m.type = 'series'";
+    filter += ` AND m.type = $${paramIndex}`;
+    queryParams.push("series");
+    paramIndex += 1;
   }
 
-  const result = await db.query(
-    `SELECT 
+  if (search) {
+    filter += ` AND m.title ILIKE $${paramIndex}`;
+    queryParams.push(`%${search}%`);
+    paramIndex += 1;
+  }
+
+  if (genreId) {
+    filter += ` AND COALESCE(um.genres::text, '') ~ $${paramIndex}`;
+    queryParams.push(`(^|[^0-9])${genreId}([^0-9]|$)`);
+    paramIndex += 1;
+  }
+
+  const selectQuery = `SELECT 
         m.id,
         m.tmdb_id,
         m.type,
@@ -197,10 +368,39 @@ export async function getUserFavorites(userId, sort, type) {
      JOIN media m ON m.id = um.media_id
      WHERE um.user_id = $1
        AND ${filter}
-     ORDER BY ${orderBy}`,
-    [userId]
+     ORDER BY ${orderBy}`;
+
+  const paginatedQueryParams = hasPagination
+    ? [...queryParams, limit, offset]
+    : queryParams;
+
+  const queryText = hasPagination
+    ? `${selectQuery}\nLIMIT $${paginatedQueryParams.length - 1} OFFSET $${paginatedQueryParams.length}`
+    : selectQuery;
+
+  const result = await db.query(queryText, paginatedQueryParams);
+
+  if (!hasPagination) {
+    return result.rows;
+  }
+
+  const countResult = await db.query(
+    `SELECT COUNT(*)::int AS total
+     FROM user_media um
+     JOIN media m ON m.id = um.media_id
+     WHERE um.user_id = $1
+       AND ${filter}`,
+    queryParams
   );
 
-  return result.rows;
+  const total = countResult.rows[0]?.total || 0;
+
+  return {
+    items: result.rows,
+    total,
+    page,
+    limit,
+    totalPages: Math.max(Math.ceil(total / limit), 1),
+  };
 }
 
