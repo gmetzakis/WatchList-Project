@@ -364,28 +364,24 @@ export default function WatchlistPage() {
     updateQueryWithSort(sort, type, genre, nextValue, 1);
   }
 
-  async function handleRemove(item) {
-    try {
-      await api.delete(`/media/${item.tmdb_id}/watchlist`, {
-        data: { type: item.type }
-      });
-
-      setItems(prev => prev.filter(i => i.tmdb_id !== item.tmdb_id));
-    } catch (err) {
+  function handleRemove(item) {
+    setItems(prev => prev.filter(i => i.tmdb_id !== item.tmdb_id));
+    api.delete(`/media/${item.tmdb_id}/watchlist`, {
+      data: { type: item.type }
+    }).catch((err) => {
       console.error("Remove watchlist error:", err);
-    }
+      setItems(prev => [...prev, item]);
+    });
   }
 
-  async function handleMoveToWatched(item) {
-    try {
-      await api.post(`/media/${item.tmdb_id}/watchlist-to-watched`, {
-        type: item.type
-      });
-
-      setItems(prev => prev.filter(i => i.tmdb_id !== item.tmdb_id));
-    } catch (err) {
+  function handleMoveToWatched(item) {
+    setItems(prev => prev.filter(i => i.tmdb_id !== item.tmdb_id));
+    api.post(`/media/${item.tmdb_id}/watchlist-to-watched`, {
+      type: item.type
+    }).catch((err) => {
       console.error("Move to watched error:", err);
-    }
+      setItems(prev => [...prev, item]);
+    });
   }
 
   if (loading) {

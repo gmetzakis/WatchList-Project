@@ -406,61 +406,63 @@ export default function FavoritesPage() {
     updateQuery(sort, type, genre, nextValue, 1);
   }
 
-  async function handleRemoveFavorite(item) {
-    try {
-      await api.delete(`/media/${item.tmdb_id}/favorite`, {
-        data: { type: item.type }
-      });
-
-      setItems(prev => prev.filter(i => i.tmdb_id !== item.tmdb_id));
-    } catch (err) {
+  function handleRemoveFavorite(item) {
+    setItems(prev => prev.filter(i => i.tmdb_id !== item.tmdb_id));
+    api.delete(`/media/${item.tmdb_id}/favorite`, {
+      data: { type: item.type }
+    }).catch((err) => {
       console.error("Unfavorite error:", err);
-    }
+      setItems(prev => [...prev, item]);
+    });
   }
 
-  async function handleRate(item, rating) {
-    try {
-      await api.post(`/media/${item.tmdb_id}/rating`, {
-        type: item.type,
-        rating
-      });
-
-      setItems(prev =>
-        prev.map(i =>
-          i.tmdb_id === item.tmdb_id ? { ...i, rating } : i
-        )
-      );
-    } catch (err) {
+  function handleRate(item, rating) {
+    const oldRating = item.rating;
+    setItems(prev =>
+      prev.map(i =>
+        i.tmdb_id === item.tmdb_id ? { ...i, rating } : i
+      )
+    );
+    api.post(`/media/${item.tmdb_id}/rating`, {
+      type: item.type,
+      rating
+    }).catch((err) => {
       console.error("Rate error:", err);
-    }
-  }
-
-  async function handleRemoveRating(item) {
-    try {
-      await api.delete(`/media/${item.tmdb_id}/rating`, {
-        data: { type: item.type }
-      });
-
       setItems(prev =>
         prev.map(i =>
-          i.tmdb_id === item.tmdb_id ? { ...i, rating: null } : i
+          i.tmdb_id === item.tmdb_id ? { ...i, rating: oldRating } : i
         )
       );
-    } catch (err) {
-      console.error("Remove rating error:", err);
-    }
+    });
   }
 
-  async function handleRemoveWatched(item) {
-    try {
-      await api.delete(`/media/${item.tmdb_id}/watched`, {
-        data: { type: item.type }
-      });
+  function handleRemoveRating(item) {
+    const oldRating = item.rating;
+    setItems(prev =>
+      prev.map(i =>
+        i.tmdb_id === item.tmdb_id ? { ...i, rating: null } : i
+      )
+    );
+    api.delete(`/media/${item.tmdb_id}/rating`, {
+      data: { type: item.type }
+    }).catch((err) => {
+      console.error("Remove rating error:", err);
+      setItems(prev =>
+        prev.map(i =>
+          i.tmdb_id === item.tmdb_id ? { ...i, rating: oldRating } : i
+        )
+      );
+    });
+  }
 
-      setItems(prev => prev.filter(i => i.tmdb_id !== item.tmdb_id));
-    } catch (err) {
+  function handleRemoveWatched(item) {
+    setItems(prev => prev.filter(i => i.tmdb_id !== item.tmdb_id));
+    api.delete(`/media/${item.tmdb_id}/watched`, {
+      data: { type: item.type }
+    }).catch((err) => {
       console.error("Remove watched error:", err);
-    }
+      setItems(prev => [...prev, item]);
+    });
   }
 
   if (loading) {

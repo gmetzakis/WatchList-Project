@@ -389,47 +389,54 @@ export default function WatchedPage() {
     updateQuery(sort, type, genre, nextValue, 1);
   }
 
-  async function handleRemove(item) {
-    try {
-      await api.delete(`/media/${item.tmdb_id}/watched`, {
-        data: { type: item.type }
-      });
-      setItems(prev => prev.filter(i => i.tmdb_id !== item.tmdb_id));
-    } catch (err) {}
+  function handleRemove(item) {
+    setItems(prev => prev.filter(i => i.tmdb_id !== item.tmdb_id));
+    api.delete(`/media/${item.tmdb_id}/watched`, {
+      data: { type: item.type }
+    }).catch(() => {
+      setItems(prev => [...prev, item]);
+    });
   }
 
-  async function handleRate(item, rating) {
-    try {
-      await api.post(`/media/${item.tmdb_id}/rating`, {
-        type: item.type,
-        rating
-      });
+  function handleRate(item, rating) {
+    const oldRating = item.rating;
+    setItems(prev =>
+      prev.map(i => i.tmdb_id === item.tmdb_id ? { ...i, rating } : i)
+    );
+    api.post(`/media/${item.tmdb_id}/rating`, {
+      type: item.type,
+      rating
+    }).catch(() => {
       setItems(prev =>
-        prev.map(i => i.tmdb_id === item.tmdb_id ? { ...i, rating } : i)
+        prev.map(i => i.tmdb_id === item.tmdb_id ? { ...i, rating: oldRating } : i)
       );
-    } catch (err) {}
+    });
   }
 
-  async function handleFavorite(item) {
-    try {
-      await api.post(`/media/${item.tmdb_id}/favorite`, {
-        type: item.type
-      });
-      setItems(prev =>
-        prev.map(i => i.tmdb_id === item.tmdb_id ? { ...i, is_favorite: true } : i)
-      );
-    } catch (err) {}
-  }
-
-  async function handleUnfavorite(item) {
-    try {
-      await api.delete(`/media/${item.tmdb_id}/favorite`, {
-        data: { type: item.type }
-      });
+  function handleFavorite(item) {
+    setItems(prev =>
+      prev.map(i => i.tmdb_id === item.tmdb_id ? { ...i, is_favorite: true } : i)
+    );
+    api.post(`/media/${item.tmdb_id}/favorite`, {
+      type: item.type
+    }).catch(() => {
       setItems(prev =>
         prev.map(i => i.tmdb_id === item.tmdb_id ? { ...i, is_favorite: false } : i)
       );
-    } catch (err) {}
+    });
+  }
+
+  function handleUnfavorite(item) {
+    setItems(prev =>
+      prev.map(i => i.tmdb_id === item.tmdb_id ? { ...i, is_favorite: false } : i)
+    );
+    api.delete(`/media/${item.tmdb_id}/favorite`, {
+      data: { type: item.type }
+    }).catch(() => {
+      setItems(prev =>
+        prev.map(i => i.tmdb_id === item.tmdb_id ? { ...i, is_favorite: true } : i)
+      );
+    });
   }
 
   if (loading) return <div>Loading watched history...</div>;

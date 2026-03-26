@@ -252,63 +252,98 @@ export default function MediaDetails() {
     const ids = new Set(media.genres.map(g => String(g.id)));
     const idArray = [...ids];
     const normalizedType = media.type === "tv" ? "series" : media.type;
-    await api.post(`/media/${tmdbId}/watchlist`, { type: normalizedType, genres: idArray });
     setStatus("watchlist");
+    try {
+      await api.post(`/media/${tmdbId}/watchlist`, { type: normalizedType, genres: idArray });
+    } catch (err) {
+      setStatus(null);
+      throw err;
+    }
   }
 
   async function removeFromWatchlist() {
     const normalizedType = media.type === "tv" ? "series" : media.type;
-    await api.delete(`/media/${tmdbId}/watchlist`, {
-      data: { type: normalizedType }
-    });
     setStatus(null);
+    try {
+      await api.delete(`/media/${tmdbId}/watchlist`, {
+        data: { type: normalizedType }
+      });
+    } catch (err) {
+      setStatus("watchlist");
+      throw err;
+    }
   }
 
   async function markAsWatched() {
     const ids = new Set(media.genres.map(g => String(g.id)));
     const idArray = [...ids];
     const normalizedType = media.type === "tv" ? "series" : media.type;
-    await api.post(`/media/${tmdbId}/watched`, { type: normalizedType, genres: idArray });
     setStatus("watched");
+    try {
+      await api.post(`/media/${tmdbId}/watched`, { type: normalizedType, genres: idArray });
+    } catch (err) {
+      setStatus(null);
+      throw err;
+    }
   }
 
   async function removeFromWatched() {
     const normalizedType = media.type === "tv" ? "series" : media.type;
-    await api.delete(`/media/${tmdbId}/watched`, {
-      data: { type: normalizedType }
-    });
+    const oldRating = rating;
     setStatus(null);
-    setRating(null); // ⭐ reset rating
+    setRating(null);
+    try {
+      await api.delete(`/media/${tmdbId}/watched`, {
+        data: { type: normalizedType }
+      });
+    } catch (err) {
+      setStatus("watched");
+      setRating(oldRating);
+      throw err;
+    }
   }
 
   async function moveToWatched() {
     const normalizedType = media.type === "tv" ? "series" : media.type;
-    await api.post(`/media/${tmdbId}/watchlist-to-watched`, {
-      type: normalizedType
-    });
     setStatus("watched");
+    try {
+      await api.post(`/media/${tmdbId}/watchlist-to-watched`, {
+        type: normalizedType
+      });
+    } catch (err) {
+      setStatus("watchlist");
+      throw err;
+    }
   }
 
   // ⭐ NEW — same logic as WatchedPage
   async function handleRate(n) {
     const normalizedType = media.type === "tv" ? "series" : media.type;
-
-    await api.post(`/media/${tmdbId}/rating`, {
-      type: normalizedType,
-      rating: n
-    });
-
+    const oldRating = rating;
     setRating(n);
+    try {
+      await api.post(`/media/${tmdbId}/rating`, {
+        type: normalizedType,
+        rating: n
+      });
+    } catch (err) {
+      setRating(oldRating);
+      throw err;
+    }
   }
 
   async function handleRemoveRating() {
     const normalizedType = media.type === "tv" ? "series" : media.type;
-
-    await api.delete(`/media/${tmdbId}/rating`, {
-      data: { type: normalizedType }
-    });
-
+    const oldRating = rating;
     setRating(null);
+    try {
+      await api.delete(`/media/${tmdbId}/rating`, {
+        data: { type: normalizedType }
+      });
+    } catch (err) {
+      setRating(oldRating);
+      throw err;
+    }
   }
 
   if (loading) return <div className="page-container">Loading...</div>;

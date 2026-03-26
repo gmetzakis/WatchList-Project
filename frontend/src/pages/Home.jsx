@@ -200,6 +200,22 @@ export default function HomePage() {
     }
   }
 
+  function snapshotHomeLists() {
+    return {
+      watchedItems,
+      watchlistItems,
+      favoritesItems,
+      recommendationItems,
+    };
+  }
+
+  function restoreHomeLists(snapshot) {
+    setWatchedItems(snapshot.watchedItems);
+    setWatchlistItems(snapshot.watchlistItems);
+    setFavoritesItems(snapshot.favoritesItems);
+    setRecommendationItems(snapshot.recommendationItems);
+  }
+
   function updateItemAcrossLists(itemKey, updater) {
     const patch = (list) => list.map((entry) => (mediaKey(entry) === itemKey ? updater(entry) : entry));
     setWatchedItems((prev) => patch(prev));
@@ -210,6 +226,7 @@ export default function HomePage() {
 
   async function handleRate(item, rating) {
     await withPending(item, async () => {
+      const snapshot = snapshotHomeLists();
       await api.post(`/media/${item.tmdb_id}/rating`, { type: item.type, rating });
       const key = mediaKey(item);
 
@@ -224,53 +241,84 @@ export default function HomePage() {
       }));
 
       updateItemAcrossLists(key, (entry) => ({ ...entry, rating }));
-    });
+    }).catch?.(() => {});
   }
 
   async function handleFavorite(item) {
+    const key = mediaKey(item);
+    const snapshot = snapshotHomeLists();
+    setMyMediaStatus((prev) => ({
+      ...prev,
+      [key]: { ...(prev[key] || {}), status: "watched", is_favorite: true },
+    }));
+    const favoriteItem = { ...item, is_favorite: true };
+    setFavoritesItems((prev) => upsertByKey(prev, favoriteItem));
+    updateItemAcrossLists(key, (entry) => ({ ...entry, is_favorite: true }));
+
     await withPending(item, async () => {
-      await api.post(`/media/${item.tmdb_id}/favorite`, { type: item.type });
-      const key = mediaKey(item);
-
-      setMyMediaStatus((prev) => ({
-        ...prev,
-        [key]: { ...(prev[key] || {}), status: "watched", is_favorite: true },
-      }));
-
-      const favoriteItem = { ...item, is_favorite: true };
-      setFavoritesItems((prev) => upsertByKey(prev, favoriteItem));
-      updateItemAcrossLists(key, (entry) => ({ ...entry, is_favorite: true }));
+      try {
+        await api.post(`/media/${item.tmdb_id}/favorite`, { type: item.type });
+      } catch (err) {
+        restoreHomeLists(snapshot);
+        setMyMediaStatus((prev) => ({
+          ...prev,
+          [key]: { ...(prev[key] || {}), status: "watched", is_favorite: false },
+        }));
+        throw err;
+      }
     });
   }
 
   async function handleUnfavorite(item) {
+    const key = mediaKey(item);
+    const snapshot = snapshotHomeLists();
+    setMyMediaStatus((prev) => ({
+      ...prev,
+      [key]: { ...(prev[key] || {}), status: "watched", is_favorite: false },
+    }));
+    setFavoritesItems((prev) => prev.filter((entry) => mediaKey(entry) !== key));
+    updateItemAcrossLists(key, (entry) => ({ ...entry, is_favorite: false }));
+
     await withPending(item, async () => {
-      await api.delete(`/media/${item.tmdb_id}/favorite`, { data: { type: item.type } });
-      const key = mediaKey(item);
-
-      setMyMediaStatus((prev) => ({
-        ...prev,
-        [key]: { ...(prev[key] || {}), status: "watched", is_favorite: false },
-      }));
-
-      setFavoritesItems((prev) => prev.filter((entry) => mediaKey(entry) !== key));
-      updateItemAcrossLists(key, (entry) => ({ ...entry, is_favorite: false }));
+      try {
+        await api.delete(`/media/${item.tmdb_id}/favorite`, { data: { type: item.type } });
+      } catch (err) {
+        restoreHomeLists(snapshot);
+        setMyMediaStatus((prev) => ({
+          ...prev,
+          [key]: { ...(prev[key] || {}), status: "watched", is_favorite: true },
+        }));
+        throw err;
+      }
     });
   }
 
   async function handleRemoveFromWatched(item) {
+    const key = mediaKey(item);
+    const snapshot = snapshotHomeLists();
+    setMyMediaStatus((prev) => ({
+      ...prev,
+      [key]: { status: null, rating: null, is_favorite: false },
+    }));
+    setWatchedItems((prev) => prev.filter((entry) => mediaKey(entry) !== key));
+    setFavoritesItems((prev) => prev.filter((entry) => mediaKey(entry) !== key));
+    updateItemAcrossLists(key, (entry) => ({ ...entry, rating: null, is_favorite: false }));
+
     await withPending(item, async () => {
-      await api.delete(`/media/${item.tmdb_id}/watched`, { data: { type: item.type } });
-      const key = mediaKey(item);
-
-      setMyMediaStatus((prev) => ({
-        ...prev,
-        [key]: { status: null, rating: null, is_favorite: false },
-      }));
-
-      setWatchedItems((prev) => prev.filter((entry) => mediaKey(entry) !== key));
-      setFavoritesItems((prev) => prev.filter((entry) => mediaKey(entry) !== key));
-      updateItemAcrossLists(key, (entry) => ({ ...entry, rating: null, is_favorite: false }));
+      try {
+        await api.delete(`/media/${item.tmdb_id}/watched`, { data: { type: item.type } });
+      } catch (err) {
+        restoreHomeLists(snapshot);
+        setMyMediaStatus((prev) => ({
+          ...prev,
+          [key]: {
+            status: "watched",
+            rating: item.rating || null,
+            is_favorite: item.is_favorite || false,
+          },
+        }));
+        throw err;
+      }
     });
   }
 

@@ -219,15 +219,18 @@ export default function ExplorePage() {
       return;
     }
 
+    setMyMediaStatus((prev) => ({
+      ...prev,
+      [key]: { status: "watchlist", rating: null, is_favorite: false },
+    }));
     setActionPending((prev) => new Set([...prev, key]));
     try {
       await api.post(`/media/${item.tmdb_id}/watchlist`, { type: item.type });
+    } catch {
       setMyMediaStatus((prev) => ({
         ...prev,
-        [key]: { status: "watchlist", rating: null, is_favorite: false },
+        [key]: { status: null, rating: null, is_favorite: false },
       }));
-    } catch {
-      // Silent fail to keep the feed snappy.
     } finally {
       setActionPending((prev) => {
         const next = new Set(prev);
@@ -243,19 +246,23 @@ export default function ExplorePage() {
       return;
     }
 
+    const previous = myMediaStatus[key];
+    setMyMediaStatus((prev) => ({
+      ...prev,
+      [key]: {
+        status: "watched",
+        rating: prev[key]?.rating || null,
+        is_favorite: prev[key]?.is_favorite || false,
+      },
+    }));
     setActionPending((prev) => new Set([...prev, key]));
     try {
       await api.post(`/media/${item.tmdb_id}/watched`, { type: item.type });
+    } catch {
       setMyMediaStatus((prev) => ({
         ...prev,
-        [key]: {
-          status: "watched",
-          rating: prev[key]?.rating || null,
-          is_favorite: prev[key]?.is_favorite || false,
-        },
+        [key]: previous || { status: null, rating: null, is_favorite: false },
       }));
-    } catch {
-      // Silent fail to keep the feed snappy.
     } finally {
       setActionPending((prev) => {
         const next = new Set(prev);
@@ -272,15 +279,19 @@ export default function ExplorePage() {
       return;
     }
 
+    const previous = myMediaStatus[key];
+    setMyMediaStatus((prev) => ({
+      ...prev,
+      [key]: { status: null, rating: null, is_favorite: false },
+    }));
     setActionPending((prev) => new Set([...prev, key]));
     try {
       await api.delete(`/media/${item.tmdb_id}/watchlist`, { data: { type: item.type } });
+    } catch {
       setMyMediaStatus((prev) => ({
         ...prev,
-        [key]: { status: null, rating: null, is_favorite: false },
+        [key]: previous,
       }));
-    } catch {
-      // Silent fail to keep the feed snappy.
     } finally {
       setActionPending((prev) => {
         const next = new Set(prev);
@@ -297,19 +308,23 @@ export default function ExplorePage() {
       return;
     }
 
+    const previous = myMediaStatus[key];
+    setMyMediaStatus((prev) => ({
+      ...prev,
+      [key]: {
+        status: "watched",
+        rating: prev[key]?.rating || null,
+        is_favorite: prev[key]?.is_favorite || false,
+      },
+    }));
     setActionPending((prev) => new Set([...prev, key]));
     try {
       await api.post(`/media/${item.tmdb_id}/watchlist-to-watched`, { type: item.type });
+    } catch {
       setMyMediaStatus((prev) => ({
         ...prev,
-        [key]: {
-          status: "watched",
-          rating: prev[key]?.rating || null,
-          is_favorite: prev[key]?.is_favorite || false,
-        },
+        [key]: previous,
       }));
-    } catch {
-      // Silent fail to keep the feed snappy.
     } finally {
       setActionPending((prev) => {
         const next = new Set(prev);
@@ -326,15 +341,19 @@ export default function ExplorePage() {
       return;
     }
 
+    const previous = myMediaStatus[key];
+    setMyMediaStatus((prev) => ({
+      ...prev,
+      [key]: { status: null, rating: null, is_favorite: false },
+    }));
     setActionPending((prev) => new Set([...prev, key]));
     try {
       await api.delete(`/media/${item.tmdb_id}/watched`, { data: { type: item.type } });
+    } catch {
       setMyMediaStatus((prev) => ({
         ...prev,
-        [key]: { status: null, rating: null, is_favorite: false },
+        [key]: previous,
       }));
-    } catch {
-      // Silent fail to keep the feed snappy.
     } finally {
       setActionPending((prev) => {
         const next = new Set(prev);
@@ -351,20 +370,24 @@ export default function ExplorePage() {
       return;
     }
 
+    const previous = myMediaStatus[key];
+    setMyMediaStatus((prev) => ({
+      ...prev,
+      [key]: {
+        ...(prev[key] || {}),
+        status: "watched",
+        rating,
+        is_favorite: prev[key]?.is_favorite || false,
+      },
+    }));
     setActionPending((prev) => new Set([...prev, key]));
     try {
       await api.post(`/media/${item.tmdb_id}/rating`, { type: item.type, rating });
+    } catch {
       setMyMediaStatus((prev) => ({
         ...prev,
-        [key]: {
-          ...(prev[key] || {}),
-          status: "watched",
-          rating,
-          is_favorite: prev[key]?.is_favorite || false,
-        },
+        [key]: previous,
       }));
-    } catch {
-      // Silent fail to keep the feed snappy.
     } finally {
       setActionPending((prev) => {
         const next = new Set(prev);
@@ -382,15 +405,18 @@ export default function ExplorePage() {
       return;
     }
 
+    setMyMediaStatus((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], is_favorite: true },
+    }));
     setActionPending((prev) => new Set([...prev, key]));
     try {
       await api.post(`/media/${item.tmdb_id}/favorite`, { type: item.type });
+    } catch {
       setMyMediaStatus((prev) => ({
         ...prev,
-        [key]: { ...prev[key], is_favorite: true },
+        [key]: { ...prev[key], is_favorite: false },
       }));
-    } catch {
-      // Silent fail to keep the feed snappy.
     } finally {
       setActionPending((prev) => {
         const next = new Set(prev);
@@ -408,15 +434,18 @@ export default function ExplorePage() {
       return;
     }
 
+    setMyMediaStatus((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], is_favorite: false },
+    }));
     setActionPending((prev) => new Set([...prev, key]));
     try {
       await api.delete(`/media/${item.tmdb_id}/favorite`, { data: { type: item.type } });
+    } catch {
       setMyMediaStatus((prev) => ({
         ...prev,
-        [key]: { ...prev[key], is_favorite: false },
+        [key]: { ...prev[key], is_favorite: true },
       }));
-    } catch {
-      // Silent fail to keep the feed snappy.
     } finally {
       setActionPending((prev) => {
         const next = new Set(prev);
