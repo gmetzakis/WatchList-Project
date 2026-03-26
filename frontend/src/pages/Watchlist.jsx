@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import api from "../api/axios.js";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Trash, Eye, LayoutGrid, GalleryVertical, X } from "lucide-react";
@@ -19,7 +19,7 @@ const TYPE_FILTERS = [
 const PAGE_SIZE = 24;
 
 // Extracted EmblaCarousel component
-function EmblaCarousel({ items, renderCard }) {
+function EmblaCarousel({ items, renderCard, canLoadMore = false, onLoadMore }) {
   const [autoplayEnabled, setAutoplayEnabled] = useState(() => {
     if (typeof window === "undefined") return true;
     return !window.matchMedia("(max-width: 760px)").matches;
@@ -56,6 +56,27 @@ function EmblaCarousel({ items, renderCard }) {
     plugins
   );
 
+  const prevItemsLengthRef = useRef(items.length);
+  useEffect(() => {
+    if (emblaApi && items.length !== prevItemsLengthRef.current) {
+      prevItemsLengthRef.current = items.length;
+      emblaApi.reInit();
+    }
+  }, [emblaApi, items.length]);
+
+  const [isAtEnd, setIsAtEnd] = useState(false);
+  useEffect(() => {
+    if (!emblaApi) return;
+    const update = () => setIsAtEnd(!emblaApi.canScrollNext());
+    update();
+    emblaApi.on('select', update);
+    emblaApi.on('reInit', update);
+    return () => {
+      emblaApi.off('select', update);
+      emblaApi.off('reInit', update);
+    };
+  }, [emblaApi]);
+
   const scrollPrev = () => {
     if (emblaApi) emblaApi.scrollPrev();
   };
@@ -78,6 +99,18 @@ function EmblaCarousel({ items, renderCard }) {
       </div>
 
       <button className="embla-arrow right" onClick={scrollNext}>›</button>
+
+      {isAtEnd && canLoadMore && onLoadMore && (
+        <div className="embla-load-more-overlay">
+          <button
+            type="button"
+            className="embla-load-more-btn"
+            onClick={onLoadMore}
+          >
+            Load More
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -108,6 +141,7 @@ export default function WatchlistPage() {
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [expandedCardKey, setExpandedCardKey] = useState(null);
   const [pagination, setPagination] = useState({ page: 1, limit: PAGE_SIZE, total: 0, totalPages: 1 });
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   useEffect(() => {
     setSearchQuery(search);
@@ -240,30 +274,57 @@ export default function WatchlistPage() {
 
   useEffect(() => {
     load();
-  }, [type, sort, genre, search, page]);
+  }, [type, sort, genre, search, page, viewMode]);
 
   async function load() {
     setLoading(true);
+    const isTapeMode = viewMode === "tape" || isMobileView;
     try {
+      const params = {
+        type: type !== "all" ? type : undefined,
+        sort: sort || undefined,
+        genre: genre !== "all" ? genre : undefined,
+        search: search || undefined,
+        page: isTapeMode ? 1 : page,
+        limit: PAGE_SIZE,
+      };
+      const itemsRes = await api.get("/media/watchlist", { params });
+      const loadedItems = itemsRes.data?.items || [];
+      setItems(loadedItems);
+      setAvailableGenres(itemsRes.data?.genres || []);
+      setPagination(itemsRes.data?.pagination || { page: 1, limit: PAGE_SIZE, total: loadedItems.length, totalPages: 1 });
+    } catch (err) {
+      console.error("Watchlist load error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadMore() {
+    if (isLoadingMore || pagination.page >= pagination.totalPages) return;
+    setIsLoadingMore(true);
+    try {
+      const nextPage = pagination.page + 1;
       const itemsRes = await api.get("/media/watchlist", {
         params: {
           type: type !== "all" ? type : undefined,
           sort: sort || undefined,
           genre: genre !== "all" ? genre : undefined,
           search: search || undefined,
-          page,
+          page: nextPage,
           limit: PAGE_SIZE,
         }
       });
-
-      setItems(itemsRes.data?.items || []);
-      setAvailableGenres(itemsRes.data?.genres || []);
-      setPagination(itemsRes.data?.pagination || { page: 1, limit: PAGE_SIZE, total: (itemsRes.data?.items || []).length, totalPages: 1 });
-
+      const newItems = itemsRes.data?.items || [];
+      setItems(prev => [...prev, ...newItems]);
+      setPagination(
+        itemsRes.data?.pagination ||
+        { page: nextPage, limit: PAGE_SIZE, total: 0, totalPages: 1 }
+      );
     } catch (err) {
-      console.error("Watchlist load error:", err);
+      console.error("Watchlist load more error:", err);
     } finally {
-      setLoading(false);
+      setIsLoadingMore(false);
     }
   }
 
@@ -436,25 +497,27 @@ export default function WatchlistPage() {
         </div>
         )}
 
-        <div className="library-pagination-row">
-          <button
-            type="button"
-            className="library-pagination-btn"
-            onClick={() => handlePageChange(page - 1)}
-            disabled={page <= 1}
-          >
-            Previous
-          </button>
-          <span className="library-pagination-label">Page {pagination.page} of {pagination.totalPages}</span>
-          <button
-            type="button"
-            className="library-pagination-btn"
-            onClick={() => handlePageChange(page + 1)}
-            disabled={page >= pagination.totalPages}
-          >
-            Next
-          </button>
-        </div>
+        {viewMode === "grid" && !isMobileView && (
+          <div className="library-pagination-row">
+            <button
+              type="button"
+              className="library-pagination-btn"
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page <= 1}
+            >
+              Previous
+            </button>
+            <span className="library-pagination-label">Page {pagination.page} of {pagination.totalPages}</span>
+            <button
+              type="button"
+              className="library-pagination-btn"
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page >= pagination.totalPages}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </section>
 
       <section className="library-content-shell">
@@ -471,7 +534,12 @@ export default function WatchlistPage() {
 
         {/* TAPE VIEW */}
         {(viewMode === "tape" || isMobileView) && (
-          <EmblaCarousel items={filteredItems} renderCard={renderCard} />
+          <EmblaCarousel
+            items={filteredItems}
+            renderCard={renderCard}
+            canLoadMore={pagination.page < pagination.totalPages}
+            onLoadMore={loadMore}
+          />
         )}
       </section>
 

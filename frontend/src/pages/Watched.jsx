@@ -18,9 +18,11 @@ const TYPE_FILTERS = [
 ];
 
 const PAGE_SIZE = 24;
+const BUCKET_INITIAL_GRID = 8;
+const BUCKET_INITIAL_TAPE = 20;
 
 // Extracted EmblaCarousel component
-function EmblaCarousel({ items, renderCard }) {
+function EmblaCarousel({ items, renderCard, canLoadMore = false, onLoadMore }) {
   const [autoplayEnabled, setAutoplayEnabled] = useState(() => {
     if (typeof window === "undefined") return true;
     return !window.matchMedia("(max-width: 760px)").matches;
@@ -57,6 +59,27 @@ function EmblaCarousel({ items, renderCard }) {
     plugins
   );
 
+  const prevItemsLengthRef = useRef(items.length);
+  useEffect(() => {
+    if (emblaApi && items.length !== prevItemsLengthRef.current) {
+      prevItemsLengthRef.current = items.length;
+      emblaApi.reInit();
+    }
+  }, [emblaApi, items.length]);
+
+  const [isAtEnd, setIsAtEnd] = useState(false);
+  useEffect(() => {
+    if (!emblaApi) return;
+    const update = () => setIsAtEnd(!emblaApi.canScrollNext());
+    update();
+    emblaApi.on('select', update);
+    emblaApi.on('reInit', update);
+    return () => {
+      emblaApi.off('select', update);
+      emblaApi.off('reInit', update);
+    };
+  }, [emblaApi]);
+
   const scrollPrev = () => {
     if (emblaApi) emblaApi.scrollPrev();
   };
@@ -79,6 +102,18 @@ function EmblaCarousel({ items, renderCard }) {
       </div>
 
       <button className="embla-arrow right" onClick={scrollNext}>›</button>
+
+      {isAtEnd && canLoadMore && onLoadMore && (
+        <div className="embla-load-more-overlay">
+          <button
+            type="button"
+            className="embla-load-more-btn"
+            onClick={onLoadMore}
+          >
+            Load More
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -107,6 +142,8 @@ export default function WatchedPage() {
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [expandedCardKey, setExpandedCardKey] = useState(null);
   const [pagination, setPagination] = useState({ page: 1, limit: PAGE_SIZE, total: 0, totalPages: 1 });
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [bucketVisible, setBucketVisible] = useState({});
 
   useEffect(() => {
     setSearchQuery(search);
@@ -246,31 +283,74 @@ export default function WatchedPage() {
 
   useEffect(() => {
     load();
-  }, [sort, type, genre, search, page]);
+  }, [sort, type, genre, search, page, viewMode]);
 
   async function load() {
     setLoading(true);
+    setBucketVisible({});
+    const isTapeMode = viewMode === "tape" || isMobileView;
+    const isRatingMode = sort === "rating_desc" || sort === "rating_asc";
     try {
+      const params = {
+        sort: sort || undefined,
+        type: type !== "all" ? type : undefined,
+        genre: genre !== "all" ? genre : undefined,
+        search: search || undefined,
+      };
+      if (!isRatingMode) {
+        params.page = isTapeMode ? 1 : page;
+        params.limit = PAGE_SIZE;
+      }
+      const itemsRes = await api.get("/media/watched", { params });
+      const loadedItems = itemsRes.data?.items || [];
+      setItems(loadedItems);
+      setAvailableGenres(itemsRes.data?.genres || []);
+      setPagination(
+        itemsRes.data?.pagination ||
+        { page: 1, limit: loadedItems.length, total: loadedItems.length, totalPages: 1 }
+      );
+    } catch (err) {
+      console.error("Watched load error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadMore() {
+    if (isLoadingMore || pagination.page >= pagination.totalPages) return;
+    setIsLoadingMore(true);
+    try {
+      const nextPage = pagination.page + 1;
       const itemsRes = await api.get("/media/watched", {
         params: {
           sort: sort || undefined,
           type: type !== "all" ? type : undefined,
           genre: genre !== "all" ? genre : undefined,
           search: search || undefined,
-          page,
+          page: nextPage,
           limit: PAGE_SIZE,
         }
       });
-
-      setItems(itemsRes.data?.items || []);
-      setAvailableGenres(itemsRes.data?.genres || []);
-      setPagination(itemsRes.data?.pagination || { page: 1, limit: PAGE_SIZE, total: (itemsRes.data?.items || []).length, totalPages: 1 });
-
+      const newItems = itemsRes.data?.items || [];
+      setItems(prev => [...prev, ...newItems]);
+      setPagination(
+        itemsRes.data?.pagination ||
+        { page: nextPage, limit: PAGE_SIZE, total: 0, totalPages: 1 }
+      );
     } catch (err) {
-      console.error("Watched load error:", err);
+      console.error("Watched load more error:", err);
     } finally {
-      setLoading(false);
+      setIsLoadingMore(false);
     }
+  }
+
+  function loadMoreBucket(key) {
+    const isTape = viewMode === "tape" || isMobileView;
+    const initial = isTape ? BUCKET_INITIAL_TAPE : BUCKET_INITIAL_GRID;
+    setBucketVisible(prev => ({
+      ...prev,
+      [key]: (prev[key] ?? initial) + initial,
+    }));
   }
 
   function updateQuery(newSort, newType, newGenre, newSearch = "", newPage = 1) {
@@ -477,25 +557,27 @@ export default function WatchedPage() {
         </div>
         )}
 
-        <div className="library-pagination-row">
-          <button
-            type="button"
-            className="library-pagination-btn"
-            onClick={() => handlePageChange(page - 1)}
-            disabled={page <= 1}
-          >
-            Previous
-          </button>
-          <span className="library-pagination-label">Page {pagination.page} of {pagination.totalPages}</span>
-          <button
-            type="button"
-            className="library-pagination-btn"
-            onClick={() => handlePageChange(page + 1)}
-            disabled={page >= pagination.totalPages}
-          >
-            Next
-          </button>
-        </div>
+        {!isRatingSort && viewMode === "grid" && !isMobileView && (
+          <div className="library-pagination-row">
+            <button
+              type="button"
+              className="library-pagination-btn"
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page <= 1}
+            >
+              Previous
+            </button>
+            <span className="library-pagination-label">Page {pagination.page} of {pagination.totalPages}</span>
+            <button
+              type="button"
+              className="library-pagination-btn"
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page >= pagination.totalPages}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </section>
 
       <section className="watched-content-shell">
@@ -507,6 +589,12 @@ export default function WatchedPage() {
             {activeOrder.map(key => {
               const bucket = grouped[key];
               if (!bucket || bucket.length === 0) return null;
+
+              const isTape = viewMode === "tape" || isMobileView;
+              const initial = isTape ? BUCKET_INITIAL_TAPE : BUCKET_INITIAL_GRID;
+              const visCount = bucketVisible[key] ?? initial;
+              const visibleItems = bucket.slice(0, visCount);
+              const hasMore = bucket.length > visCount;
 
             const title = key === "unrated"
               ? "Unrated"
@@ -520,11 +608,29 @@ export default function WatchedPage() {
                   <h2 className="rating-section-title">{title}</h2>
 
                 {viewMode === "grid" && !isMobileView ? (
-                  <div className="media-grid">
-                    {bucket.map(item => renderCard(item))}
-                  </div>
+                  <>
+                    <div className="media-grid">
+                      {visibleItems.map(item => renderCard(item))}
+                    </div>
+                    {hasMore && (
+                      <div className="library-pagination-row" style={{ justifyContent: "center", marginTop: "16px" }}>
+                        <button
+                          type="button"
+                          className="library-pagination-btn"
+                          onClick={() => loadMoreBucket(key)}
+                        >
+                          Load More
+                        </button>
+                      </div>
+                    )}
+                  </>
                 ) : (
-                  <EmblaCarousel items={bucket} renderCard={renderCard} />
+                  <EmblaCarousel
+                    items={visibleItems}
+                    renderCard={renderCard}
+                    canLoadMore={hasMore}
+                    onLoadMore={() => loadMoreBucket(key)}
+                  />
                 )}
                 </div>
               );
@@ -542,7 +648,12 @@ export default function WatchedPage() {
             )}
 
             {(viewMode === "tape" || isMobileView) && (
-              <EmblaCarousel items={filteredItems} renderCard={renderCard} />
+              <EmblaCarousel
+                items={filteredItems}
+                renderCard={renderCard}
+                canLoadMore={pagination.page < pagination.totalPages}
+                onLoadMore={loadMore}
+              />
             )}
           </>
         )}
