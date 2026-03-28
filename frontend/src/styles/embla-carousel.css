@@ -37,6 +37,22 @@
   min-width: 0;
 }
 
+@media (max-width: 600px) {
+  .embla-container {
+    gap: 10px;
+    padding: 0 8px;
+  }
+  .embla-slide {
+    flex: 0 0 110px;
+    max-width: 110px;
+  }
+  .embla-arrow {
+    font-size: 48px;
+    padding: 0 2px;
+  }
+}
+}
+
 .embla-arrow {
   position: absolute;
   top: 50%;
