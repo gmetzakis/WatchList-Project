@@ -24,7 +24,7 @@ const BUCKET_INITIAL_TAPE = 20;
 // Extracted EmblaCarousel component
 function EmblaCarousel({ items, renderCard, canLoadMore = false, onLoadMore }) {
   const [autoplayEnabled, setAutoplayEnabled] = useState(() => {
-    if (typeof window === "undefined") return true;
+    if (typeof window === "undefined") return false;
     return !window.matchMedia("(max-width: 760px)").matches;
   });
 
@@ -164,17 +164,7 @@ export default function FavoritesPage() {
     };
   }, []);
 
-  useEffect(() => {
-    if (isMobileView && viewMode !== "tape") {
-      setViewMode("tape");
-    }
-  }, [isMobileView, viewMode]);
-
-  useEffect(() => {
-    if (!isMobileView) {
-      setExpandedCardKey(null);
-    }
-  }, [isMobileView]);
+  useEffect(() => { setExpandedCardKey(isMobileView ? expandedCardKey : null); }, [isMobileView]);
 
   function normalizeGenreNames(genres) {
     if (!Array.isArray(genres)) return [];
@@ -303,7 +293,6 @@ export default function FavoritesPage() {
   async function load() {
     setLoading(true);
     setBucketVisible({});
-    const isTapeMode = viewMode === "tape" || isMobileView;
     const isRatingMode = sort === "rating_desc" || sort === "rating_asc";
     try {
       const params = {
@@ -313,7 +302,7 @@ export default function FavoritesPage() {
         search: search || undefined,
       };
       if (!isRatingMode) {
-        params.page = isTapeMode ? 1 : page;
+        params.page = viewMode === "tape" ? 1 : page;
         params.limit = PAGE_SIZE;
       }
       const itemsRes = await api.get("/media/favorites", { params });
@@ -538,23 +527,20 @@ export default function FavoritesPage() {
         {(!isMobileView || isMobileFiltersOpen) && (
         <div id="favorites-mobile-filters" className="filter-bar library-filter-bar">
 
-        {!isMobileView && (
-          <div className="view-toggle-container">
-            <div
-              className={`view-toggle-box ${viewMode === "grid" ? "active" : ""}`}
-              onClick={() => setViewMode("grid")}
-            >
-              <LayoutGrid size={22} />
-            </div>
-
-            <div
-              className={`view-toggle-box ${viewMode === "tape" ? "active" : ""}`}
-              onClick={() => setViewMode("tape")}
-            >
-              <GalleryVertical size={22} />
-            </div>
+        <div className="view-toggle-container">
+          <div
+            className={`view-toggle-box ${viewMode === "grid" ? "active" : ""}`}
+            onClick={() => setViewMode("grid")}
+          >
+            <LayoutGrid size={22} />
           </div>
-        )}
+          <div
+            className={`view-toggle-box ${viewMode === "tape" ? "active" : ""}`}
+            onClick={() => setViewMode("tape")}
+          >
+            <GalleryVertical size={22} />
+          </div>
+        </div>
 
         <input
           type="text"
@@ -598,7 +584,7 @@ export default function FavoritesPage() {
         </div>
         )}
 
-        {!isRatingSort && viewMode === "grid" && !isMobileView && (
+        {!isRatingSort && viewMode === "grid" && (
           <div className="library-pagination-row">
             <button
               type="button"
@@ -633,8 +619,7 @@ export default function FavoritesPage() {
               const bucket = grouped[key];
               if (!bucket || bucket.length === 0) return null;
 
-              const isTape = viewMode === "tape" || isMobileView;
-              const initial = isTape ? BUCKET_INITIAL_TAPE : BUCKET_INITIAL_GRID;
+              const initial = BUCKET_INITIAL_GRID;
               const visCount = bucketVisible[key] ?? initial;
               const visibleItems = bucket.slice(0, visCount);
               const hasMore = bucket.length > visCount;
@@ -650,31 +635,20 @@ export default function FavoritesPage() {
                 <div key={key} className="rating-section">
                   <h2 className="rating-section-title">{title}</h2>
 
-                {viewMode === "grid" && !isMobileView ? (
-                  <>
-                    <div className="media-grid">
-                      {visibleItems.map(item => renderCard(item))}
+                  <div className="media-grid">
+                    {visibleItems.map(item => renderCard(item))}
+                  </div>
+                  {hasMore && (
+                    <div className="library-pagination-row" style={{ justifyContent: "center", marginTop: "16px" }}>
+                      <button
+                        type="button"
+                        className="library-pagination-btn"
+                        onClick={() => loadMoreBucket(key)}
+                      >
+                        Load More
+                      </button>
                     </div>
-                    {hasMore && (
-                      <div className="library-pagination-row" style={{ justifyContent: "center", marginTop: "16px" }}>
-                        <button
-                          type="button"
-                          className="library-pagination-btn"
-                          onClick={() => loadMoreBucket(key)}
-                        >
-                          Load More
-                        </button>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <EmblaCarousel
-                    items={visibleItems}
-                    renderCard={renderCard}
-                    canLoadMore={hasMore}
-                    onLoadMore={() => loadMoreBucket(key)}
-                  />
-                )}
+                  )}
                 </div>
               );
             })}
@@ -684,13 +658,13 @@ export default function FavoritesPage() {
         {/* NON-GROUPED MODE */}
         {!isRatingSort && (
           <>
-            {viewMode === "grid" && !isMobileView && (
+            {viewMode === "grid" && (
               <div className="media-grid">
                 {filteredItems.map(item => renderCard(item))}
               </div>
             )}
 
-            {(viewMode === "tape" || isMobileView) && (
+            {viewMode === "tape" && (
                <EmblaCarousel
                  items={filteredItems}
                  renderCard={renderCard}

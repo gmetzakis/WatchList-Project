@@ -163,11 +163,7 @@ export default function WatchedPage() {
     };
   }, []);
 
-  useEffect(() => {
-    if (isMobileView && viewMode !== "tape") {
-      setViewMode("tape");
-    }
-  }, [isMobileView, viewMode]);
+  // Remove forced tape mode on mobile so user can select grid
 
   useEffect(() => {
     if (!isMobileView) {
@@ -288,7 +284,7 @@ export default function WatchedPage() {
   async function load() {
     setLoading(true);
     setBucketVisible({});
-    const isTapeMode = viewMode === "tape" || isMobileView;
+    const isTapeMode = viewMode === "tape";
     const isRatingMode = sort === "rating_desc" || sort === "rating_asc";
     try {
       const params = {
@@ -345,7 +341,7 @@ export default function WatchedPage() {
   }
 
   function loadMoreBucket(key) {
-    const isTape = viewMode === "tape" || isMobileView;
+    const isTape = viewMode === "tape";
     const initial = isTape ? BUCKET_INITIAL_TAPE : BUCKET_INITIAL_GRID;
     setBucketVisible(prev => ({
       ...prev,
@@ -508,25 +504,20 @@ export default function WatchedPage() {
 
         {(!isMobileView || isMobileFiltersOpen) && (
         <div id="watched-mobile-filters" className="filter-bar watched-filter-bar">
-
-          {!isMobileView && (
-            <div className="view-toggle-container">
-              <div
-                className={`view-toggle-box ${viewMode === "grid" ? "active" : ""}`}
-                onClick={() => setViewMode("grid")}
-              >
-                <LayoutGrid size={22} />
-              </div>
-
-              <div
-                className={`view-toggle-box ${viewMode === "tape" ? "active" : ""}`}
-                onClick={() => setViewMode("tape")}
-              >
-                <GalleryVertical size={22} />
-              </div>
+          <div className="view-toggle-container">
+            <div
+              className={`view-toggle-box ${viewMode === "grid" ? "active" : ""}`}
+              onClick={() => setViewMode("grid")}
+            >
+              <LayoutGrid size={22} />
             </div>
-          )}
-
+            <div
+              className={`view-toggle-box ${viewMode === "tape" ? "active" : ""}`}
+              onClick={() => setViewMode("tape")}
+            >
+              <GalleryVertical size={22} />
+            </div>
+          </div>
           <input
             type="text"
             className="filter-search-input"
@@ -534,7 +525,6 @@ export default function WatchedPage() {
             value={searchQuery}
             onChange={handleSearchInputChange}
           />
-
           <div>
             <label className="filter-label">Sort:</label>
             <select value={sort} onChange={handleSortChange} className="filter-select">
@@ -547,7 +537,6 @@ export default function WatchedPage() {
               <option value="rating_asc">Rating Ascending</option>
             </select>
           </div>
-
           <div>
             <label className="filter-label">Genre:</label>
             <select
@@ -564,7 +553,8 @@ export default function WatchedPage() {
         </div>
         )}
 
-        {!isRatingSort && viewMode === "grid" && !isMobileView && (
+        {/* Show pagination in grid mode on all devices */}
+        {!isRatingSort && viewMode === "grid" && (
           <div className="library-pagination-row">
             <button
               type="button"
@@ -597,8 +587,7 @@ export default function WatchedPage() {
               const bucket = grouped[key];
               if (!bucket || bucket.length === 0) return null;
 
-              const isTape = viewMode === "tape" || isMobileView;
-              const initial = isTape ? BUCKET_INITIAL_TAPE : BUCKET_INITIAL_GRID;
+              const initial = BUCKET_INITIAL_GRID;
               const visCount = bucketVisible[key] ?? initial;
               const visibleItems = bucket.slice(0, visCount);
               const hasMore = bucket.length > visCount;
@@ -614,31 +603,20 @@ export default function WatchedPage() {
                 <div key={key} className="rating-section">
                   <h2 className="rating-section-title">{title}</h2>
 
-                {viewMode === "grid" && !isMobileView ? (
-                  <>
-                    <div className="media-grid">
-                      {visibleItems.map(item => renderCard(item))}
+                  <div className="media-grid">
+                    {visibleItems.map(item => renderCard(item))}
+                  </div>
+                  {hasMore && (
+                    <div className="library-pagination-row" style={{ justifyContent: "center", marginTop: "16px" }}>
+                      <button
+                        type="button"
+                        className="library-pagination-btn"
+                        onClick={() => loadMoreBucket(key)}
+                      >
+                        Load More
+                      </button>
                     </div>
-                    {hasMore && (
-                      <div className="library-pagination-row" style={{ justifyContent: "center", marginTop: "16px" }}>
-                        <button
-                          type="button"
-                          className="library-pagination-btn"
-                          onClick={() => loadMoreBucket(key)}
-                        >
-                          Load More
-                        </button>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <EmblaCarousel
-                    items={visibleItems}
-                    renderCard={renderCard}
-                    canLoadMore={hasMore}
-                    onLoadMore={() => loadMoreBucket(key)}
-                  />
-                )}
+                  )}
                 </div>
               );
             })}
@@ -648,13 +626,13 @@ export default function WatchedPage() {
         {/* NON-GROUPED MODE */}
         {!isRatingSort && (
           <>
-            {viewMode === "grid" && !isMobileView && (
+            {viewMode === "grid" && (
               <div className="media-grid">
                 {filteredItems.map(item => renderCard(item))}
               </div>
             )}
 
-            {(viewMode === "tape" || isMobileView) && (
+            {viewMode === "tape" && (
               <EmblaCarousel
                 items={filteredItems}
                 renderCard={renderCard}

@@ -162,12 +162,6 @@ export default function WatchlistPage() {
   }, []);
 
   useEffect(() => {
-    if (isMobileView && viewMode !== "tape") {
-      setViewMode("tape");
-    }
-  }, [isMobileView, viewMode]);
-
-  useEffect(() => {
     if (!isMobileView) {
       setExpandedCardKey(null);
     }
@@ -278,14 +272,13 @@ export default function WatchlistPage() {
 
   async function load() {
     setLoading(true);
-    const isTapeMode = viewMode === "tape" || isMobileView;
     try {
       const params = {
         type: type !== "all" ? type : undefined,
         sort: sort || undefined,
         genre: genre !== "all" ? genre : undefined,
         search: search || undefined,
-        page: isTapeMode ? 1 : page,
+        page: viewMode === "tape" ? 1 : page,
         limit: PAGE_SIZE,
       };
       const itemsRes = await api.get("/media/watchlist", { params });
@@ -440,23 +433,20 @@ export default function WatchlistPage() {
         {(!isMobileView || isMobileFiltersOpen) && (
         <div id="watchlist-mobile-filters" className="filter-bar library-filter-bar">
         
-        {!isMobileView && (
-          <div className="view-toggle-container">
-            <div
-              className={`view-toggle-box ${viewMode === "grid" ? "active" : ""}`}
-              onClick={() => setViewMode("grid")}
-            >
-              <LayoutGrid size={22} />
-            </div>
-
-            <div
-              className={`view-toggle-box ${viewMode === "tape" ? "active" : ""}`}
-              onClick={() => setViewMode("tape")}
-            >
-              <GalleryVertical size={22} />
-            </div>
+        <div className="view-toggle-container">
+          <div
+            className={`view-toggle-box ${viewMode === "grid" ? "active" : ""}`}
+            onClick={() => setViewMode("grid")}
+          >
+            <LayoutGrid size={22} />
           </div>
-        )}
+          <div
+            className={`view-toggle-box ${viewMode === "tape" ? "active" : ""}`}
+            onClick={() => setViewMode("tape")}
+          >
+            <GalleryVertical size={22} />
+          </div>
+        </div>
 
         <input
           type="text"
@@ -493,7 +483,7 @@ export default function WatchlistPage() {
         </div>
         )}
 
-        {viewMode === "grid" && !isMobileView && (
+        {viewMode === "grid" && (
           <div className="library-pagination-row">
             <button
               type="button"
@@ -522,14 +512,14 @@ export default function WatchlistPage() {
         )}
 
         {/* GRID VIEW */}
-        {viewMode === "grid" && !isMobileView && (
+        {viewMode === "grid" && (
           <div className="media-grid">
             {filteredItems.map(item => renderCard(item))}
           </div>
         )}
 
         {/* TAPE VIEW */}
-        {(viewMode === "tape" || isMobileView) && (
+        {viewMode === "tape" && (
           <EmblaCarousel
             items={filteredItems}
             renderCard={renderCard}
