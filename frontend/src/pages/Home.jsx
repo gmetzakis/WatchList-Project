@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Fragment } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
@@ -453,8 +454,8 @@ export default function HomePage() {
     const isPending = actionPending.has(itemKey);
     const detailsPath = `/media/${item.type}/${item.tmdb_id}`;
 
-    return (
-      <article className={`media-card home-media-card ${isExpanded ? "mobile-card-expanded" : ""}`} key={itemKey}>
+    const card = (
+      <article className={`media-card home-media-card ${isExpanded ? "mobile-card-expanded" : ""}`}>
         <Link
           to={detailsPath}
           className="media-image-wrapper"
@@ -690,6 +691,15 @@ export default function HomePage() {
         </Link>
       </article>
     );
+    if (isExpanded) {
+      return (
+        <Fragment key={itemKey}>
+          <article className="media-card home-media-card" style={{visibility:'hidden'}}><div className="media-image-wrapper" /></article>
+          {createPortal(card, document.body)}
+        </Fragment>
+      );
+    }
+    return <Fragment key={itemKey}>{card}</Fragment>;
   }
 
   useEffect(() => {

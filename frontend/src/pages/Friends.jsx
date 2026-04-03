@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, Fragment } from "react";
+import { createPortal } from "react-dom";
 import { Link, useLocation } from "react-router-dom";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
@@ -227,8 +228,8 @@ function MediaShelf({
     const genresText = normalizeGenres(item.genres).slice(0, 3).join(" • ");
     const showFriendRating = Number.isInteger(item.rating) && (!isMobileView || isExpanded);
 
-    return (
-      <article key={key} className={`media-card friend-mobile-media-card ${isExpanded ? "mobile-card-expanded" : ""}`}>
+    const card = (
+      <article className={`media-card friend-mobile-media-card ${isExpanded ? "mobile-card-expanded" : ""}`}>
         <Link
           to={mediaLink}
           className="media-image-wrapper"
@@ -367,6 +368,15 @@ function MediaShelf({
         </Link>
       </article>
     );
+    if (isExpanded) {
+      return (
+        <Fragment key={key}>
+          <article className="media-card friend-mobile-media-card" style={{visibility:'hidden'}}><div className="media-image-wrapper" /></article>
+          {createPortal(card, document.body)}
+        </Fragment>
+      );
+    }
+    return <Fragment key={key}>{card}</Fragment>;
   }
 
   return (

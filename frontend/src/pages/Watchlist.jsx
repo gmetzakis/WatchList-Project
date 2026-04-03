@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, Fragment } from "react";
+import { createPortal } from "react-dom";
 import api from "../api/axios.js";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Trash, Eye, LayoutGrid, GalleryVertical, X } from "lucide-react";
@@ -189,8 +190,8 @@ export default function WatchlistPage() {
   function renderCard(item) {
     const itemKey = `${item.type}-${item.tmdb_id}`;
     const isExpanded = isMobileView && expandedCardKey === itemKey;
-    return (
-      <div key={item.tmdb_id} className={`media-card ${isExpanded ? "mobile-card-expanded" : ""}`}>
+    const card = (
+      <div className={`media-card ${isExpanded ? "mobile-card-expanded" : ""}`}>
 
         <Link
           to={`/media/${item.type}/${item.tmdb_id}`}
@@ -271,6 +272,15 @@ export default function WatchlistPage() {
 
       </div>
     );
+    if (isExpanded) {
+      return (
+        <Fragment key={item.tmdb_id}>
+          <div className="media-card" style={{visibility:'hidden'}}><div className="media-image-wrapper" /></div>
+          {createPortal(card, document.body)}
+        </Fragment>
+      );
+    }
+    return <Fragment key={item.tmdb_id}>{card}</Fragment>;
   }
 
   useEffect(() => {

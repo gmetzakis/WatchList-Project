@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Fragment } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { LayoutGrid, GalleryVertical, Heart, Eye, EyeOff, BookmarkPlus, BookmarkMinus, X, ThumbsDown, RotateCcw } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
@@ -586,8 +587,8 @@ export default function ExplorePage() {
     const friendLabel = Array.isArray(item.reason_context) && item.reason_context.length > 0 ? item.reason_context[0] : "Friend pick";
     const isExpanded = isMobileView && expandedCardKey === cardIdentifier;
 
-    return (
-      <article key={key} className={`media-card explore-media-card ${mode === "tape" ? "carousel-card" : ""} ${isExpanded ? "mobile-card-expanded" : ""}`}>
+    const card = (
+      <article className={`media-card explore-media-card ${mode === "tape" ? "carousel-card" : ""} ${isExpanded ? "mobile-card-expanded" : ""}`}>
         <Link
           to={mediaLink}
           className="media-image-wrapper"
@@ -747,6 +748,15 @@ export default function ExplorePage() {
         </Link>
       </article>
     );
+    if (isExpanded) {
+      return (
+        <Fragment key={key}>
+          <article className="media-card explore-media-card" style={{visibility:'hidden'}}><div className="media-image-wrapper" /></article>
+          {createPortal(card, document.body)}
+        </Fragment>
+      );
+    }
+    return <Fragment key={key}>{card}</Fragment>;
   }
 
   return (

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Fragment } from "react";
+import { createPortal } from "react-dom";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { Heart, Eye, EyeOff, BookmarkPlus, BookmarkMinus, X } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
@@ -511,8 +512,10 @@ export default function MediaDetails() {
       <EmblaCarousel
         items={recommendationItems}
         itemKey={(rec) => `rec-${rec.id}`}
-        renderCard={(rec) => (
-          <div key={rec.id} className={`media-card${isMobileView && expandedCardKey === `rec-${rec.id}` ? " mobile-card-expanded" : ""}`} style={isMobileView && expandedCardKey === `rec-${rec.id}` ? {zIndex: 9999, position: "fixed", left: "50%", top: "50%", transform: "translate(-50%, -50%)"} : {}}>
+        renderCard={(rec) => {
+          const isRecExpanded = isMobileView && expandedCardKey === `rec-${rec.id}`;
+          const card = (
+          <div className={`media-card${isRecExpanded ? " mobile-card-expanded" : ""}`} style={isRecExpanded ? {zIndex: 9999, position: "fixed", left: "50%", top: "50%", transform: "translate(-50%, -50%)"} : {}}>
             <Link
               to={`/media/${media.type}/${rec.id}`}
               className="media-image-wrapper"
@@ -665,7 +668,17 @@ export default function MediaDetails() {
               </div>
             </Link>
           </div>
-        )}
+          );
+          if (isRecExpanded) {
+            return (
+              <>
+                <div className="media-card" style={{visibility:'hidden'}}><div className="media-image-wrapper" /></div>
+                {createPortal(card, document.body)}
+              </>
+            );
+          }
+          return card;
+        }}
       />
 
       {isMobileView && expandedCardKey && (

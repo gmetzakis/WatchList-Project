@@ -48,6 +48,13 @@
     transform: none;
     box-shadow: none !important;
     color: var(--text);
+    filter: none !important;
+  }
+  .btn-rating.active:hover,
+  .star.active:hover {
+    color: #ffd700 !important;
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6)) !important;
   }
   .btn-remove-rating:hover {
     color: var(--accent-glow);

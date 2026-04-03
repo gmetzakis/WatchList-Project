@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Fragment } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Heart, Eye, EyeOff, BookmarkPlus, BookmarkMinus, X } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
@@ -268,9 +269,10 @@ export default function PersonDetailsPage() {
             renderCard={(item) => (
               (() => {
                 const state = getCreditState(item);
-                return (
+                const isExpanded = isMobileView && expandedCardKey === `${sectionType}-${creditKey(item)}`;
+                const card = (
               <div
-                className={`media-card${isMobileView && expandedCardKey === `${sectionType}-${creditKey(item)}` ? " mobile-card-expanded" : ""}`}
+                className={`media-card${isExpanded ? " mobile-card-expanded" : ""}`}
               >
                 <Link
                   to={`/media/${item.type === "tv" ? "series" : item.type}/${item.id}`}
@@ -418,6 +420,15 @@ export default function PersonDetailsPage() {
                 </Link>
               </div>
                 );
+                if (isExpanded) {
+                  return (
+                    <>
+                      <div className="media-card" style={{visibility:'hidden'}}><div className="media-image-wrapper" /></div>
+                      {createPortal(card, document.body)}
+                    </>
+                  );
+                }
+                return card;
               })()
             )}
           />

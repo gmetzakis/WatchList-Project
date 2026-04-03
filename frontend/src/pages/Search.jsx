@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
+import { createPortal } from "react-dom";
 import api from "../api/axios";
 import { Link, useSearchParams } from "react-router-dom";
 import { Heart, Eye, EyeOff, Bookmark, BookmarkMinus, BookmarkPlus, X } from "lucide-react";
@@ -318,8 +319,10 @@ export default function SearchPage() {
         </div>
       ) : (
         <div className="media-grid">
-          {results.map((item) => (
-            <div key={item._key} className={`media-card ${isMobileView && expandedCardKey === item._key ? "mobile-card-expanded" : ""}`}>
+          {results.map((item) => {
+            const isExpanded = isMobileView && expandedCardKey === item._key;
+            const card = (
+            <div className={`media-card ${isExpanded ? "mobile-card-expanded" : ""}`}>
 
               <Link
                 to={`/media/${item.type === "tv" ? "series" : item.type}/${item.id}`}
@@ -462,7 +465,17 @@ export default function SearchPage() {
               </Link>
 
             </div>
-          ))}
+            );
+            if (isExpanded) {
+              return (
+                <Fragment key={item._key}>
+                  <div className="media-card" style={{visibility:'hidden'}}><div className="media-image-wrapper" /></div>
+                  {createPortal(card, document.body)}
+                </Fragment>
+              );
+            }
+            return <Fragment key={item._key}>{card}</Fragment>;
+          })}
         </div>
       )}
 
