@@ -24,11 +24,35 @@
   font-size: 1rem;
 }
 
-.btn-rating:hover {
-  border-color: var(--panel-border-strong);
-  background: linear-gradient(135deg, #444, #555);
-  transform: scale(1.1);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
+
+/* Remove hover effects for mobile */
+@media (max-width: 760px), (hover: none) and (pointer: coarse) {
+  .btn-rating,
+  .star {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .btn-rating.active,
+  .star.active {
+    background: transparent !important;
+    color: #ffd700 !important;
+    border-color: var(--panel-border-strong);
+    box-shadow: none !important;
+    font-weight: 700;
+    transform: scale(1.15);
+  }
+  .btn-rating:hover,
+  .star:hover {
+    border-color: var(--panel-border);
+    background: transparent !important;
+    transform: none;
+    box-shadow: none !important;
+    color: var(--text);
+  }
+  .btn-remove-rating:hover {
+    color: var(--accent-glow);
+    text-shadow: none;
+  }
 }
 
 .btn-rating.active {

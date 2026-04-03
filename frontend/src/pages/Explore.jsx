@@ -128,6 +128,13 @@ export default function ExplorePage() {
   const [myMediaStatus, setMyMediaStatus] = useState({});
   const [actionPending, setActionPending] = useState(new Set());
   const [expandedCardKey, setExpandedCardKey] = useState(null);
+
+  useEffect(() => {
+    if (isMobileView && expandedCardKey) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [isMobileView, expandedCardKey]);
   const [refreshingSections, setRefreshingSections] = useState(new Set());
   const [payload, setPayload] = useState({
     sections: [],
@@ -860,6 +867,7 @@ export default function ExplorePage() {
       {isMobileView && expandedCardKey && (
         <div
           className="mobile-card-backdrop"
+          style={{position: "fixed", inset: 0, zIndex: 9998, background: "transparent"}}
           onClick={() => setExpandedCardKey(null)}
         />
       )}

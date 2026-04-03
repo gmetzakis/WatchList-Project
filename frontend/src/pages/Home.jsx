@@ -158,6 +158,13 @@ export default function HomePage() {
   const [isRefreshingHomeRecommendations, setIsRefreshingHomeRecommendations] = useState(false);
 
   useEffect(() => {
+    if (isMobileView && expandedCardKey) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [isMobileView, expandedCardKey]);
+
+  useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 760px)");
     const handleViewportChange = (event) => {
       setIsMobileView(event.matches);
@@ -841,6 +848,7 @@ export default function HomePage() {
       {isMobileView && expandedCardKey && (
         <div
           className="mobile-card-backdrop"
+          style={{position: "fixed", inset: 0, zIndex: 9998, background: "transparent"}}
           onClick={() => setExpandedCardKey(null)}
         />
       )}

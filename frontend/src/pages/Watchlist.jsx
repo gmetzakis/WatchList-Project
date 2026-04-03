@@ -140,6 +140,13 @@ export default function WatchlistPage() {
   const [searchQuery, setSearchQuery] = useState(search);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [expandedCardKey, setExpandedCardKey] = useState(null);
+
+  useEffect(() => {
+    if (isMobileView && expandedCardKey) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [isMobileView, expandedCardKey]);
   const [pagination, setPagination] = useState({ page: 1, limit: PAGE_SIZE, total: 0, totalPages: 1 });
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
@@ -532,6 +539,7 @@ export default function WatchlistPage() {
       {isMobileView && expandedCardKey && (
         <div
           className="mobile-card-backdrop"
+          style={{position: "fixed", inset: 0, zIndex: 9998, background: "transparent"}}
           onClick={() => setExpandedCardKey(null)}
         />
       )}

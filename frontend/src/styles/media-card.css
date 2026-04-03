@@ -1,3 +1,22 @@
+/* Ensure expanded recommendation card in MediaDetails is always on top and blocks pointer events behind */
+.media-card.mobile-card-expanded {
+  z-index: 9999 !important;
+  position: fixed !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+}
+
+/* Add a backdrop to block pointer events to elements behind */
+.media-card.mobile-card-expanded::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: -1;
+  pointer-events: auto;
+}
 /* ===========================
    MEDIA CARD
    =========================== */

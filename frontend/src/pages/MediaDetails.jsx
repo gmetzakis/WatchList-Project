@@ -87,6 +87,13 @@ export default function MediaDetails() {
   });
   const [expandedCardKey, setExpandedCardKey] = useState(null);
 
+  useEffect(() => {
+    if (isMobileView && expandedCardKey) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [isMobileView, expandedCardKey]);
+
   const trailerKey = media?.trailer?.site === "YouTube" ? media?.trailer?.key : null;
   const director = media?.credits?.crew?.find((member) => {
     if (!member?.job) return false;
@@ -422,22 +429,23 @@ export default function MediaDetails() {
           {status === "watched" && (
             <div style={{ marginTop: "50px" }}>
 
+
               <div className="rating-inline">
                 {[1,2,3,4,5,6,7,8,9,10].map(n => (
                   <button
                     key={n}
                     onClick={() => handleRate(n)}
-                    style={{ fontSize: "24px" }}
+                    style={{ fontSize: "24px", touchAction: "manipulation" }}
                     className={rating >= n ? "star active" : "star"}
+                    tabIndex={0}
+                    aria-label={`Rate ${n} out of 10`}
                   >
                     ★
                   </button>
                 ))}
-
                 {rating && (
-                      <span style={{ fontSize: "18px" }} className="rating-label">{rating}/10</span>
+                  <span style={{ fontSize: "18px" }} className="rating-label">{rating}/10</span>
                 )}
-
               </div>
 
               {rating && (
@@ -490,11 +498,21 @@ export default function MediaDetails() {
       />
 
       <h2 className="details-section-title">Recommendations</h2>
+      {/* Overlay to block pointer events when a recommendation card is expanded on mobile */}
+      {isMobileView && expandedCardKey && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9998,
+          background: "rgba(0,0,0,0.01)",
+          pointerEvents: "auto"
+        }} />
+      )}
       <EmblaCarousel
         items={recommendationItems}
         itemKey={(rec) => `rec-${rec.id}`}
         renderCard={(rec) => (
-          <div key={rec.id} className={`media-card${isMobileView && expandedCardKey === `rec-${rec.id}` ? " mobile-card-expanded" : ""}`}>
+          <div key={rec.id} className={`media-card${isMobileView && expandedCardKey === `rec-${rec.id}` ? " mobile-card-expanded" : ""}`} style={isMobileView && expandedCardKey === `rec-${rec.id}` ? {zIndex: 9999, position: "fixed", left: "50%", top: "50%", transform: "translate(-50%, -50%)"} : {}}>
             <Link
               to={`/media/${media.type}/${rec.id}`}
               className="media-image-wrapper"
@@ -543,16 +561,19 @@ export default function MediaDetails() {
                   {recommendationStatus[recommendationKey(rec.id)]?.status === "watched" && (
                     <div className="rating-inline">
                       {[1,2,3,4,5,6,7,8,9,10].map((n) => (
-                        <span
+                        <button
                           key={n}
                           className={recommendationStatus[recommendationKey(rec.id)]?.rating >= n ? "star active" : "star"}
                           onClick={(e) => {
                             stopCardNavigation(e);
                             rateRecommendation(rec.id, n);
                           }}
+                          style={{ fontSize: "20px", touchAction: "manipulation" }}
+                          tabIndex={0}
+                          aria-label={`Rate ${n} out of 10`}
                         >
                           ★
-                        </span>
+                        </button>
                       ))}
                       {recommendationStatus[recommendationKey(rec.id)]?.rating && (
                         <span className="rating-label">{recommendationStatus[recommendationKey(rec.id)]?.rating}/10</span>
@@ -650,6 +671,7 @@ export default function MediaDetails() {
       {isMobileView && expandedCardKey && (
         <div
           className="mobile-card-backdrop"
+          style={{position: "fixed", inset: 0, zIndex: 9998, background: "transparent"}}
           onClick={() => setExpandedCardKey(null)}
         />
       )}
