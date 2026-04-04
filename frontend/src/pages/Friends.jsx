@@ -481,11 +481,28 @@ function FriendsEmblaCarousel({ items, renderCard }) {
     if (emblaApi) emblaApi.scrollNext();
   };
 
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(true);
+  useEffect(() => {
+    if (!emblaApi) return;
+    const update = () => {
+      setCanScrollPrev(emblaApi.canScrollPrev());
+      setCanScrollNext(emblaApi.canScrollNext());
+    };
+    update();
+    emblaApi.on('select', update);
+    emblaApi.on('reInit', update);
+    return () => {
+      emblaApi.off('select', update);
+      emblaApi.off('reInit', update);
+    };
+  }, [emblaApi]);
+
   return (
     <div className="embla-carousel">
-      <button className="embla-arrow left" onClick={scrollPrev}>
+      {canScrollPrev && <button className="embla-arrow left" onClick={scrollPrev}>
         ‹
-      </button>
+      </button>}
 
       <div className="embla-viewport" ref={emblaRef}>
         <div className="embla-container">
@@ -497,9 +514,9 @@ function FriendsEmblaCarousel({ items, renderCard }) {
         </div>
       </div>
 
-      <button className="embla-arrow right" onClick={scrollNext}>
+      {canScrollNext && <button className="embla-arrow right" onClick={scrollNext}>
         ›
-      </button>
+      </button>}
     </div>
   );
 }

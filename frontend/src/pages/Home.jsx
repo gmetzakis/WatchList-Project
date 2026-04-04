@@ -118,11 +118,28 @@ function EmblaCarousel({ items, renderCard }) {
     plugins
   );
 
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(true);
+  useEffect(() => {
+    if (!emblaApi) return;
+    const update = () => {
+      setCanScrollPrev(emblaApi.canScrollPrev());
+      setCanScrollNext(emblaApi.canScrollNext());
+    };
+    update();
+    emblaApi.on('select', update);
+    emblaApi.on('reInit', update);
+    return () => {
+      emblaApi.off('select', update);
+      emblaApi.off('reInit', update);
+    };
+  }, [emblaApi]);
+
   return (
     <div className="embla-carousel">
-      <button className="embla-arrow left" onClick={() => emblaApi?.scrollPrev()}>
+      {canScrollPrev && <button className="embla-arrow left" onClick={() => emblaApi?.scrollPrev()}>
         ‹
-      </button>
+      </button>}
 
       <div className="embla-viewport" ref={emblaRef}>
         <div className="embla-container">
@@ -134,9 +151,9 @@ function EmblaCarousel({ items, renderCard }) {
         </div>
       </div>
 
-      <button className="embla-arrow right" onClick={() => emblaApi?.scrollNext()}>
+      {canScrollNext && <button className="embla-arrow right" onClick={() => emblaApi?.scrollNext()}>
         ›
-      </button>
+      </button>}
     </div>
   );
 }

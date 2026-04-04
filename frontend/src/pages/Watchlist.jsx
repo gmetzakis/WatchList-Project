@@ -66,9 +66,13 @@ function EmblaCarousel({ items, renderCard, canLoadMore = false, onLoadMore }) {
   }, [emblaApi, items.length]);
 
   const [isAtEnd, setIsAtEnd] = useState(false);
+  const [isAtStart, setIsAtStart] = useState(true);
   useEffect(() => {
     if (!emblaApi) return;
-    const update = () => setIsAtEnd(!emblaApi.canScrollNext());
+    const update = () => {
+      setIsAtEnd(!emblaApi.canScrollNext());
+      setIsAtStart(!emblaApi.canScrollPrev());
+    };
     update();
     emblaApi.on('select', update);
     emblaApi.on('reInit', update);
@@ -87,7 +91,7 @@ function EmblaCarousel({ items, renderCard, canLoadMore = false, onLoadMore }) {
 
   return (
     <div className="embla-carousel">
-      <button className="embla-arrow left" onClick={scrollPrev}>‹</button>
+      {!isAtStart && <button className="embla-arrow left" onClick={scrollPrev}>‹</button>}
 
       <div className="embla-viewport" ref={emblaRef}>
         <div className="embla-container">
@@ -99,7 +103,7 @@ function EmblaCarousel({ items, renderCard, canLoadMore = false, onLoadMore }) {
         </div>
       </div>
 
-      <button className="embla-arrow right" onClick={scrollNext}>›</button>
+      {!isAtEnd && <button className="embla-arrow right" onClick={scrollNext}>›</button>}
 
       {isAtEnd && canLoadMore && onLoadMore && (
         <div className="embla-load-more-overlay">

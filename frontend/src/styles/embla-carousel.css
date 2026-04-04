@@ -47,7 +47,7 @@
     max-width: 110px;
   }
   .embla-arrow {
-    font-size: 48px;
+    font-size: 36px;
     padding: 0 2px;
   }
 }
@@ -59,8 +59,8 @@
   z-index: 100;
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.1);
-  font-size: 150px;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 80px;
   cursor: pointer;
   display: flex;
   align-items: center;
