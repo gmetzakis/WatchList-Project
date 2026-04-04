@@ -367,18 +367,143 @@
 }
 
 @media (max-width: 760px) {
-  .library-mobile-filter-toggle {
-    margin-top: 12px;
+  /* Keep page head as a row: title left, chips+count right */
+  .library-page-head {
+    flex-direction: row !important;
+    align-items: center;
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+    gap: 6px;
   }
 
+  /* Compact hero shell on mobile */
+  .library-hero-shell,
+  .watched-hero-shell {
+    padding: 12px 12px 10px;
+  }
+
+  /* Right side: chips + count stacked, aligned right */
+  .library-page-head-actions {
+    align-items: flex-end !important;
+    gap: 4px;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  /* Chips row: wrap if needed, small */
+  .library-page-head-actions .library-type-filter-row {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+
+  .library-hero-kicker,
+  .watched-hero-kicker {
+    margin-bottom: 2px;
+    font-size: 0.6rem;
+  }
+
+  .library-page-title {
+    font-size: 1.2rem !important;
+  }
+
+  .library-type-filter-chip {
+    padding: 3px 7px;
+    font-size: 0.6rem;
+    border-radius: 12px;
+  }
+
+  .library-page-count {
+    min-width: auto;
+    padding: 2px 7px;
+    font-size: 0.6rem;
+  }
+
+  /* Compact toggle button */
+  .library-mobile-filter-toggle {
+    margin-top: 6px;
+    padding: 4px 10px;
+    font-size: 0.65rem;
+    border-radius: 12px;
+  }
+
+  /* Compact inline filter bar */
   .library-filter-bar,
   .watched-filter-bar {
-    margin-top: 12px;
+    margin-top: 6px;
+    margin-bottom: 8px;
+    padding: 6px 8px;
+    gap: 6px;
+    flex-wrap: wrap;
+    border-radius: 10px;
+    animation: none;
   }
 
+  /* Hide labels on mobile */
+  .library-filter-bar .filter-label,
+  .watched-filter-bar .filter-label {
+    display: none;
+  }
+
+  /* Search input: compact, full width first row */
+  .library-filter-bar .filter-search-input,
+  .watched-filter-bar .filter-search-input {
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    border-radius: 8px;
+  }
+
+  /* Selects: compact inline */
+  .library-filter-bar .filter-select,
+  .watched-filter-bar .filter-select {
+    padding: 5px 24px 5px 8px;
+    font-size: 0.72rem;
+    border-radius: 8px;
+    flex: 1;
+    min-width: 0;
+    width: auto;
+  }
+
+  /* View toggle: smaller */
+  .library-filter-bar .view-toggle-container,
+  .watched-filter-bar .view-toggle-container {
+    gap: 4px;
+    padding: 2px;
+    border-radius: 8px;
+  }
+
+  .library-filter-bar .view-toggle-box,
+  .watched-filter-bar .view-toggle-box {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+  }
+
+  .library-filter-bar .view-toggle-box svg,
+  .watched-filter-bar .view-toggle-box svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Pagination compact - right aligned */
   .library-pagination-row {
-    justify-content: flex-start;
+    margin-top: 6px;
+    gap: 6px;
+    justify-content: flex-end;
     flex-wrap: wrap;
+  }
+
+  .library-pagination-btn {
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    border-radius: 8px;
+  }
+
+  .library-pagination-label {
+    font-size: 0.72rem;
   }
 }
 

@@ -537,16 +537,13 @@ export default function FavoritesPage() {
             type="button"
             className={`library-mobile-filter-toggle ${isMobileFiltersOpen ? "active" : ""}`}
             onClick={() => setIsMobileFiltersOpen((prev) => !prev)}
-            aria-expanded={isMobileFiltersOpen}
-            aria-controls="favorites-mobile-filters"
           >
             {isMobileFiltersOpen ? "Hide Filters" : "Filters"}
           </button>
         )}
 
-        {/* FILTER BAR */}
         {(!isMobileView || isMobileFiltersOpen) && (
-        <div id="favorites-mobile-filters" className="filter-bar library-filter-bar">
+        <div className="filter-bar library-filter-bar">
 
         <div className="view-toggle-container">
           <div

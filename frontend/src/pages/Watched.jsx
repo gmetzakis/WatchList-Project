@@ -516,15 +516,13 @@ export default function WatchedPage() {
             type="button"
             className={`library-mobile-filter-toggle ${isMobileFiltersOpen ? "active" : ""}`}
             onClick={() => setIsMobileFiltersOpen((prev) => !prev)}
-            aria-expanded={isMobileFiltersOpen}
-            aria-controls="watched-mobile-filters"
           >
             {isMobileFiltersOpen ? "Hide Filters" : "Filters"}
           </button>
         )}
 
         {(!isMobileView || isMobileFiltersOpen) && (
-        <div id="watched-mobile-filters" className="filter-bar watched-filter-bar">
+        <div className="filter-bar watched-filter-bar">
           <div className="view-toggle-container">
             <div
               className={`view-toggle-box ${viewMode === "grid" ? "active" : ""}`}

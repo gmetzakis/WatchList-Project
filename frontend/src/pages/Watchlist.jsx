@@ -443,16 +443,13 @@ export default function WatchlistPage() {
             type="button"
             className={`library-mobile-filter-toggle ${isMobileFiltersOpen ? "active" : ""}`}
             onClick={() => setIsMobileFiltersOpen((prev) => !prev)}
-            aria-expanded={isMobileFiltersOpen}
-            aria-controls="watchlist-mobile-filters"
           >
             {isMobileFiltersOpen ? "Hide Filters" : "Filters"}
           </button>
         )}
 
-        {/* TYPE FILTER */}
         {(!isMobileView || isMobileFiltersOpen) && (
-        <div id="watchlist-mobile-filters" className="filter-bar library-filter-bar">
+        <div className="filter-bar library-filter-bar">
         
         <div className="view-toggle-container">
           <div
