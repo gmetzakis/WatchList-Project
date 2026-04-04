@@ -751,7 +751,7 @@ export default function ExplorePage() {
     if (isExpanded) {
       return (
         <Fragment key={key}>
-          <article className="media-card explore-media-card" style={{visibility:'hidden'}}><div className="media-image-wrapper" /></article>
+          <article className="media-card explore-media-card"><div className="media-image-wrapper">{item.poster_path ? <img src={`https://image.tmdb.org/t/p/w300${item.poster_path}`} className="media-card-img" style={{opacity:0.3}} width="300" height="450" /> : <div className="explore-card-fallback" style={{opacity:0.3}}>{item.title?.slice(0,1)||"?"}</div>}</div></article>
           {createPortal(card, document.body)}
         </Fragment>
       );

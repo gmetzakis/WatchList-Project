@@ -672,7 +672,7 @@ export default function MediaDetails() {
           if (isRecExpanded) {
             return (
               <>
-                <div className="media-card" style={{visibility:'hidden'}}><div className="media-image-wrapper" /></div>
+                <div className="media-card"><div className="media-image-wrapper"><img src={`https://image.tmdb.org/t/p/w300${rec.poster_path}`} className="media-card-img" style={{opacity:0.3}} width="300" height="450" /></div></div>
                 {createPortal(card, document.body)}
               </>
             );

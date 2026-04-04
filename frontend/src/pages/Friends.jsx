@@ -371,7 +371,7 @@ function MediaShelf({
     if (isExpanded) {
       return (
         <Fragment key={key}>
-          <article className="media-card friend-mobile-media-card" style={{visibility:'hidden'}}><div className="media-image-wrapper" /></article>
+          <article className="media-card friend-mobile-media-card"><div className="media-image-wrapper">{item.poster_path ? <img src={`https://image.tmdb.org/t/p/w300${item.poster_path}`} className="media-card-img" style={{opacity:0.3}} width="300" height="450" /> : null}</div></article>
           {createPortal(card, document.body)}
         </Fragment>
       );
