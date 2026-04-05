@@ -3,9 +3,9 @@ import axios from "axios";
 let baseURLs = "";
 baseURLs = "https://api.mycineshelf.com";
 
-if (import.meta.env.VITE_PC_RUNNING === "home") {
-  baseURLs = "http://localhost:5000/";
-}
+// if (import.meta.env.VITE_PC_RUNNING === "home") {
+//   baseURLs = "http://localhost:5000/";
+// }
 
 // if (import.meta.env.VITE_PC_RUNNING === "army_service_room") {
 //   baseURLs = "https://friendly-invention-v5vxr4q6j5rh6qj7-5000.app.github.dev/"
