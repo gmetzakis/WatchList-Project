@@ -144,3 +144,12 @@
   text-shadow: 0 6px 12px rgba(0,0,0,0.24);
 }
 
+.auth-success {
+  color: #9fe8b6;
+  margin-bottom: 12px;
+  padding: 10px;
+  background: rgba(46, 204, 113, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid #9fe8b6;
+}
+

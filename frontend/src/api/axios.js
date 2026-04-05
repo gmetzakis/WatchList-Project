@@ -3,9 +3,9 @@ import axios from "axios";
 let baseURLs = "";
 baseURLs = "https://api.mycineshelf.com";
 
-// if (import.meta.env.VITE_PC_RUNNING === "home") {
-//   baseURLs = "http://localhost:5000/";
-// }
+if (import.meta.env.VITE_PC_RUNNING === "home") {
+  baseURLs = "http://localhost:5000/";
+}
 
 // if (import.meta.env.VITE_PC_RUNNING === "army_service_room") {
 //   baseURLs = "https://friendly-invention-v5vxr4q6j5rh6qj7-5000.app.github.dev/"
@@ -68,7 +68,7 @@ api.interceptors.response.use(
   (error) => {
     const status = error?.response?.status;
     const requestUrl = error?.config?.url || "";
-    const isAuthEndpoint = requestUrl.includes("/auth/login") || requestUrl.includes("/auth/register");
+    const isAuthEndpoint = requestUrl.includes("/auth/login") || requestUrl.includes("/auth/register") || requestUrl.includes("/auth/forgot-password") || requestUrl.includes("/auth/reset-password");
 
     if (status === 401 && !isAuthEndpoint) {
       localStorage.removeItem("token");

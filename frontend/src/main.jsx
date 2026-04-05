@@ -15,6 +15,8 @@ const FriendsPage = lazy(() => import("./pages/Friends.jsx"));
 const ProfilePage = lazy(() => import("./pages/Profile.jsx"));
 const PersonDetailsPage = lazy(() => import("./pages/PersonDetails.jsx"));
 const ExplorePage = lazy(() => import("./pages/Explore.jsx"));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPassword.jsx"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPassword.jsx"));
 
 import "./index.css";
 import "./styles/global.css";
@@ -63,6 +65,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         {/* PUBLIC ROUTES */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* PROTECTED ROUTES */}
         <Route path="/" element={

@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
+import ForgotPassword from "../pages/ForgotPassword";
+import ResetPassword from "../pages/ResetPassword";
 import Search from "../pages/Search";
 import MediaDetails from "../pages/MediaDetails";
 import Watchlist from "../pages/Watchlist";
@@ -14,6 +16,8 @@ export default function AppRouter() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/" element={<ProtectedRoute> <Search /> </ProtectedRoute>} />
         <Route path="/media/:tmdbId" element={<ProtectedRoute> <MediaDetails /> </ProtectedRoute>} />
         <Route path="/watchlist" element={<ProtectedRoute> <Watchlist /> </ProtectedRoute>} />
