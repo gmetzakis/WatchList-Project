@@ -223,54 +223,54 @@ export default function MediaDetails() {
 
   async function addRecommendationToWatchlist(recId) {
     const normalizedType = media?.type === "series" ? "series" : "movie";
+    updateRecommendationState(recId, { status: "watchlist" });
     const recDetails = await api.get(`/tmdb/details/${normalizedType}/${recId}`);
     const ids = new Set((recDetails.data?.genres || []).map((g) => String(g.id)));
     await api.post(`/media/${recId}/watchlist`, { type: normalizedType, genres: [...ids] });
-    updateRecommendationState(recId, { status: "watchlist" });
   }
 
   async function removeRecommendationFromWatchlist(recId) {
     const normalizedType = media?.type === "series" ? "series" : "movie";
-    await api.delete(`/media/${recId}/watchlist`, { data: { type: normalizedType } });
     updateRecommendationState(recId, { status: null });
+    await api.delete(`/media/${recId}/watchlist`, { data: { type: normalizedType } });
   }
 
   async function markRecommendationAsWatched(recId) {
     const normalizedType = media?.type === "series" ? "series" : "movie";
+    updateRecommendationState(recId, { status: "watched" });
     const recDetails = await api.get(`/tmdb/details/${normalizedType}/${recId}`);
     const ids = new Set((recDetails.data?.genres || []).map((g) => String(g.id)));
     await api.post(`/media/${recId}/watched`, { type: normalizedType, genres: [...ids] });
-    updateRecommendationState(recId, { status: "watched" });
   }
 
   async function removeRecommendationFromWatched(recId) {
     const normalizedType = media?.type === "series" ? "series" : "movie";
-    await api.delete(`/media/${recId}/watched`, { data: { type: normalizedType } });
     updateRecommendationState(recId, { status: null, rating: null });
+    await api.delete(`/media/${recId}/watched`, { data: { type: normalizedType } });
   }
 
   async function moveRecommendationToWatched(recId) {
     const normalizedType = media?.type === "series" ? "series" : "movie";
-    await api.post(`/media/${recId}/watchlist-to-watched`, { type: normalizedType });
     updateRecommendationState(recId, { status: "watched" });
+    await api.post(`/media/${recId}/watchlist-to-watched`, { type: normalizedType });
   }
 
   async function favoriteRecommendation(recId) {
     const normalizedType = media?.type === "series" ? "series" : "movie";
-    await api.post(`/media/${recId}/favorite`, { type: normalizedType });
     updateRecommendationState(recId, { is_favorite: true });
+    await api.post(`/media/${recId}/favorite`, { type: normalizedType });
   }
 
   async function unfavoriteRecommendation(recId) {
     const normalizedType = media?.type === "series" ? "series" : "movie";
-    await api.delete(`/media/${recId}/favorite`, { data: { type: normalizedType } });
     updateRecommendationState(recId, { is_favorite: false });
+    await api.delete(`/media/${recId}/favorite`, { data: { type: normalizedType } });
   }
 
   async function rateRecommendation(recId, value) {
     const normalizedType = media?.type === "series" ? "series" : "movie";
-    await api.post(`/media/${recId}/rating`, { type: normalizedType, rating: value });
     updateRecommendationState(recId, { rating: value });
+    await api.post(`/media/${recId}/rating`, { type: normalizedType, rating: value });
   }
 
   async function addToWatchlist() {

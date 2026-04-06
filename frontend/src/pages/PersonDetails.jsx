@@ -218,54 +218,54 @@ export default function PersonDetailsPage() {
 
   async function addCreditToWatchlist(item) {
     const normalizedType = item.type === "tv" ? "series" : "movie";
+    updateCreditState(item, { status: "watchlist" });
     const details = await api.get(`/tmdb/details/${normalizedType}/${item.id}`);
     const ids = new Set((details.data?.genres || []).map((g) => String(g.id)));
     await api.post(`/media/${item.id}/watchlist`, { type: normalizedType, genres: [...ids] });
-    updateCreditState(item, { status: "watchlist" });
   }
 
   async function removeCreditFromWatchlist(item) {
     const normalizedType = item.type === "tv" ? "series" : "movie";
-    await api.delete(`/media/${item.id}/watchlist`, { data: { type: normalizedType } });
     updateCreditState(item, { status: null });
+    await api.delete(`/media/${item.id}/watchlist`, { data: { type: normalizedType } });
   }
 
   async function markCreditAsWatched(item) {
     const normalizedType = item.type === "tv" ? "series" : "movie";
+    updateCreditState(item, { status: "watched" });
     const details = await api.get(`/tmdb/details/${normalizedType}/${item.id}`);
     const ids = new Set((details.data?.genres || []).map((g) => String(g.id)));
     await api.post(`/media/${item.id}/watched`, { type: normalizedType, genres: [...ids] });
-    updateCreditState(item, { status: "watched" });
   }
 
   async function removeCreditFromWatched(item) {
     const normalizedType = item.type === "tv" ? "series" : "movie";
-    await api.delete(`/media/${item.id}/watched`, { data: { type: normalizedType } });
     updateCreditState(item, { status: null, rating: null });
+    await api.delete(`/media/${item.id}/watched`, { data: { type: normalizedType } });
   }
 
   async function moveCreditToWatched(item) {
     const normalizedType = item.type === "tv" ? "series" : "movie";
-    await api.post(`/media/${item.id}/watchlist-to-watched`, { type: normalizedType });
     updateCreditState(item, { status: "watched" });
+    await api.post(`/media/${item.id}/watchlist-to-watched`, { type: normalizedType });
   }
 
   async function favoriteCredit(item) {
     const normalizedType = item.type === "tv" ? "series" : "movie";
-    await api.post(`/media/${item.id}/favorite`, { type: normalizedType });
     updateCreditState(item, { is_favorite: true });
+    await api.post(`/media/${item.id}/favorite`, { type: normalizedType });
   }
 
   async function unfavoriteCredit(item) {
     const normalizedType = item.type === "tv" ? "series" : "movie";
-    await api.delete(`/media/${item.id}/favorite`, { data: { type: normalizedType } });
     updateCreditState(item, { is_favorite: false });
+    await api.delete(`/media/${item.id}/favorite`, { data: { type: normalizedType } });
   }
 
   async function rateCredit(item, value) {
     const normalizedType = item.type === "tv" ? "series" : "movie";
-    await api.post(`/media/${item.id}/rating`, { type: normalizedType, rating: value });
     updateCreditState(item, { rating: value });
+    await api.post(`/media/${item.id}/rating`, { type: normalizedType, rating: value });
   }
 
   function renderCreditsSection(sectionType) {

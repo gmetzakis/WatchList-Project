@@ -196,50 +196,50 @@ export default function SearchPage() {
   // ---------------------------
   async function addToWatchlist(item) {
     const type = item.type === "tv" ? "series" : item.type;
-    await api.post(`/media/${item.id}/watchlist`, { type: type, genres: item.genres });
     updateItem(item._key, { status: "watchlist" });
+    await api.post(`/media/${item.id}/watchlist`, { type: type, genres: item.genres });
   }
 
   async function removeFromWatchlist(item) {
     const type = item.type === "tv" ? "series" : item.type;
-    await api.delete(`/media/${item.id}/watchlist`, { data: { type } });
     updateItem(item._key, { status: null });
+    await api.delete(`/media/${item.id}/watchlist`, { data: { type } });
   }
 
   async function markAsWatched(item) {
     const type = item.type === "tv" ? "series" : item.type;
-    await api.post(`/media/${item.id}/watched`, { type: type, genres: item.genres });
     updateItem(item._key, { status: "watched" });
+    await api.post(`/media/${item.id}/watched`, { type: type, genres: item.genres });
   }
 
   async function removeFromWatched(item) {
     const type = item.type === "tv" ? "series" : item.type;
-    await api.delete(`/media/${item.id}/watched`, { data: { type } });
     updateItem(item._key, { status: null, rating: null });
+    await api.delete(`/media/${item.id}/watched`, { data: { type } });
   }
 
   async function moveToWatched(item) {
     const type = item.type === "tv" ? "series" : item.type;
-    await api.post(`/media/${item.id}/watchlist-to-watched`, { type });
     updateItem(item._key, { status: "watched" });
+    await api.post(`/media/${item.id}/watchlist-to-watched`, { type });
   }
 
   async function handleRate(item, n) {
     const type = item.type === "tv" ? "series" : item.type;
-    await api.post(`/media/${item.id}/rating`, { type, rating: n });
     updateItem(item._key, { rating: n });
+    await api.post(`/media/${item.id}/rating`, { type, rating: n });
   }
 
   async function handleFavorite(item) {
     const type = item.type === "tv" ? "series" : item.type;
-    await api.post(`/media/${item.id}/favorite`, { type });
     updateItem(item._key, { is_favorite: true });
+    await api.post(`/media/${item.id}/favorite`, { type });
   }
 
   async function handleUnfavorite(item) {
     const type = item.type === "tv" ? "series" : item.type;
-    await api.delete(`/media/${item.id}/favorite`, { data: { type } });
     updateItem(item._key, { is_favorite: false });
+    await api.delete(`/media/${item.id}/favorite`, { data: { type } });
   }
 
   // ---------------------------
