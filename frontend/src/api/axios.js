@@ -3,22 +3,8 @@ import axios from "axios";
 let baseURLs = "";
 baseURLs = "https://api.mycineshelf.com";
 
-// if (import.meta.env.VITE_PC_RUNNING === "home") {
+// if (import.meta.env.VITE_DEPLOYMENT_TYPE === "local") {
 //   baseURLs = "http://localhost:5000/";
-// }
-
-// if (import.meta.env.VITE_PC_RUNNING === "army_service_room") {
-//   baseURLs = "https://friendly-invention-v5vxr4q6j5rh6qj7-5000.app.github.dev/"
-// }
-// else if (import.meta.env.VITE_PC_RUNNING === "oracle") {
-//   baseURLs = "https://api.mycineshelf.com"
-// }
-// else {
-//   baseURLs = "http://localhost:5000/"
-// }
-
-// if (import.meta.env.VITE_MOBILE === "yes") {
-//   baseURLs = "http://192.168.1.11:5000/"
 // }
 
 const api = axios.create({
