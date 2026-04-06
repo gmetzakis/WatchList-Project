@@ -299,69 +299,82 @@ function MediaShelf({
 
             <div className="control-icons">
             {!isWatched && !isInWatchlist && (
-              <span
-                className={`unbookmark-icon ${isPending ? "disabled" : ""}`}
-                title="Add to Watchlist"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (!isPending) onAddWatchlist(item);
-                }}
-              >
-                <BookmarkPlus size={32} />
-              </span>
+              <>
+                <span
+                  className={`watched-icon ${isPending ? "disabled" : ""}`}
+                  title="Add to Watchlist"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!isPending) onAddWatchlist(item);
+                  }}
+                >
+                  <BookmarkPlus size={32} />
+                </span>
+                <span
+                  className={`watched-icon ${isPending ? "disabled" : ""}`}
+                  title="Mark as Watched"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!isPending) onMarkWatched(item);
+                  }}
+                >
+                  <Eye size={32} />
+                </span>
+              </>
             )}
             {isInWatchlist && (
-              <span
-                className={`unbookmark-icon ${isPending ? "disabled" : ""}`}
-                title="Remove from watchlist"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (!isPending) onRemoveWatchlist(item);
-                }}
-              >
-                <BookmarkMinus size={32} />
-              </span>
-            )}
-            {!isWatched && (
-              <span
-                className={`watched-icon ${isPending ? "disabled" : ""}`}
-                title="Mark as Watched"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (!isPending) onMarkWatched(item);
-                }}
-              >
-                <Eye size={32} />
-              </span>
-            )}
-            {isWatched && (
-              <span
-                className={`watched-icon active ${isPending ? "disabled" : ""}`}
-                title="Remove from watched"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (!isPending) onRemoveWatched(item);
-                }}
-              >
-                <EyeOff size={32} />
-              </span>
+              <>
+                <span
+                  className={`watched-icon ${isPending ? "disabled" : ""}`}
+                  title="Remove from watchlist"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!isPending) onRemoveWatchlist(item);
+                  }}
+                >
+                  <BookmarkMinus size={32} />
+                </span>
+                <span
+                  className={`watched-icon ${isPending ? "disabled" : ""}`}
+                  title="Mark as Watched"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!isPending) onMarkWatched(item);
+                  }}
+                >
+                  <Eye size={32} />
+                </span>
+              </>
             )}
             {isWatched && (
-              <span
-                className={`favorite-icon ${isFavorite ? "active" : ""} ${isPending ? "disabled" : ""}`}
-                title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (!isPending) onToggleFavorite(item);
-                }}
-              >
-                <Heart size={32} fill={isFavorite ? "currentColor" : "none"} />
-              </span>
+              <>
+                <span
+                  className={`favorite-icon ${isFavorite ? "active" : ""} ${isPending ? "disabled" : ""}`}
+                  title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!isPending) onToggleFavorite(item);
+                  }}
+                >
+                  <Heart size={32} fill={isFavorite ? "currentColor" : "none"} />
+                </span>
+                <span
+                  className={`watched-icon active ${isPending ? "disabled" : ""}`}
+                  title="Remove from watched"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!isPending) onRemoveWatched(item);
+                  }}
+                >
+                  <EyeOff size={32} />
+                </span>
+              </>
             )}
             </div>
           </div>
@@ -766,92 +779,86 @@ export default function FriendsPage() {
   async function handleAddToWatchlist(item) {
     const key = `${item.type}-${item.tmdb_id}`;
     if (actionPending.has(key)) return;
-    setActionPending((prev) => new Set([...prev, key]));
+    const prev = myMediaStatus[key];
+    setMyMediaStatus((s) => ({ ...s, [key]: { status: "watchlist", isFavorite: false } }));
+    setActionPending((p) => new Set([...p, key]));
     try {
       await api.post(`/media/${item.tmdb_id}/watchlist`, { type: item.type });
-      setMyMediaStatus((prev) => ({ ...prev, [key]: { status: "watchlist", isFavorite: false } }));
     } catch {
-      // silent fail
+      setMyMediaStatus((s) => ({ ...s, [key]: prev || {} }));
     } finally {
-      setActionPending((prev) => { const next = new Set(prev); next.delete(key); return next; });
+      setActionPending((p) => { const next = new Set(p); next.delete(key); return next; });
     }
   }
 
   async function handleMarkAsWatched(item) {
     const key = `${item.type}-${item.tmdb_id}`;
     if (actionPending.has(key)) return;
-    setActionPending((prev) => new Set([...prev, key]));
+    const prev = myMediaStatus[key];
+    setMyMediaStatus((s) => ({
+      ...s,
+      [key]: { status: "watched", isFavorite: s[key]?.isFavorite || false },
+    }));
+    setActionPending((p) => new Set([...p, key]));
     try {
       await api.post(`/media/${item.tmdb_id}/watched`, { type: item.type });
-      setMyMediaStatus((prev) => ({
-        ...prev,
-        [key]: { status: "watched", isFavorite: prev[key]?.isFavorite || false },
-      }));
     } catch {
-      // silent fail
+      setMyMediaStatus((s) => ({ ...s, [key]: prev || {} }));
     } finally {
-      setActionPending((prev) => { const next = new Set(prev); next.delete(key); return next; });
+      setActionPending((p) => { const next = new Set(p); next.delete(key); return next; });
     }
   }
 
   async function handleRemoveFromWatchlist(item) {
     const key = `${item.type}-${item.tmdb_id}`;
     if (actionPending.has(key)) return;
-    setActionPending((prev) => new Set([...prev, key]));
+    const prev = myMediaStatus[key];
+    setMyMediaStatus((s) => { const next = { ...s }; delete next[key]; return next; });
+    setActionPending((p) => new Set([...p, key]));
     try {
       await api.delete(`/media/${item.tmdb_id}/watchlist`, { data: { type: item.type } });
-      setMyMediaStatus((prev) => {
-        const next = { ...prev };
-        delete next[key];
-        return next;
-      });
     } catch {
-      // silent fail
+      setMyMediaStatus((s) => ({ ...s, [key]: prev || {} }));
     } finally {
-      setActionPending((prev) => { const next = new Set(prev); next.delete(key); return next; });
+      setActionPending((p) => { const next = new Set(p); next.delete(key); return next; });
     }
   }
 
   async function handleRemoveWatched(item) {
     const key = `${item.type}-${item.tmdb_id}`;
     if (actionPending.has(key)) return;
-    setActionPending((prev) => new Set([...prev, key]));
+    const prev = myMediaStatus[key];
+    setMyMediaStatus((s) => { const next = { ...s }; delete next[key]; return next; });
+    setActionPending((p) => new Set([...p, key]));
     try {
       await api.delete(`/media/${item.tmdb_id}/watched`, { data: { type: item.type } });
-      setMyMediaStatus((prev) => {
-        const next = { ...prev };
-        delete next[key];
-        return next;
-      });
     } catch {
-      // silent fail
+      setMyMediaStatus((s) => ({ ...s, [key]: prev || {} }));
     } finally {
-      setActionPending((prev) => { const next = new Set(prev); next.delete(key); return next; });
+      setActionPending((p) => { const next = new Set(p); next.delete(key); return next; });
     }
   }
 
   async function handleRate(item, rating) {
     const key = `${item.type}-${item.tmdb_id}`;
     if (actionPending.has(key)) return;
-    setActionPending((prev) => new Set([...prev, key]));
-    try {
-      await api.post(`/media/${item.tmdb_id}/rating`, {
-        type: item.type,
+    const prev = myMediaStatus[key];
+    setMyMediaStatus((s) => ({
+      ...s,
+      [key]: {
+        ...(s[key] || {}),
+        status: "watched",
+        isFavorite: s[key]?.isFavorite || false,
         rating,
-      });
-      setMyMediaStatus((prev) => ({
-        ...prev,
-        [key]: {
-          ...(prev[key] || {}),
-          status: "watched",
-          isFavorite: prev[key]?.isFavorite || false,
-          rating,
-        },
-      }));
+      },
+    }));
+    setActionPending((p) => new Set([...p, key]));
+    try {
+      await api.post(`/media/${item.tmdb_id}/rating`, { type: item.type, rating });
     } catch {
-      // silent fail
+      setMyMediaStatus((s) => ({ ...s, [key]: prev || {} }));
     } finally {
-      setActionPending((prev) => { const next = new Set(prev); next.delete(key); return next; });
+      setActionPending((p) => { const next = new Set(p); next.delete(key); return next; });
     }
   }
 
@@ -859,19 +866,19 @@ export default function FriendsPage() {
     const key = `${item.type}-${item.tmdb_id}`;
     const currentStatus = myMediaStatus[key];
     if (actionPending.has(key) || currentStatus?.status !== "watched") return;
-    setActionPending((prev) => new Set([...prev, key]));
+    const wasFavorite = currentStatus.isFavorite;
+    setMyMediaStatus((s) => ({ ...s, [key]: { ...s[key], isFavorite: !wasFavorite } }));
+    setActionPending((p) => new Set([...p, key]));
     try {
-      if (currentStatus.isFavorite) {
+      if (wasFavorite) {
         await api.delete(`/media/${item.tmdb_id}/favorite`, { data: { type: item.type } });
-        setMyMediaStatus((prev) => ({ ...prev, [key]: { ...prev[key], isFavorite: false } }));
       } else {
         await api.post(`/media/${item.tmdb_id}/favorite`, { type: item.type });
-        setMyMediaStatus((prev) => ({ ...prev, [key]: { ...prev[key], isFavorite: true } }));
       }
     } catch {
-      // silent fail
+      setMyMediaStatus((s) => ({ ...s, [key]: { ...s[key], isFavorite: wasFavorite } }));
     } finally {
-      setActionPending((prev) => { const next = new Set(prev); next.delete(key); return next; });
+      setActionPending((p) => { const next = new Set(p); next.delete(key); return next; });
     }
   }
 
