@@ -9,6 +9,10 @@
 </p>
 
 <p align="center">
+  <a href="https://mycineshelf.com"><strong>🌐 Live Demo — mycineshelf.com</strong></a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React 19" />
   <img src="https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white" alt="Express 5" />
   <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
