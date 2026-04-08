@@ -395,7 +395,11 @@ function MediaShelf({
   return (
     <>
       {isMobileView && expandedCardKey && (
-        <div className="mobile-card-backdrop" onClick={() => setExpandedCardKey(null)} />
+        <div
+          className="mobile-card-backdrop"
+          style={{position: "fixed", inset: 0, zIndex: 9998, background: "transparent"}}
+          onClick={() => setExpandedCardKey(null)}
+        />
       )}
 
       {isRatingSort ? (

@@ -482,6 +482,7 @@ export default function SearchPage() {
       {isMobileView && expandedCardKey && (
         <div
           className="mobile-card-backdrop"
+          style={{position: "fixed", inset: 0, zIndex: 9998, background: "transparent"}}
           onClick={closeExpandedCard}
         />
       )}
