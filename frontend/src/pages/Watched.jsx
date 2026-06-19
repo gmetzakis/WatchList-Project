@@ -600,7 +600,7 @@ export default function WatchedPage() {
         {items.length === 0 && <p>You haven't watched anything yet.</p>}
 
         {/* GROUPED MODE */}
-        {isRatingSort && (
+        {isRatingSort && viewMode === "grid" && (
           <div className="rating-groups">
             {activeOrder.map(key => {
               const bucket = grouped[key];
@@ -611,13 +611,13 @@ export default function WatchedPage() {
               const visibleItems = bucket.slice(0, visCount);
               const hasMore = bucket.length > visCount;
 
-            const title = key === "unrated"
-              ? "Unrated"
-              : (
-                  <>
-                    {key}/10 <span className="star active">★</span>
-                  </>
-                );
+              const title = key === "unrated"
+                ? "Unrated"
+                : (
+                    <>
+                      {key}/10 <span className="star active">★</span>
+                    </>
+                  );
               return (
                 <div key={key} className="rating-section">
                   <h2 className="rating-section-title">{title}</h2>
@@ -636,6 +636,34 @@ export default function WatchedPage() {
                       </button>
                     </div>
                   )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* RATING TAPE MODE */}
+        {isRatingSort && viewMode === "tape" && (
+          <div className="rating-groups">
+            {activeOrder.map(key => {
+              const bucket = grouped[key];
+              if (!bucket || bucket.length === 0) return null;
+
+              const title = key === "unrated"
+                ? "Unrated"
+                : (
+                    <>
+                      {key}/10 <span className="star active">★</span>
+                    </>
+                  );
+              return (
+                <div key={key} className="rating-section">
+                  <h2 className="rating-section-title">{title}</h2>
+                  <EmblaCarousel
+                    key={`${key}-carousel`}
+                    items={bucket}
+                    renderCard={renderCard}
+                  />
                 </div>
               );
             })}
