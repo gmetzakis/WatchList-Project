@@ -3,21 +3,46 @@ import axios from "axios";
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const API_KEY = process.env.TMDB_API_KEY
 
+const tmdb = axios.create({
+  baseURL: "https://api.themoviedb.org/3",
+  timeout: 5000,
+  headers: {
+    "User-Agent": "MyCineShelf/1.0",
+    "Accept": "application/json"
+  }
+});
+
 export async function fetchTMDBMedia(tmdbId, type) {
   const endpoint = type === "movie" ? "movie" : "tv";
 
-  const url = `${TMDB_BASE}/${endpoint}/${tmdbId}?api_key=${process.env.TMDB_API_KEY}&language=en-US`;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = await tmdb.get(`/${endpoint}/${tmdbId}`, {
+        params: {
+          api_key: process.env.TMDB_API_KEY,
+          language: "en-US"
+        }
+      });
 
-  const { data } = await axios.get(url);
+      const data = res.data;
 
-  return {
-    tmdb_id: data.id,
-    type,
-    title: type === "movie" ? data.title : data.name,
-    poster_path: data.poster_path,
-    genres: data.genres,
-    release_year: (type === "movie" ? data.release_date : data.first_air_date)?.slice(0, 4)
-  };
+      return {
+        tmdb_id: data.id,
+        type,
+        title: type === "movie" ? data.title : data.name,
+        poster_path: data.poster_path,
+        genres: data.genres,
+        release_year: (type === "movie" ? data.release_date : data.first_air_date)?.slice(0, 4)
+      };
+    } catch (err) {
+      console.error(`TMDB fetch failed (attempt ${attempt}):`, err.message);
+
+      if (attempt === 3) throw err;
+
+      // exponential backoff
+      await new Promise(r => setTimeout(r, 300 * attempt));
+    }
+  }
 }
 
 export async function searchTMDB(query) {
